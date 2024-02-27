@@ -10,11 +10,15 @@ def load_image(image_path):
     return image
 
 
-def find_balls(image, threshold=230):
+def find_balls(image, threshold=230,min_contour_size=100):
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     _, thresholded_image = cv2.threshold(gray_image, threshold, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    return contours
+
+#filter contours based on size
+    filtered_contours = [contour for contour in contours if cv2.contourArea(contour) > min_contour_size]
+
+    return filtered_contours
 
 
 def draw_dot(image, position, label, color=(0, 255, 255)):
@@ -61,6 +65,8 @@ if contours:
         draw_dot(image, tuple(bottom_corners[1]), 'BL (0,0)')
         draw_dot(image, center, 'Center')
 
+#  minimum contour size to filter out small objects
+min_contour_size = 500
 # find balls and process each contour
 ball_contours = find_balls(image)
 for i, contour in enumerate(ball_contours, 1):
