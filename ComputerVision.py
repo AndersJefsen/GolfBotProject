@@ -23,8 +23,8 @@ def draw_dot(image, position, label, color=(0, 255, 255)):
 
 
 #original_image_path = 'images/Bane 2 uden gule/WIN_20240207_09_37_09_Pro.jpg'
-#original_image_path = 'images/Bane 2 uden gule/bane2UdenGule1.jpg'
-original_image_path = 'images/Bane 2 uden gule/WIN_20240207_09_37_26_Pro.jpg'
+original_image_path = 'images/Bane 2 uden gule/bane2UdenGule1.jpg'
+#original_image_path = 'images/Bane 2 uden gule/WIN_20240207_09_37_26_Pro.jpg'
 image = load_image(original_image_path)
 
 # edge detection to find maps edges
@@ -36,7 +36,7 @@ contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
 if contours:
     largest_contour = max(contours, key=cv2.contourArea)#find the largest contour, ie the map
-    epsilon = 0.009 * cv2.arcLength(largest_contour, True) #calculate epsilon for contour approximaton, because of imperfect contours
+    epsilon = 0.01 * cv2.arcLength(largest_contour, True) #calculate epsilon for contour approximaton, because of imperfect contours
     approx_corners = cv2.approxPolyDP(largest_contour, epsilon, True) #makes largest contour into main corners
 
     if len(approx_corners) == 4:
@@ -50,7 +50,7 @@ if contours:
 
 
         # find and label corners
-        sorted_corners = sorted(approx_corners[:, 0, :], key=lambda x: (x[1], x[0]))
+        sorted_corners = sorted(approx_corners[:, 0, :], key=lambda x: (x[1], x[0])) #separates the top corners from bottom corners, after y-value
         top_corners = sorted(sorted_corners[:2], key=lambda x: x[0])
         bottom_corners = sorted(sorted_corners[2:], key=lambda x: x[0], reverse=True)
 
