@@ -24,12 +24,19 @@ def process_image(image):
     # Define lower and upper bounds for red color detection
     lower_red = np.array([0, 0, 150])
     upper_red = np.array([100, 100, 255])
+    lower_white = np.array([200, 200, 200])
+    upper_white = np.array([255, 255, 255])
 
-    # Threshold the image to get only red areas
+    # Thresholds for red and white colours
     red_mask = cv2.inRange(image, lower_red, upper_red)
+    white_mask = cv2.inRange(image, lower_white, upper_white)
+
+    combined_mask = cv2.bitwise_or(red_mask, white_mask)
 
     # Find contours in the red mask
-    contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(combined_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+
 
     # Draw contours on the original image
     for contour in contours:
