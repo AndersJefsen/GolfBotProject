@@ -11,15 +11,24 @@ def load_image(image_path):
 
 
 def process_image(image):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    alpha = 0.5  # Contrast control
+    beta = 5
+
+    cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
+    #cv2.addWeighted()
+
+
+    #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Apply histogram equalization to improve contrast
-    hist = cv2.equalizeHist(gray)
+    #hist = cv2.equalizeHist(gray)
+
 
     # Show the grayscale image
-    #cv2.imshow('Grayscale Image', hist)
+    #cv2.imshow('Grayscale Image', image)
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
+
 
     # Define lower and upper bounds for red color detection
     lower_red = np.array([0, 0, 150])
@@ -37,9 +46,9 @@ def process_image(image):
     contours, _ = cv2.findContours(combined_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Show the grayscale image
-    cv2.imshow('Grayscale Image', combined_mask)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.imshow('Grayscale Image', combined_mask)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
 
 
     # Draw contours on the original image
@@ -56,6 +65,6 @@ def process_image(image):
 
 if __name__ == "__main__":
     image_path = "images/banemedfarve2/banemedfarve7.jpg"  # Path to your image
-    image = load_image(image_path)
+    image = cv2.imread(image_path)
     if image is not None:
         process_image(image)
