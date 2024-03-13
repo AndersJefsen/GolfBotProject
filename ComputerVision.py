@@ -17,9 +17,9 @@ def process_image(image):
     hist = cv2.equalizeHist(gray)
 
     # Show the grayscale image
-    # cv2.imshow('Grayscale Image', hist)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    #cv2.imshow('Grayscale Image', hist)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
 
     # Define lower and upper bounds for red color detection
     lower_red = np.array([0, 0, 150])
@@ -36,12 +36,16 @@ def process_image(image):
     # Find contours in the red mask
     contours, _ = cv2.findContours(combined_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+    # Show the grayscale image
+    cv2.imshow('Grayscale Image', combined_mask)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
     # Draw contours on the original image
     for contour in contours:
         area = cv2.contourArea(contour)
-        if area > 100:  # Ignore small contours
+        if area > 300:  # Ignore small contours
             cv2.drawContours(image, [contour], -1, (0, 255, 0), 2)  # Draw green contours around detected red areas
 
     # Show the processed image
