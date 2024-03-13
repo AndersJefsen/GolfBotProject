@@ -20,6 +20,28 @@ def find_balls(image, threshold=230,min_contour_size=100):
 
     return filtered_contours
 
+def find_edges(image):
+    """
+    Detect edges and squares in the image.
+    """
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    red_mask = cv2.inRange(hsv_image, np.array([0, 120, 70]), np.array([10, 255, 255])) + \
+               cv2.inRange(hsv_image, np.array([170, 120, 70]), np.array([180, 255, 255]))
+    edges = cv2.Canny(red_mask, 100, 200)
+    contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    if contours:
+        largest_contour = max(contours, key=cv2.contourArea)  # find the largest contour, ie the map
+        epsilon = 0.009 * cv2.arcLength(largest_contour, True)  # calculate epsilon for contour approximation
+        approx_corners = cv2.approxPolyDP(largest_contour, epsilon, True)  # makes largest contour into main corners
+
+        if len(approx_corners) == 4:
+            cv2.polylines(image, [approx_corners], True, (255, 0, 0), 3)
+
+            # Process as needed...
+            # Additional logic can be added here based on your specific needs.
+
+    return image  # Returning image with detected edges and squares
 
 def draw_dot(image, position, label, color=(0, 255, 255)):
     cv2.circle(image, position, 5, color, -1)
@@ -38,8 +60,9 @@ red_mask = cv2.inRange(hsv_image, np.array([0, 120, 70]), np.array([10, 255, 255
 edges = cv2.Canny(red_mask, 100, 200)
 contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
+
 if contours:
-    largest_contour = max(contours, key=cv2.contourArea)#find the largest contour, ie the map
+    largest_contour = max(contours, key=cv2.contourArea) #find the largest contour, ie the map
     epsilon = 0.009 * cv2.arcLength(largest_contour, True) #calculate epsilon for contour approximaton, because of imperfect contours
     approx_corners = cv2.approxPolyDP(largest_contour, epsilon, True) #makes largest contour into main corners
 
