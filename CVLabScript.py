@@ -23,6 +23,9 @@ def process_image(image):
     th1 = cv2.threshold(l_channel, 200, 255, cv2.THRESH_BINARY)[1]
 
 
+
+    contours, _ = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
     # create copy of original image
     img1 = image.copy()
     # highlight white region with different color
