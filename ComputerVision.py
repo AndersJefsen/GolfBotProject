@@ -9,10 +9,6 @@ def load_image(image_path):
         return None
     return image
 
-def draw_dot(image, position, label, color=(0, 255, 0), thickness=3):
-    cv2.circle(image, position, 5, color, -1)
-    cv2.putText(image, label, (position[0] + 10, position[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
-
 
 def process_image(image):
 
@@ -29,9 +25,9 @@ def process_image(image):
     max_contour = max(contours, key=cv2.contourArea)
 
     max_contour_area = cv2.contourArea(max_contour) * 0.99 # remove largest except all other 99% smaller
-    # min_contour_area = cv2.contourArea(max_contour) * 0.50 # smaller contours
+    min_contour_area = cv2.contourArea(max_contour) * 0.002 # smaller contours
 
-    filtered_contours = [cnt for cnt in contours if cv2.contourArea(cnt) < max_contour_area]
+    filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
 
     # Draw filtered contours on original image
     # result = image.copy()
