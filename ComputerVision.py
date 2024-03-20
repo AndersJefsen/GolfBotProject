@@ -20,15 +20,35 @@ def find_balls(image, threshold=230,min_contour_size=100):
 
     return filtered_contours
 
+def convert_coordinates(x, y, corners):
+    
 
-def draw_dot(image, position, label, color=(0, 255, 255)):
+    top_left = corners[0]
+    top_right = corners[1]
+    bottom_left = corners[2]
+    
+    # Calculate the ratio of the distance of the point from the corners
+    # to the distance between the corners
+    x_ratio = x / 180
+    y_ratio = y / 120
+    
+    # Convert to image coordinates
+    img_x = int((top_right[0] - top_left[0]) * x_ratio + top_left[0])
+    img_y = int((bottom_left[1] - top_left[1]) * y_ratio + top_left[1])
+    
+    return (img_x, img_y)
+
+def draw_dot(image, position, label, color=(0, 255, 255), corners=None):
+    if corners is not None:
+        position = convert_coordinates(position[0], position[1], corners)
     cv2.circle(image, position, 5, color, -1)
     cv2.putText(image, label, (position[0] + 10, position[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
 
 
+
 #original_image_path = 'images/Bane 2 uden gule/WIN_20240207_09_37_09_Pro.jpg'
-original_image_path = 'images/Bane 2 uden gule/bane2UdenGule1.jpg'
-#original_image_path = 'images/Bane 2 uden gule/WIN_20240207_09_37_26_Pro.jpg'
+#original_image_path = 'images/Bane 2 uden gule/bane2UdenGule1.jpg'
+original_image_path = 'images/Bane 4/WIN_20240313_10_51_58_Pro.jpg'
 image = load_image(original_image_path)
 
 # edge detection to find maps edges
@@ -40,7 +60,7 @@ contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
 if contours:
     largest_contour = max(contours, key=cv2.contourArea)#find the largest contour, ie the map
-    epsilon = 0.01 * cv2.arcLength(largest_contour, True) #calculate epsilon for contour approximaton, because of imperfect contours
+    epsilon = 0.009 * cv2.arcLength(largest_contour, True) #calculate epsilon for contour approximaton, because of imperfect contours
     approx_corners = cv2.approxPolyDP(largest_contour, epsilon, True) #makes largest contour into main corners
 
     if len(approx_corners) == 4:
@@ -54,16 +74,15 @@ if contours:
 
 
         # find and label corners
-        sorted_corners = sorted(approx_corners[:, 0, :], key=lambda x: (x[1], x[0])) #separates the top corners from bottom corners, after y-value
+        sorted_corners = sorted(approx_corners[:, 0, :], key=lambda x: (x[1], x[0]))
         top_corners = sorted(sorted_corners[:2], key=lambda x: x[0])
         bottom_corners = sorted(sorted_corners[2:], key=lambda x: x[0], reverse=True)
+        corners = [top_corners[0], top_corners[1], bottom_corners[0], bottom_corners[1]]
 
         # corner labels
-        draw_dot(image, tuple(top_corners[0]), 'TL (0,120)')
-        draw_dot(image, tuple(top_corners[1]), 'TR (180,120)')
-        draw_dot(image, tuple(bottom_corners[0]), 'BR (180,0)')
-        draw_dot(image, tuple(bottom_corners[1]), 'BL (0,0)')
-        draw_dot(image, center, 'Center')
+        draw_dot(image, (0, 0), 'Dot 1', corners=corners)
+
+      
 
 #  minimum contour size to filter out small objects
 min_contour_size = 500
@@ -78,6 +97,8 @@ for i, contour in enumerate(ball_contours, 1):
     real_x = (x - bottom_corners[1][0]) / (top_corners[1][0] - bottom_corners[1][0]) * 180
     real_y = 120 - (y - top_corners[0][1]) / (bottom_corners[1][1] - top_corners[0][1]) * 120
     print(f"Ball {i} at: ({real_x:.2f}cm, {real_y:.2f}cm) ")
+
+
 
 cv2.imshow("", image)
 cv2.waitKey(0)
