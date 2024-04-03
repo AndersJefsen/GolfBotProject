@@ -105,15 +105,6 @@ def process_image(image):
                     max_y = y
                     bottom_left_corner = (x, y)
 
-                """"
-                if i == 0:
-                    # text on topmost co-ordinate.
-                    cv2.putText(image, "Top left", (x, y), font, 0.5, (255, 0, 0))
-                else:
-                    # text on remaining co-ordinates.
-                    cv2.putText(image, string, (x, y), font, 0.5, (0, 255, 0))
-                    """
-
             i = i + 1
 
     # find balls and process each contour
