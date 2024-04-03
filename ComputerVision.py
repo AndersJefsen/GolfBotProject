@@ -55,6 +55,12 @@ def process_image(image):
     # result = image.copy()
     # cv2.drawContours(result, filtered_contours, -1, (0, 255, 0), 2)
 
+    # 3. forsøg på at sætte koordinater på bunden af venstre hjørne
+    # Initialize variables to store the extreme points
+    min_x = float('inf')
+    max_y = -1
+    bottom_left_corner = None
+
     for cnt in filtered_contours:
 
         font = cv2.FONT_HERSHEY_COMPLEX
@@ -62,7 +68,7 @@ def process_image(image):
         approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
 
         # draws boundary of contours.
-        cv2.drawContours(image, [approx], 0, (0, 0, 255), 5)
+        cv2.drawContours(image, [approx], 0, (255, 0, 0), 5)
 
         # Used to flatted the array containing
         # the co-ordinates of the vertices.
@@ -76,14 +82,28 @@ def process_image(image):
 
                 # String containing the co-ordinates.
                 string = str(x) + " " + str(y)
+                # Update the min_x and max_y for the bottom left corner detection
+                if y > max_y or (y == max_y and x < min_x):
+                    min_x = x
+                    max_y = y
+                    bottom_left_corner = (x, y)
 
+                """"
                 if i == 0:
                     # text on topmost co-ordinate.
                     cv2.putText(image, "Top left", (x, y), font, 0.5, (255, 0, 0))
                 else:
                     # text on remaining co-ordinates.
                     cv2.putText(image, string, (x, y), font, 0.5, (0, 255, 0))
+                    """
+
             i = i + 1
+
+    # Draw a circle at the detected bottom left corner
+    if bottom_left_corner is not None:
+        cv2.circle(image, bottom_left_corner, 10, (0, 0, 255), -1)
+
+
     # find balls and process each contour
     ball_contours = find_balls(image)
     for i, contour in enumerate(ball_contours, 1):
@@ -91,18 +111,26 @@ def process_image(image):
         cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
         cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
+
     # Showing the final image.
     cv2.imshow('image2', image)
 
-    # cv2.imshow('Processed Image', result)
+    #cv2.imshow('Processed Image', result)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+
+
+
+
 
     # create copy of original image
     # img1 = image.copy()
     # highlight white region with different color
     # img1[th == 255] = (255, 255, 0)
     # img1[th1 == 255] = (0, 255, 255)
+
+
 
 
 if __name__ == "__main__":
