@@ -32,36 +32,24 @@ def process_image(image):
 
     red = cv2.threshold(lab[:, :, 1], 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
 
-    white = cv2.threshold(lab[:, :, 0], 200, 255, cv2.THRESH_BINARY)[1]
-
     # Edge detection using Canny
     edges = cv2.Canny(red, 100, 200)
 
-
-
     # Find contours
     contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
-
-    balls, _ = cv2.findContours(white, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
     # cv2.imshow('Processed Image', white)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
     max_contour = max(contours, key=cv2.contourArea)
-    max_contour_ball = max(balls, key=cv2.contourArea)
 
     # For the map
     max_contour_area = cv2.contourArea(max_contour) * 0.99  # remove largest except all other 99% smaller
     min_contour_area = cv2.contourArea(max_contour) * 0.002  # smaller contours
 
-    # For the balls
-    max_ball_area = cv2.contourArea(max_contour_ball) * 0.99
-    min_ball_area = cv2.contourArea(max_contour_ball) * 0.00001
 
     filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
-
-    filtered_balls = [cnt for cnt in max_contour_ball if max_ball_area > cv2.contourArea(cnt) > min_ball_area]
 
     # Draw filtered contours on original image
     # result = image.copy()
