@@ -19,7 +19,7 @@ def find_balls(image, min_contour_size=350, max_contour_size = 1200):
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
     # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # _, thresholded_image = cv2.threshold(gray_image, threshold, 255, cv2.THRESH_BINARY)
-    white = cv2.threshold(lab[:, :, 0], 200, 255, cv2.THRESH_BINARY)[1]
+    white = cv2.threshold(lab[:, :, 0], 190, 255, cv2.THRESH_BINARY)[1]
 
     # cv2.imshow('Processed Image', white)
     # cv2.waitKey(0)
@@ -121,7 +121,7 @@ def process_image(image):
 
 
 if __name__ == "__main__":
-    image_path = "images/banemedfarve2/banemedfarve7.jpg"  # Path to your image
+    image_path = "images/Bane 2 med Gule/WIN_20240207_09_35_30_Pro.jpg"  # Path to your image
     image = cv2.imread(image_path)
     if image is not None:
         process_image(image)
