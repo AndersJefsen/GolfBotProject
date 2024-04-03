@@ -26,6 +26,23 @@ def find_balls(image, min_contour_size=200, max_contour_size = 700):
 
     return filtered_contours
 
+def image_to_cartesian(image_point, origin):
+    """
+    Convert an image point to Cartesian coordinates with the given origin.
+
+    Parameters:
+        image_point (tuple): The point (x, y) in image coordinates.
+        origin (tuple): The origin (x, y) in image coordinates.
+
+    Returns:
+        (tuple): The point in Cartesian coordinates.
+    """
+    x, y = image_point
+    origin_x, origin_y = origin
+    cartesian_x = x-origin_x
+    cartesian_y = origin_y - y # Invert the y-axis
+    return (cartesian_x, cartesian_y)
+
 def process_image(image):
 
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
@@ -99,18 +116,27 @@ def process_image(image):
 
             i = i + 1
 
-    # Draw a circle at the detected bottom left corner
-    if bottom_left_corner is not None:
-        cv2.circle(image, bottom_left_corner, 10, (0, 0, 255), -1)
-
-
     # find balls and process each contour
     ball_contours = find_balls(image)
     for i, contour in enumerate(ball_contours, 1):
+        # Compute the bounding rectangle for each ball contour
         x, y, w, h = cv2.boundingRect(contour)
+        # Compute the center of the ball
+        center_x = x+w // 2
+        center_y = y+h // 2
+        # Draw the rectangle and number on the ball
         cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
         cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        # Get the cartesian coordinates
+        if bottom_left_corner is not None:  # Ensure the bottom left corner was found
+            cartesian_coords = image_to_cartesian((center_x, center_y), bottom_left_corner)
+            # Now you can use `cartesian_coords` as needed
+            print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
 
+
+    # Draw a circle at the detected bottom left corner
+    if bottom_left_corner is not None:
+        cv2.circle(image, bottom_left_corner, 10, (0, 0, 255), -1)
 
     # Showing the final image.
     cv2.imshow('image2', image)
