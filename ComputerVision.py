@@ -13,6 +13,19 @@ def load_image(image_path):
     return image
 
 
+def find_balls(image, min_contour_size=200, max_contour_size = 700):
+    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # _, thresholded_image = cv2.threshold(gray_image, threshold, 255, cv2.THRESH_BINARY)
+    white = cv2.threshold(lab[:, :, 0], 200, 255, cv2.THRESH_BINARY)[1]
+
+    contours, _ = cv2.findContours(white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+#filter contours based on size
+    filtered_contours = [contour for contour in contours if cv2.contourArea(contour) < max_contour_size and cv2.contourArea(contour) > min_contour_size]
+
+    return filtered_contours
+
 def process_image(image):
 
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
@@ -83,8 +96,12 @@ def process_image(image):
                     # text on remaining co-ordinates.
                     cv2.putText(image, string, (x, y), font, 0.5, (0, 255, 0))
             i = i + 1
-    for cnt in filtered_balls:
-        cv2.drawContours(image, [cnt], -1, (0, 255, 0), 2)
+    # find balls and process each contour
+    ball_contours = find_balls(image)
+    for i, contour in enumerate(ball_contours, 1):
+        x, y, w, h = cv2.boundingRect(contour)
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
     # Showing the final image.
     cv2.imshow('image2', image)
@@ -101,7 +118,7 @@ def process_image(image):
 
 
 if __name__ == "__main__":
-    image_path = "images/banemedfarve2/banemedfarve5.jpg"  # Path to your image
+    image_path = "images/Bane 3 med Gule/WIN_20240207_09_22_41_Pro.jpg"  # Path to your image
     image = cv2.imread(image_path)
     if image is not None:
         process_image(image)
