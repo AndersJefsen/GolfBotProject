@@ -1,3 +1,5 @@
+import math
+
 import cv2
 import numpy as np
 
@@ -13,18 +15,31 @@ def load_image(image_path):
     return image
 
 
-def find_balls(image, min_contour_size=200, max_contour_size = 700):
+def find_balls(image, min_contour_size=350, max_contour_size = 1200):
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
     # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # _, thresholded_image = cv2.threshold(gray_image, threshold, 255, cv2.THRESH_BINARY)
     white = cv2.threshold(lab[:, :, 0], 200, 255, cv2.THRESH_BINARY)[1]
 
-    contours, _ = cv2.findContours(white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # cv2.imshow('Processed Image', white)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
-#filter contours based on size
-    filtered_contours = [contour for contour in contours if cv2.contourArea(contour) < max_contour_size and cv2.contourArea(contour) > min_contour_size]
+    contours, _ = cv2.findContours(white, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+
+    # filter contours based on size
+    filtered_contours = []
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if min_contour_size < area < max_contour_size:
+            perimeter = cv2.arcLength(contour, True)
+            circularity = 4 * math.pi * (area / (perimeter * perimeter))
+            # Check if circularity is close to 1 (for a perfect circle)
+            if 0.5 < circularity < 1.5:  # You may adjust these values based on trial and error
+                filtered_contours.append(contour)
 
     return filtered_contours
+
 
 def process_image(image):
 
@@ -62,7 +77,7 @@ def process_image(image):
         approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
 
         # draws boundary of contours.
-        cv2.drawContours(image, [approx], 0, (0, 0, 255), 5)
+        cv2.drawContours(image, [approx], 0, (255, 0, 0), 5)
 
         # Used to flatted the array containing
         # the co-ordinates of the vertices.
@@ -106,7 +121,7 @@ def process_image(image):
 
 
 if __name__ == "__main__":
-    image_path = "images/Bane 3 med Gule/WIN_20240207_09_22_41_Pro.jpg"  # Path to your image
+    image_path = "images/banemedfarve2/banemedfarve7.jpg"  # Path to your image
     image = cv2.imread(image_path)
     if image is not None:
         process_image(image)
