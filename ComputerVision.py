@@ -1,5 +1,30 @@
 import cv2
 import numpy as np
+import socket
+
+# Server settings
+# The third number needs to be changed each time the hotspot changes
+HOST = '192.168.123.243'  # The IP address of your EV3 brick
+PORT = 1024  # The same port as used by the server
+
+
+def send_command(command):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((HOST, PORT))
+            s.sendall(command.encode('utf-8'))
+    except ConnectionRefusedError:
+        print("Could not connect to the server. Please check if the server is running and reachable.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    # Example usage
+
+
+"""
+while True:
+    command = input()
+    send_command(command)
+"""
 
 
 # cv2.imshow('Processed Image', th)
@@ -15,13 +40,9 @@ def load_image(image_path):
 
 
 # For at finde balls nemmere
-def find_balls_hsv(image, min_size=20, max_size=1000):
+def find_balls_hsv(image, min_size=20, max_size=1000):  # Størrelsen af hvid, der skal findes
     # Convert the image to HSV color space
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
-    # Define color ranges for yellow and white
-    # yellow_lower = np.array([20, 100, 100], dtype="uint8")
-    # yellow_upper = np.array([30, 255, 255], dtype="uint8")
 
     white_lower = np.array([0, 0, 190], dtype="uint8")
     white_upper = np.array([180, 55, 255], dtype="uint8")
@@ -41,7 +62,7 @@ def find_balls_hsv(image, min_size=20, max_size=1000):
     return ball_contours
 
 
-def image_to_cartesian(image_point, origin):
+def image_to_cartesian(image_point, origin):  # Funktionen som converter til koordinater
     """
     Convert an image point to Cartesian coordinates with the given origin.
 
@@ -137,6 +158,10 @@ def process_image(image):
             cartesian_coords = image_to_cartesian((center_x, center_y), bottom_left_corner)
             # Now you can use `cartesian_coords` as needed
             print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
+
+            # Converts the coordinates to string and sends to server
+            coords_str = f"{cartesian_coords[0]},{cartesian_coords[1]}"
+            send_command(coords_str)
 
     # Draw a circle at the detected bottom left corner
     if bottom_left_corner is not None:
