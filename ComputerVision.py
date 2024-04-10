@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
 
-    # cv2.imshow('Processed Image', th)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+
+# cv2.imshow('Processed Image', th)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 
 def load_image(image_path):
     image = cv2.imread(image_path)
@@ -12,22 +13,20 @@ def load_image(image_path):
         return None
     return image
 
+
 # For at finde balls nemmere
-def find_balls_hsv(image, min_size = 20, max_size = 1000 ):
+def find_balls_hsv(image, min_size=20, max_size=1000):
     # Convert the image to HSV color space
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Define color ranges for yellow and white
-    #yellow_lower = np.array([20, 100, 100], dtype="uint8")
-    #yellow_upper = np.array([30, 255, 255], dtype="uint8")
+    # yellow_lower = np.array([20, 100, 100], dtype="uint8")
+    # yellow_upper = np.array([30, 255, 255], dtype="uint8")
 
     white_lower = np.array([0, 0, 190], dtype="uint8")
     white_upper = np.array([180, 55, 255], dtype="uint8")
 
-
     white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
-
-
 
     cv2.imshow('Processed Image', white_mask)
     cv2.waitKey(0)
@@ -40,7 +39,6 @@ def find_balls_hsv(image, min_size = 20, max_size = 1000 ):
     ball_contours = [cnt for cnt in contours if min_size <= cv2.contourArea(cnt) <= max_size]
 
     return ball_contours
-
 
 
 def image_to_cartesian(image_point, origin):
@@ -56,12 +54,12 @@ def image_to_cartesian(image_point, origin):
     """
     x, y = image_point
     origin_x, origin_y = origin
-    cartesian_x = x-origin_x
-    cartesian_y = origin_y - y # Invert the y-axis
-    return (cartesian_x, cartesian_y)
+    cartesian_x = x - origin_x
+    cartesian_y = origin_y - y  # Invert the y-axis
+    return cartesian_x, cartesian_y
+
 
 def process_image(image):
-
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
 
     red = cv2.threshold(lab[:, :, 1], 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
@@ -81,7 +79,6 @@ def process_image(image):
     # For the map
     max_contour_area = cv2.contourArea(max_contour) * 0.99  # remove largest except all other 99% smaller
     min_contour_area = cv2.contourArea(max_contour) * 0.002  # smaller contours
-
 
     filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
 
@@ -104,7 +101,7 @@ def process_image(image):
         # draws boundary of contours.
         cv2.drawContours(image, [approx], 0, (255, 0, 0), 5)
 
-        # Used to flatted the array containing
+        # Used to flat the array containing
         # the co-ordinates of the vertices.
         n = approx.ravel()
         i = 0
@@ -130,8 +127,8 @@ def process_image(image):
         # Compute the bounding rectangle for each ball contour
         x, y, w, h = cv2.boundingRect(contour)
         # Compute the center of the ball
-        center_x = x+w // 2
-        center_y = y+h // 2
+        center_x = x + w // 2
+        center_y = y + h // 2
         # Draw the rectangle and number on the ball
         cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
         cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
@@ -141,7 +138,6 @@ def process_image(image):
             # Now you can use `cartesian_coords` as needed
             print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
 
-
     # Draw a circle at the detected bottom left corner
     if bottom_left_corner is not None:
         cv2.circle(image, bottom_left_corner, 10, (0, 0, 255), -1)
@@ -149,22 +145,9 @@ def process_image(image):
     # Showing the final image.
     cv2.imshow('image2', image)
 
-    #cv2.imshow('Processed Image', result)
+    # cv2.imshow('Processed Image', result)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-
-
-
-
-
-    # create copy of original image
-    # img1 = image.copy()
-    # highlight white region with different color
-    # img1[th == 255] = (255, 255, 0)
-    # img1[th1 == 255] = (0, 255, 255)
-
-
 
 
 if __name__ == "__main__":
