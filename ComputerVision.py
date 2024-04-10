@@ -1,4 +1,5 @@
 import cv2
+import image
 import numpy as np
 from numpy.ma.testutils import approx
 import socket
@@ -143,10 +144,11 @@ class ImageProcessor:
             cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             if bottom_left_corner is not None:
                 cartesian_coords = ImageProcessor.image_to_cartesian((center_x, center_y), bottom_left_corner)
-                print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
 
-coords_str = f"{cartesian_coords[0]},{cartesian_coords[1]}"
-send_command(coords_str)
+                print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
+        coords_str = f"{cartesian_coords[0]},{cartesian_coords[1]}"
+        send_command(coords_str)
+
 
         cv2.imshow('image2', image)
         cv2.waitKey(0)
