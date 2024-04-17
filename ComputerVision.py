@@ -56,19 +56,19 @@ class ImageProcessor:
 
     @staticmethod
     def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
-        # Calculate scaling factors for x and y axes(so there can be a proportion between pixel distance).
-        x_scale = 120 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
-        y_scale = 180 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
+        # Calculate scaling factors for x and y axes (so there can be a proportion between pixel distance).
+        x_scale = 180 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
+        y_scale = 120 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
 
         # Map pixel coordinates to Cartesian coordinates
         x_cartesian = (pixel_coords[0] - bottom_left[0]) * x_scale
-        y_cartesian = (bottom_left[1] - pixel_coords[1]) * y_scale  # Invert y-axis
+        y_cartesian = 120 - (pixel_coords[1] - top_left[1]) * y_scale  # Invert y-axis and adjust to top-left origin
 
-        #x-coordinate range (0 to 120)
-        x_cartesian = max(min(x_cartesian, 120), 0)
+        # x-coordinate range (0 to 120)
+        x_cartesian = max(min(x_cartesian, 180), 0)
 
-        #y-coordinate range (0 to 180)
-        y_cartesian = max(min(y_cartesian, 180), 0)
+        # y-coordinate range (0 to 180)
+        y_cartesian = max(min(y_cartesian, 120), 0)
 
         return x_cartesian, y_cartesian
 
