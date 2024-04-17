@@ -1,6 +1,10 @@
 import cv2
 import numpy as np
 
+    # cv2.imshow('Processed Image', th)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
 def load_image(image_path):
     image = cv2.imread(image_path)
     if image is None:
@@ -8,49 +12,150 @@ def load_image(image_path):
         return None
     return image
 
-def compute_contrast_level(image):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    #hist1 = cv2.equalizeHist(gray)
-    hist = cv2.calcHist([gray], [0], None, [256], [0, 256])
-    contrast_level = np.sum(hist[64:192]) / np.sum(hist)
-    return contrast_level
+# 1. Forsøg for at finde balls nemmere
+def find_balls_hsv(image, min_size = 90, max_size = 1000 ):
+    # Convert the image to HSV color space
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    # Define color ranges for yellow and white
+    #yellow_lower = np.array([20, 100, 100], dtype="uint8")
+    #yellow_upper = np.array([30, 255, 255], dtype="uint8")
+
+    white_lower = np.array([0, 0, 190], dtype="uint8")
+    white_upper = np.array([180, 55, 255], dtype="uint8")
+
+    # Create masks for yellow and white
+    #yellow_mask = cv2.inRange(hsv_image, yellow_lower, yellow_upper)
+    white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
+
+    # Combine the masks
+    #combined_mask = cv2.bitwise_or(yellow_mask, white_mask)
+
+    # cv2.imshow('Processed Image', white_mask)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+    # Find contours
+    contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Filter contours by size
+    ball_contours = [cnt for cnt in contours if min_size <= cv2.contourArea(cnt) <= max_size]
+
+    return ball_contours
+
+
+def image_to_cartesian(image_point, origin):
+    """
+    Convert an image point to Cartesian coordinates with the given origin.
+
+    Parameters:
+        image_point (tuple): The point (x, y) in image coordinates.
+        origin (tuple): The origin (x, y) in image coordinates.
+
+    Returns:
+        (tuple): The point in Cartesian coordinates.
+    """
+    x, y = image_point
+    origin_x, origin_y = origin
+    cartesian_x = x-origin_x
+    cartesian_y = origin_y - y # Invert the y-axis
+    return (cartesian_x, cartesian_y)
 
 def process_image(image):
-    contrast_level = compute_contrast_level(image)
-    print("Contrast Level:", contrast_level)
 
-    # Define base lower and upper bounds for red color detection
-    lower_red_base = np.array([100, 100, 150])
-    upper_red_base = np.array([130, 130, 255])
+    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
 
-    # Adjust thresholds based on contrast level
-    contrast_threshold = 0.45  # Example threshold for adjusting thresholds
-    if contrast_level > contrast_threshold:
-        lower_red = np.array([0, 0, 150])  # Lower threshold for lower contrast
-        upper_red = np.array([100, 100, 255])
-    else:
-        lower_red = lower_red_base
-        upper_red = upper_red_base
+    red = cv2.threshold(lab[:, :, 1], 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
 
-    # Threshold the image to get only red areas
-    red_mask = cv2.inRange(image, lower_red, upper_red)
+    # Edge detection using Canny
+    edges = cv2.Canny(red, 100, 200)
 
-    # Find contours in the red mask
-    contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # Find contours
+    contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
-    # Draw contours on the original image
-    for contour in contours:
-        area = cv2.contourArea(contour)
-        if area > 100:  # Ignore small contours
-            cv2.drawContours(image, [contour], -1, (0, 255, 0), 2)  # Draw green contours around detected red areas
+    # cv2.imshow('Processed Image', red)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
-    # Show the processed image
-    cv2.imshow('Processed Image', image)
+    max_contour = max(contours, key=cv2.contourArea)
+
+    # For the map
+    max_contour_area = cv2.contourArea(max_contour) * 0.99  # remove largest except all other 99% smaller
+    min_contour_area = cv2.contourArea(max_contour) * 0.002  # smaller contours
+
+
+    filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
+
+    # Draw filtered contours on original image
+    # result = image.copy()
+    # cv2.drawContours(result, filtered_contours, -1, (0, 255, 0), 2)
+
+    # 3. forsøg på at sætte koordinater på bunden af venstre hjørne
+    # Initialize variables to store the extreme points
+    min_x = float('inf')
+    max_y = -1
+    bottom_left_corner = None
+
+    for cnt in filtered_contours:
+
+        font = cv2.FONT_HERSHEY_COMPLEX
+
+        approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
+
+        # draws boundary of contours.
+        cv2.drawContours(image, [approx], 0, (255, 0, 0), 5)
+
+        # Used to flatted the array containing
+        # the co-ordinates of the vertices.
+        n = approx.ravel()
+        i = 0
+
+        for j in n:
+            if i % 2 == 0:
+                x = n[i]
+                y = n[i + 1]
+
+                # String containing the co-ordinates.
+                string = str(x) + " " + str(y)
+                # Update the min_x and max_y for the bottom left corner detection
+                if y > max_y or (y == max_y and x < min_x):
+                    min_x = x
+                    max_y = y
+                    bottom_left_corner = (x, y)
+
+            i = i + 1
+
+    # find balls and process each contour
+    ball_contours = find_balls_hsv(image, min_size=90, max_size=1000)
+    for i, contour in enumerate(ball_contours, 1):
+        # Compute the bounding rectangle for each ball contour
+        x, y, w, h = cv2.boundingRect(contour)
+        # Compute the center of the ball
+        center_x = x+w // 2
+        center_y = y+h // 2
+        # Draw the rectangle and number on the ball
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        # Get the cartesian coordinates
+        if bottom_left_corner is not None:  # Ensure the bottom left corner was found
+            cartesian_coords = image_to_cartesian((center_x, center_y), bottom_left_corner)
+            # Now you can use `cartesian_coords` as needed
+            print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
+
+
+    # Draw a circle at the detected bottom left corner
+    if bottom_left_corner is not None:
+        cv2.circle(image, bottom_left_corner, 10, (0, 0, 255), -1)
+
+    # Showing the final image.
+    cv2.imshow('image2', image)
+
+    #cv2.imshow('Processed Image', result)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    image_path = "images/banemedfarve2/banemedfarve4.jpg"  # Path to your image
-    image = load_image(image_path)
+    image_path = "images/Bane 2 med Gule/WIN_20240207_09_35_30_Pro.jpg"  # Path to your image
+    image = cv2.imread(image_path)
     if image is not None:
         process_image(image)
