@@ -1,7 +1,5 @@
 import cv2
-import image
 import numpy as np
-from numpy.ma.testutils import approx
 import socket
 
 # Server settings
@@ -57,50 +55,60 @@ class ImageProcessor:
         return ball_contours
 
     @staticmethod
-    def image_to_cartesian(image_point, origin):
-        x, y = image_point
-        origin_x, origin_y = origin
-        cartesian_x = x - origin_x
-        cartesian_y = origin_y - y  # Invert the y-axis
-        return cartesian_x, cartesian_y
+    def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
+        # Calculate scaling factors for x and y axes(so there can be a proportion between pixel distance).
+        x_scale = 120 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
+        y_scale = 180 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
+
+        # Map pixel coordinates to Cartesian coordinates
+        x_cartesian = (pixel_coords[0] - bottom_left[0]) * x_scale
+        y_cartesian = (bottom_left[1] - pixel_coords[1]) * y_scale  # Invert y-axis
+
+        #x-coordinate range (0 to 120)
+        x_cartesian = max(min(x_cartesian, 120), 0)
+
+        #y-coordinate range (0 to 180)
+        y_cartesian = max(min(y_cartesian, 180), 0)
+
+        return x_cartesian, y_cartesian
 
     @staticmethod
-    def detect_all_corners(filtered_contours):
-        min_x = float('inf')
-        max_x = -1
-        min_y = float('inf')
-        max_y = -1
-        bottom_left_corner = None
-        bottom_right_corner = None
-        top_left_corner = None
-        top_right_corner = None
-
+    def detect_all_corners(filtered_contours, image_width, image_height):
+        corners = []
         for cnt in filtered_contours:
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
-            n = approx.ravel()
-            i = 0
+        if len(approx) == 4:
+            corners.extend(approx)
 
-            for j in n:
-                if i % 2 == 0:
-                    x = n[i]
-                    y = n[i + 1]
+        # Sort the corners by their x and y coordinates
+        corners.sort(key=lambda point: point[0][0] + point[0][1])
 
-                    if x < min_x:
-                        min_x = x
-                        bottom_left_corner = (x, y)
-                    if x > max_x:
-                        max_x = x
-                        bottom_right_corner = (x, y)
-                    if y < min_y:
-                        min_y = y
-                        top_left_corner = (x, y)
-                    if y > max_y:
-                        max_y = y
-                        top_right_corner = (x, y)
+        # Extract the four corners(maybe this should be redone)
+        top_left_corner = corners[0][0]
+        bottom_left_corner = corners[1][0]
+        bottom_right_corner = corners[2][0]
+        top_right_corner = corners[3][0]
 
-                i += 1
+        # Ensure corners are within the picture.
+        top_left_corner = (max(0, top_left_corner[0]), max(0, top_left_corner[1]))
+        bottom_left_corner = (max(0, bottom_left_corner[0]), min(image_height, bottom_left_corner[1]))
+        bottom_right_corner = (min(image_width, bottom_right_corner[0]), min(image_height, bottom_right_corner[1]))
+        top_right_corner = (min(image_width, top_right_corner[0]), max(0, top_right_corner[1]))
 
         return bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner
+
+    @staticmethod
+    def calculate_scale_factors(bottom_left, bottom_right, top_left, top_right):
+        bottom_width = np.linalg.norm(np.array(bottom_left) - np.array(bottom_right))
+        top_width = np.linalg.norm(np.array(top_left) - np.array(top_right))
+        left_height = np.linalg.norm(np.array(bottom_left) - np.array(top_left))
+        right_height = np.linalg.norm(np.array(bottom_right) - np.array(top_right))
+
+        # Define the Cartesian distances between corners
+        x_scale = 120 / max(bottom_width, top_width)
+        y_scale = 180 / max(left_height, right_height)
+
+        return x_scale, y_scale
 
     @staticmethod
     def process_image(image):
@@ -114,12 +122,27 @@ class ImageProcessor:
         min_contour_area = cv2.contourArea(max_contour) * 0.002
         filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
 
-
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
-        ImageProcessor.detect_all_corners(filtered_contours)
+            ImageProcessor.detect_all_corners(filtered_contours, image.shape[1], image.shape[0])
 
 
-#Use RGB for setting up color.
+        # Calculate scale factors
+        x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
+
+
+        print("Bottom Left Corner - Pixel Coordinates:", bottom_left_corner)
+        print("Bottom Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        print("Bottom Right Corner - Pixel Coordinates:", bottom_right_corner)
+        print("Bottom Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        print("Top Left Corner - Pixel Coordinates:", top_left_corner)
+        print("Top Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        print("Top Right Corner - Pixel Coordinates:", top_right_corner)
+        print("Top Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        # Use RGB for setting up color. (-1 er thickness)
         if bottom_left_corner is not None:
             cv2.circle(image, bottom_left_corner, 10, (0, 0, 255), -1)
         if bottom_right_corner is not None:
@@ -143,12 +166,11 @@ class ImageProcessor:
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
             cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             if bottom_left_corner is not None:
-                cartesian_coords = ImageProcessor.image_to_cartesian((center_x, center_y), bottom_left_corner)
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
 
                 print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
-        coords_str = f"{cartesian_coords[0]},{cartesian_coords[1]}"
-        send_command(coords_str)
-
+        # coords_str = f"{cartesian_coords[0]},{cartesian_coords[1]}"
+        # send_command(coords_str)
 
         cv2.imshow('image2', image)
         cv2.waitKey(0)
@@ -156,7 +178,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "images/Bane 3 med Gule/WIN_20240207_09_22_48_Pro.jpg"
+    image_path = "images/Bane 3 med Gule/WIN_20240207_09_22_41_Pro.jpg"
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)
