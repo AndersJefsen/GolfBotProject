@@ -62,12 +62,12 @@ class ImageProcessor:
 
         # Map pixel coordinates to Cartesian coordinates
         x_cartesian = (pixel_coords[0] - bottom_left[0]) * x_scale
-        y_cartesian = 120 - (pixel_coords[1] - top_left[1]) * y_scale  # Invert y-axis and adjust to top-left origin
+        y_cartesian = 120 - (pixel_coords[1] - top_left[1]) * y_scale  #adjust to top-left origin
 
-        # x-coordinate range (0 to 120)
+        # x-coordinate range (0 to 180)
         x_cartesian = max(min(x_cartesian, 180), 0)
 
-        # y-coordinate range (0 to 180)
+        # y-coordinate range (0 to 120)
         y_cartesian = max(min(y_cartesian, 120), 0)
 
         return x_cartesian, y_cartesian
@@ -86,14 +86,15 @@ class ImageProcessor:
         # Extract the four corners(maybe this should be redone)
         top_left_corner = corners[0][0]
         bottom_left_corner = corners[1][0]
-        bottom_right_corner = corners[2][0]
-        top_right_corner = corners[3][0]
+        top_right_corner = corners[2][0]
+        bottom_right_corner = corners[3][0]
 
         # Ensure corners are within the picture.
         top_left_corner = (max(0, top_left_corner[0]), max(0, top_left_corner[1]))
         bottom_left_corner = (max(0, bottom_left_corner[0]), min(image_height, bottom_left_corner[1]))
-        bottom_right_corner = (min(image_width, bottom_right_corner[0]), min(image_height, bottom_right_corner[1]))
         top_right_corner = (min(image_width, top_right_corner[0]), max(0, top_right_corner[1]))
+        bottom_right_corner = (min(image_width, bottom_right_corner[0]), min(image_height, bottom_right_corner[1]))
+
 
         return bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner
 
@@ -105,8 +106,8 @@ class ImageProcessor:
         right_height = np.linalg.norm(np.array(bottom_right) - np.array(top_right))
 
         # Define the Cartesian distances between corners
-        x_scale = 120 / max(bottom_width, top_width)
-        y_scale = 180 / max(left_height, right_height)
+        x_scale = 180 / max(bottom_width, top_width)
+        y_scale = 120 / max(left_height, right_height)
 
         return x_scale, y_scale
 
