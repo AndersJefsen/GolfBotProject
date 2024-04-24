@@ -23,10 +23,8 @@ def draw_dot(image, position, label, color=(0, 255, 255)):
 
 
 #original_image_path = 'images/Bane 2 uden gule/WIN_20240207_09_37_09_Pro.jpg'
-#original_image_path = 'GolfBotProject/images/Bane 2 med Gule/bane2MedGule1.jpg'
-#original_image_path = 'images/Bane 2 uden gule/WIN_20240207_09_37_26_Pro.jpg'
-original_image_path = 'GolfBotProject/images/Bane 2 uden gule/bane2UdenGule1.jpg'
-
+#original_image_path = 'images/Bane 2 uden gule/bane2UdenGule1.jpg'
+original_image_path = 'images/Bane 2 uden gule/WIN_20240207_09_37_26_Pro.jpg'
 image = load_image(original_image_path)
 
 # edge detection to find maps edges
