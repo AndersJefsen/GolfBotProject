@@ -1,80 +1,185 @@
 import cv2
 import numpy as np
+import socket
+
+# Server settings
+# The third number needs to be changed each time the hotspot changes
+HOST = '192.168.123.243'  # The IP address of your EV3 brick
+PORT = 1024  # The same port as used by the server
 
 
-def load_image(image_path):
-    image = cv2.imread(image_path)
-    if image is None:
-        print(f"Could not load from {image_path}")
-        return None
-    return image
+def send_command(command):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((HOST, PORT))
+            s.sendall(command.encode('utf-8'))
+    except ConnectionRefusedError:
+        print("Could not connect to the server. Please check if the server is running and reachable.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    # Example usage
 
 
-def find_balls(image, threshold=230):
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    _, thresholded_image = cv2.threshold(gray_image, threshold, 255, cv2.THRESH_BINARY)
-    contours, _ = cv2.findContours(thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    return contours
+"""
+while True:
+    command = input()
+    send_command(command)
+"""
 
 
-def draw_dot(image, position, label, color=(0, 255, 255)):
-    cv2.circle(image, position, 5, color, -1)
-    cv2.putText(image, label, (position[0] + 10, position[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+class ImageProcessor:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def load_image(image_path):
+        image = cv2.imread(image_path)
+        if image is None:
+            print(f"Could not load from {image_path}")
+            return None
+        return image
+
+    @staticmethod
+    def find_balls_hsv(image, min_size=20, max_size=1000):
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+        white_lower = np.array([0, 0, 190], dtype="uint8")
+        white_upper = np.array([180, 55, 255], dtype="uint8")
+
+        white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
+
+        contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        ball_contours = [cnt for cnt in contours if min_size <= cv2.contourArea(cnt) <= max_size]
+
+        return ball_contours
+
+    @staticmethod
+    def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
+        # Calculate scaling factors for x and y axes (so there can be a proportion between pixel distance).
+        x_scale = 180 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
+        y_scale = 120 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
+
+        # Map pixel coordinates to Cartesian coordinates
+        x_cartesian = (pixel_coords[0] - bottom_left[0]) * x_scale
+        y_cartesian = 120 - (pixel_coords[1] - top_left[1]) * y_scale  #adjust to top-left origin
+
+        # x-coordinate range (0 to 180)
+        x_cartesian = max(min(x_cartesian, 180), 0)
+
+        # y-coordinate range (0 to 120)
+        y_cartesian = max(min(y_cartesian, 120), 0)
+
+        return x_cartesian, y_cartesian
+
+    @staticmethod
+    def detect_all_corners(filtered_contours, image_width, image_height):
+        corners = []
+        for cnt in filtered_contours:
+            approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
+        if len(approx) == 4:
+            corners.extend(approx)
+
+        # Sort the corners by their x and y coordinates
+        corners.sort(key=lambda point: point[0][0] + point[0][1])
+
+        # Extract the four corners(maybe this should be redone)
+        top_left_corner = corners[0][0]
+        bottom_left_corner = corners[1][0]
+        top_right_corner = corners[2][0]
+        bottom_right_corner = corners[3][0]
+
+        # Ensure corners are within the picture.
+        top_left_corner = (max(0, top_left_corner[0]), max(0, top_left_corner[1]))
+        bottom_left_corner = (max(0, bottom_left_corner[0]), min(image_height, bottom_left_corner[1]))
+        top_right_corner = (min(image_width, top_right_corner[0]), max(0, top_right_corner[1]))
+        bottom_right_corner = (min(image_width, bottom_right_corner[0]), min(image_height, bottom_right_corner[1]))
 
 
-#original_image_path = 'images/Bane 2 uden gule/WIN_20240207_09_37_09_Pro.jpg'
-#original_image_path = 'GolfBotProject/images/Bane 2 med Gule/bane2MedGule1.jpg'
-#original_image_path = 'images/Bane 2 uden gule/WIN_20240207_09_37_26_Pro.jpg'
-original_image_path = 'GolfBotProject/images/Bane 2 uden gule/bane2UdenGule1.jpg'
+        return bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner
 
-image = load_image(original_image_path)
+    @staticmethod
+    def calculate_scale_factors(bottom_left, bottom_right, top_left, top_right):
+        bottom_width = np.linalg.norm(np.array(bottom_left) - np.array(bottom_right))
+        top_width = np.linalg.norm(np.array(top_left) - np.array(top_right))
+        left_height = np.linalg.norm(np.array(bottom_left) - np.array(top_left))
+        right_height = np.linalg.norm(np.array(bottom_right) - np.array(top_right))
 
-# edge detection to find maps edges
-hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-red_mask = cv2.inRange(hsv_image, np.array([0, 120, 70]), np.array([10, 255, 255])) + \
-           cv2.inRange(hsv_image, np.array([170, 120, 70]), np.array([180, 255, 255]))
-edges = cv2.Canny(red_mask, 100, 200)
-contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        # Define the Cartesian distances between corners
+        x_scale = 180 / max(bottom_width, top_width)
+        y_scale = 120 / max(left_height, right_height)
 
-if contours:
-    largest_contour = max(contours, key=cv2.contourArea)#find the largest contour, ie the map
-    epsilon = 0.009 * cv2.arcLength(largest_contour, True) #calculate epsilon for contour approximaton, because of imperfect contours
-    approx_corners = cv2.approxPolyDP(largest_contour, epsilon, True) #makes largest contour into main corners
+        return x_scale, y_scale
 
-    if len(approx_corners) == 4:
-        cv2.polylines(image, [approx_corners], True, (255, 0, 0), 3)
+    @staticmethod
+    def process_image(image):
+        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+        red = cv2.threshold(lab[:, :, 1], 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        edges = cv2.Canny(red, 100, 200)
+        contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
-        # calculate center of map
-        center_x = int(sum([corner[0][0] for corner in approx_corners]) / 4)
-        center_y = int(sum([corner[0][1] for corner in approx_corners]) / 4)
-        center = (center_x, center_y)
+        max_contour = max(contours, key=cv2.contourArea)
+        max_contour_area = cv2.contourArea(max_contour) * 0.99
+        min_contour_area = cv2.contourArea(max_contour) * 0.002
+        filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
+
+        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
+            ImageProcessor.detect_all_corners(filtered_contours, image.shape[1], image.shape[0])
 
 
+        # Calculate scale factors
+        x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
 
-        # find and label corners
-        sorted_corners = sorted(approx_corners[:, 0, :], key=lambda x: (x[1], x[0]))
-        top_corners = sorted(sorted_corners[:2], key=lambda x: x[0])
-        bottom_corners = sorted(sorted_corners[2:], key=lambda x: x[0], reverse=True)
 
-        # corner labels
-        draw_dot(image, tuple(top_corners[0]), 'TL (0,120)')
-        draw_dot(image, tuple(top_corners[1]), 'TR (180,120)')
-        draw_dot(image, tuple(bottom_corners[0]), 'BR (180,0)')
-        draw_dot(image, tuple(bottom_corners[1]), 'BL (0,0)')
-        draw_dot(image, center, 'Center')
+        print("Bottom Left Corner - Pixel Coordinates:", bottom_left_corner)
+        print("Bottom Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
 
-# find balls and process each contour
-ball_contours = find_balls(image)
-for i, contour in enumerate(ball_contours, 1):
-    x, y, w, h = cv2.boundingRect(contour)
-    cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        print("Bottom Right Corner - Pixel Coordinates:", bottom_right_corner)
+        print("Bottom Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
 
-    # make into  the 180x120 coordinate system where bottom left corner is 0,0
-    real_x = (x - bottom_corners[1][0]) / (top_corners[1][0] - bottom_corners[1][0]) * 180
-    real_y = 120 - (y - top_corners[0][1]) / (bottom_corners[1][1] - top_corners[0][1]) * 120
-    print(f"Ball {i} at: ({real_x:.2f}cm, {real_y:.2f}cm) ")
+        print("Top Left Corner - Pixel Coordinates:", top_left_corner)
+        print("Top Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
 
-cv2.imshow("", image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+        print("Top Right Corner - Pixel Coordinates:", top_right_corner)
+        print("Top Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        # Use RGB for setting up color. (-1 er thickness)
+        if bottom_left_corner is not None:
+            cv2.circle(image, bottom_left_corner, 10, (0, 0, 255), -1)
+        if bottom_right_corner is not None:
+            cv2.circle(image, bottom_right_corner, 10, (0, 255, 0), -1)
+        if top_left_corner is not None:
+            cv2.circle(image, top_left_corner, 10, (255, 135, 0), -1)
+        if top_right_corner is not None:
+            cv2.circle(image, top_right_corner, 10, (255, 0, 135), -1)
+
+        for cnt in filtered_contours:
+            font = cv2.FONT_HERSHEY_COMPLEX
+        approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
+        cv2.drawContours(image, [approx], 0, (255, 0, 0), 5)
+
+        # after detecting them balls , process each contour
+        ball_contours = ImageProcessor.find_balls_hsv(image, min_size=20, max_size=1000)
+        for i, contour in enumerate(ball_contours, 1):
+            x, y, w, h = cv2.boundingRect(contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            if bottom_left_corner is not None:
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
+
+                print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
+        # coords_str = f"{cartesian_coords[0]},{cartesian_coords[1]}"
+        # send_command(coords_str)
+
+        cv2.imshow('image2', image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    image_path = "images/Bane 3 med Gule/WIN_20240207_09_22_41_Pro.jpg"
+    image = ImageProcessor.load_image(image_path)
+    if image is not None:
+        ImageProcessor.process_image(image)

@@ -1,39 +1,56 @@
-import socket
+import cv2
+import numpy as np
 
-# Server settings
-#the third number needs to be changed each time the hotspot changes
-HOST = '192.168.123.243'  # The IP address of your EV3 brick
-PORT = 1024  # The same port as used by the server
+def load_image(image_path):
+    image = cv2.imread(image_path)
+    if image is None:
+        print(f"Could not load from {image_path}")
+        return None
+    return image
 
-def send_command(command):
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((HOST, PORT))
-            s.sendall(command.encode('utf-8'))
-    except ConnectionRefusedError:
-       print("Could not connect to the server. Please check if the server is running and reachable.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-# Example usage
-    while True:
-        # Here you need to implement a way to get the current position of the robot
-        # For this example, we're setting a fixed position
-        robot_position = (0, 0)  # This should be dynamically determined
+def compute_contrast_level(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    #hist1 = cv2.equalizeHist(gray)
+    hist = cv2.calcHist([gray], [0], None, [256], [0, 256])
+    contrast_level = np.sum(hist[64:192]) / np.sum(hist)
+    return contrast_level
 
-        # And a way to dynamically get the positions of the balls
-        balls = [(3, 4), (1, 2), (5, 5)]  # This should also be dynamically determined
+def process_image(image):
+    contrast_level = compute_contrast_level(image)
+    print("Contrast Level:", contrast_level)
 
-        closest_ball, distance_to_ball, angle_to_turn = find_closest_ball(robot_position, balls)
+    # Define base lower and upper bounds for red color detection
+    lower_red_base = np.array([100, 100, 150])
+    upper_red_base = np.array([130, 130, 255])
 
-        # Decision making for sending commands
-        if distance_to_ball < 0.5:  # Assuming this is the distance threshold for "close enough to collect"
-            send_command("COLLECT")
-        elif abs(angle_to_turn) > 10:  # Assuming this is the angle threshold to decide if we need to turn
-            if angle_to_turn > 0:
-                send_command("RIGHT")
-            else:
-                send_command("LEFT")
-        else:
-            send_command("FORWARD")
-        
-        time.sleep(1) 
+    # Adjust thresholds based on contrast level
+    contrast_threshold = 0.45  # Example threshold for adjusting thresholds
+    if contrast_level > contrast_threshold:
+        lower_red = np.array([0, 0, 150])  # Lower threshold for lower contrast
+        upper_red = np.array([100, 100, 255])
+    else:
+        lower_red = lower_red_base
+        upper_red = upper_red_base
+
+    # Threshold the image to get only red areas
+    red_mask = cv2.inRange(image, lower_red, upper_red)
+
+    # Find contours in the red mask
+    contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Draw contours on the original image
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area > 100:  # Ignore small contours
+            cv2.drawContours(image, [contour], -1, (0, 255, 0), 2)  # Draw green contours around detected red areas
+
+    # Show the processed image
+    cv2.imshow('Processed Image', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    image_path = "images/banemedfarve2/banemedfarve4.jpg"  # Path to your image
+    image = load_image(image_path)
+    if image is not None:
+        process_image(image)
