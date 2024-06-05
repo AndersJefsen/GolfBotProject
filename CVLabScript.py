@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 
 
+
+"""
+Gamle kode, ved ikke om det skal slettes
 def load_image(image_path):
     image = cv2.imread(image_path)
     if image is None:
@@ -68,3 +71,4 @@ if __name__ == "__main__":
     image = cv2.imread(image_path)
     if image is not None:
         process_image(image)
+"""
