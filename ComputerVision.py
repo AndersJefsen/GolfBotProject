@@ -27,9 +27,9 @@ while True:
 """
 
 
-# cv2.imshow('Processed Image', th)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+class ImageProcessor:
+    def __init__(self):
+        pass
 
     @staticmethod
     def load_image(image_path):
@@ -38,47 +38,39 @@ while True:
             print(f"Could not load from {image_path}")
             return None
         return image
-@staticmethod
-def find_balls_hsv(image, min_size=300, max_size=1000):  # Størrelsen af hvid, der skal findes
-    # Convert the image to HSV color space
-    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    # Define range for white color in HSV
-    white_lower = np.array([0, 0, 200], dtype="uint8")
-    white_upper = np.array([180, 60, 255], dtype="uint8")
+    @staticmethod
+    def find_balls_hsv(image, min_size=20, max_size=1000):
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    # Threshold the HSV image to get only white colors
-    white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
+        white_lower = np.array([0, 0, 200], dtype="uint8")
+        white_upper = np.array([180, 60, 255], dtype="uint8")
 
-    # Use morphological operations to clean up the mask
-    kernel = np.ones((5, 5), np.uint8)
-    white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
-    white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
+        white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
+        kernel = np.ones((5, 5), np.uint8)
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
+        cv2.imshow('Processed Image', white_mask)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
-    cv2.imshow('Processed Image', white_mask)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+        contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        ball_contours = []
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if min_size <= area <= max_size:
+                # Check for circularity
+                perimeter = cv2.arcLength(cnt, True)
+                if perimeter == 0:
+                    continue
+                circularity = 4 * np.pi * (area / (perimeter * perimeter))
+                if 0.7 <= circularity <= 1.2:  # Adjust thresholds as needed for your specific conditions
+                    ball_contours.append(cnt)
 
-    # Find contours
-    contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        return ball_contours
 
-    ball_contours = []
-
-    for cnt in contours:
-        area = cv2.contourArea(cnt)
-        if min_size <= area <= max_size:
-            # Check for circularity
-            perimeter = cv2.arcLength(cnt, True)
-            if perimeter == 0:
-                continue
-            circularity = 4 * np.pi * (area / (perimeter * perimeter))
-            if 0.7 <= circularity <= 1.2:  # Adjust thresholds as needed for your specific conditions
-                ball_contours.append(cnt)
-
-    return ball_contours
-
-@staticmethod
-def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
+    @staticmethod
+    def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
         # Calculate scaling factors for x and y axes (so there can be a proportion between pixel distance).
         x_scale = 180 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
         y_scale = 120 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
@@ -95,8 +87,8 @@ def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_
 
         return x_cartesian, y_cartesian
 
-@staticmethod
-def detect_all_corners(filtered_contours, image_width, image_height):
+    @staticmethod
+    def detect_all_corners(filtered_contours, image_width, image_height):
         corners = []
         for cnt in filtered_contours:
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
@@ -106,13 +98,13 @@ def detect_all_corners(filtered_contours, image_width, image_height):
         # Sort the corners by their x and y coordinates
         corners.sort(key=lambda point: point[0][0] + point[0][1])
 
-        # Extract the four corners(maybe this should be redone)
+        # Extract the four corners(maybe this should be redone, depends on accuracy)
         top_left_corner = corners[0][0]
         bottom_left_corner = corners[1][0]
         top_right_corner = corners[2][0]
         bottom_right_corner = corners[3][0]
 
-        # Ensure corners are within the picture.
+        # Ensure tha corners are within tha picture!
         top_left_corner = (max(0, top_left_corner[0]), max(0, top_left_corner[1]))
         bottom_left_corner = (max(0, bottom_left_corner[0]), min(image_height, bottom_left_corner[1]))
         top_right_corner = (min(image_width, top_right_corner[0]), max(0, top_right_corner[1]))
@@ -145,6 +137,9 @@ def detect_all_corners(filtered_contours, image_width, image_height):
         max_contour_area = cv2.contourArea(max_contour) * 0.99
         min_contour_area = cv2.contourArea(max_contour) * 0.002
         filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
+
+        result = image.copy()
+        cv2.drawContours(result, filtered_contours, -1, (0, 255, 0), 2)
 
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
             ImageProcessor.detect_all_corners(filtered_contours, image.shape[1], image.shape[0])
@@ -189,6 +184,7 @@ def detect_all_corners(filtered_contours, image_width, image_height):
             center_y = y + h // 2
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
             cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
             if bottom_left_corner is not None:
                 cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
 
@@ -202,7 +198,8 @@ def detect_all_corners(filtered_contours, image_width, image_height):
 
 
 if __name__ == "__main__":
-    image_path = "images/Bane 3 med Gule/WIN_20240207_09_22_41_Pro.jpg"  # Path to your image
+    image_path = "images/Bane 4 3 ugers/WIN_20240605_10_27_29_Pro.jpg"
+    #image = ImageProcessor.load_image(image_path)
     image = cv2.imread(image_path)
     if image is not None:
-        process_image(image)
+        ImageProcessor.process_image(image)
