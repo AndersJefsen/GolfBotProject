@@ -185,7 +185,7 @@ def process_image(image):
 
 
 if __name__ == "__main__":
-    image_path = "/Users/peterhannibalhildorf/PycharmProjects/GolfBotProject/images/Bane 4 3 ugers/447581779_1406817973341106_4196241142250562638_n.jpg"  # Path to your image
+    image_path = "/Users/peterhannibalhildorf/PycharmProjects/GolfBotProject/images/Bane 4 3 ugers/WIN_20240605_10_27_29_Pro.jpg"  # Path to your image
     image = cv2.imread(image_path)
     if image is not None:
         process_image(image)
