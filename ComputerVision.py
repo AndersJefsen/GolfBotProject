@@ -58,24 +58,24 @@ class ImageProcessor:
 
         # Define range for orange color in HSV
         orange_lower = np.array([150, 50, 20], dtype="uint8")
-        orange_upper = np.array([240, 150, 40], dtype="uint8")
+        orange_upper = np.array([250, 200, 90], dtype="uint8")
 
         # Threshhold the HSV image to get only white colors
-        white_mask = cv2.inRange(hsv_image, orange_lower, orange_upper)
+        orange_mask = cv2.inRange(hsv_image, orange_lower, orange_upper)
 
         # Use morphological operations to clean up the mask
         kernel = np.ones((5, 5), np.uint8)
-        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
-        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
+        orange_mask = cv2.morphologyEx(orange_mask, cv2.MORPH_CLOSE, kernel)
+        orange_mask = cv2.morphologyEx(orange_mask, cv2.MORPH_OPEN, kernel)
 
         # Load maskerne på billedet
-        cv2.imshow('Processed Image', white_mask)
+        cv2.imshow('Processed Image', orange_mask)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
         # Find contours
-        contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        ball_contours = []
+        contours, _ = cv2.findContours(orange_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        orangeball_contours = []
         # Logikken for at finde countours på boldene
         for cnt in contours:
             area = cv2.contourArea(cnt)
@@ -85,8 +85,8 @@ class ImageProcessor:
                     continue
                 circularity = 4 * np.pi * (area / (perimeter * perimeter))
                 if 0.7 <= circularity <= 1.2:
-                    ball_contours.append(cnt)
-        return ball_contours
+                    orangeball_contours.append(cnt)
+        return orangeball_contours
 
     @staticmethod
     def find_robot(image, min_size=0, max_size=10000):
