@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 class ImageProcessor:
     def __init__(self):
         pass
@@ -30,6 +31,7 @@ class ImageProcessor:
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
 
+        # Load maskerne på billedet
         cv2.imshow('Processed Image', white_mask)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -37,7 +39,7 @@ class ImageProcessor:
         # Find contours
         contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         ball_contours = []
-
+        # Logikken for at finde countours på boldene
         for cnt in contours:
             area = cv2.contourArea(cnt)
             if min_size <= area <= max_size:
@@ -54,15 +56,23 @@ class ImageProcessor:
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         blue_lower = np.array([111, 100, 100], dtype="uint8")
         blue_upper = np.array([131, 255, 255], dtype="uint8")
+
+        # Threshhold the HSV image image to get only blue colors
         blue_mask = cv2.inRange(hsv_image, blue_lower, blue_upper)
+
+        # Load maskerne på billedet
         cv2.imshow('Processed Image', blue_mask)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
         contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
         if len(contours) == 0:
             return None
+
         largest_contour = max(contours, key=cv2.contourArea)
         print(f"Largest contour area: {cv2.contourArea(largest_contour)}")
+
         area = cv2.contourArea(largest_contour)
         if min_size <= area <= max_size:
             return largest_contour
@@ -109,28 +119,52 @@ class ImageProcessor:
 
     @staticmethod
     def process_image(image):
+
         lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+
         red = cv2.threshold(lab[:, :, 1], 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
         edges = cv2.Canny(red, 100, 200)
+
         contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+
         max_contour = max(contours, key=cv2.contourArea)
         max_contour_area = cv2.contourArea(max_contour) * 0.99
         min_contour_area = cv2.contourArea(max_contour) * 0.002
+
         filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
+
         result = image.copy()
         cv2.drawContours(result, filtered_contours, -1, (0, 255, 0), 2)
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
             ImageProcessor.detect_all_corners(filtered_contours, image.shape[1], image.shape[0])
-        x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
+        x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner,
+                                                                  top_left_corner, top_right_corner)
 
         print("Bottom Left Corner - Pixel Coordinates:", bottom_left_corner)
-        print("Bottom Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+        print("Bottom Left Corner - Cartesian Coordinates:", (round(
+            ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner,
+                                                top_left_corner, top_right_corner)[0], 2), abs(round(
+            ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner,
+                                                top_left_corner, top_right_corner)[1], 2))))
         print("Bottom Right Corner - Pixel Coordinates:", bottom_right_corner)
-        print("Bottom Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+        print("Bottom Right Corner - Cartesian Coordinates:", (round(
+            ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner,
+                                                top_left_corner, top_right_corner)[0], 2), abs(round(
+            ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner,
+                                                top_left_corner, top_right_corner)[1], 2))))
         print("Top Left Corner - Pixel Coordinates:", top_left_corner)
-        print("Top Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+        print("Top Left Corner - Cartesian Coordinates:", (round(
+            ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner,
+                                                top_left_corner, top_right_corner)[0], 2), abs(round(
+            ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner,
+                                                top_left_corner, top_right_corner)[1], 2))))
         print("Top Right Corner - Pixel Coordinates:", top_right_corner)
-        print("Top Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+        print("Top Right Corner - Cartesian Coordinates:", (round(
+            ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner,
+                                                top_left_corner, top_right_corner)[0], 2), abs(round(
+            ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner,
+                                                top_left_corner, top_right_corner)[1], 2))))
 
         if bottom_left_corner is not None:
             cv2.circle(image, bottom_left_corner, 10, (0, 0, 255), -1)
@@ -144,19 +178,7 @@ class ImageProcessor:
         for cnt in filtered_contours:
             font = cv2.FONT_HERSHEY_COMPLEX
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
-            cv2.drawContours(image, [approx], 0, (255, 0, 0), 5)
-
-        ball_contours = ImageProcessor.find_balls_hsv(image, min_size=300, max_size=1000)
-        for i, contour in enumerate(ball_contours, 1):
-            x, y, w, h = cv2.boundingRect(contour)
-            center_x = x + w // 2
-            center_y = y + h // 2
-            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-            if bottom_left_corner is not None:
-                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
-                print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
-
+            cv2.drawContours(image, [approx], 0, (60, 0, 0), 5)
         robot_contour = ImageProcessor.find_robot(image, min_size=0, max_size=100000)
         robot_coordinates = []
 
@@ -167,7 +189,9 @@ class ImageProcessor:
             center_y = y + h // 2
 
             if bottom_left_corner is not None:
-                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
+                                                                       bottom_right_corner, top_left_corner,
+                                                                       top_right_corner)
                 robot_coordinates.append(cartesian_coords)
                 print(f"Robot Cartesian Coordinates: {cartesian_coords}")
 
@@ -176,12 +200,26 @@ class ImageProcessor:
         else:
             print("No robot found.")
 
+        ball_contours = ImageProcessor.find_balls_hsv(image, min_size=300, max_size=1000)
+        for i, contour in enumerate(ball_contours, 1):
+            x, y, w, h = cv2.boundingRect(contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            if bottom_left_corner is not None:
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
+                                                                       bottom_right_corner, top_left_corner,
+                                                                       top_right_corner)
+                print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
+
         cv2.imshow('image2', image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
+
 if __name__ == "__main__":
-    image_path = "/Users/peterhannibalhildorf/PycharmProjects/GolfBotProject/images/Bane 4 3 ugers/WIN_20240605_10_26_58_Pro.jpg"  # Path to your image
+    image_path = "/Users/peterhannibalhildorf/PycharmProjects/GolfBotProject/images/Bane 4 3 ugers/WIN_20240605_10_27_29_Pro.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)
