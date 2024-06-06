@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 def load_image(image_path):
     image = cv2.imread(image_path)
     if image is None:
@@ -8,7 +9,8 @@ def load_image(image_path):
         return None
     return image
 
-def find_balls_hsv(image, min_size=300, max_size=1000):  # Størrelsen af hvid, der skal findes
+
+def find_balls_hsv(image, min_size=300, max_size=1000000000):  # Størrelsen af hvid, der skal findes
     # Convert the image to HSV color space
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -46,12 +48,46 @@ def find_balls_hsv(image, min_size=300, max_size=1000):  # Størrelsen af hvid, 
 
     return ball_contours
 
+
+def find_robot(image, min_size=0, max_size=10000):
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    # Define range for blue color in HSV (adjusted values based on image)
+    blue_lower = np.array([111, 100, 100], dtype="uint8")
+    blue_upper = np.array([131, 255, 255], dtype="uint8")
+    # Threshold the HSV image to get only blue colors
+    blue_mask = cv2.inRange(hsv_image, blue_lower, blue_upper)
+
+
+    cv2.imshow('Processed Image', blue_mask)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    # Find contours
+    contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    if len(contours) == 0:
+        return None
+
+    # Find the largest contour which we assume to be the robot
+    largest_contour = max(contours, key=cv2.contourArea)
+    print(f"Largest contour area: {cv2.contourArea(largest_contour)}")
+
+
+    area = cv2.contourArea(largest_contour)
+    if min_size <= area <= max_size:
+        return largest_contour
+
+    return None
+
+
 def image_to_cartesian(image_point, origin):  # Funktionen som converter til koordinater
     x, y = image_point
     origin_x, origin_y = origin
     cartesian_x = x - origin_x
     cartesian_y = origin_y - y  # Invert the y-axis
     return cartesian_x, cartesian_y
+
 
 def process_image(image):
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
@@ -81,17 +117,10 @@ def process_image(image):
     max_y = -1
     bottom_left_corner = None
 
+    # Markere banen
     for cnt in filtered_contours:
-
-        font = cv2.FONT_HERSHEY_COMPLEX
-
         approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
-
-        # draws boundary of contours.
-        cv2.drawContours(image, [approx], 0, (255, 0, 0), 5)
-
-        # Used to flat the array containing
-        # the co-ordinates of the vertices.
+        cv2.drawContours(image, [approx], 0, (60, 0, 0), 5)
         n = approx.ravel()
         i = 0
 
@@ -99,18 +128,36 @@ def process_image(image):
             if i % 2 == 0:
                 x = n[i]
                 y = n[i + 1]
-
-                # Update the min_x and max_y for the bottom left corner detection
                 if y > max_y or (y == max_y and x < min_x):
                     min_x = x
                     max_y = y
                     bottom_left_corner = (x, y)
-
             i = i + 1
+
+    # find robot and process contour
+    robot_contour = find_robot(image, min_size=0, max_size=100000)
+    robot_coordinates = []
 
     # find balls and process each contour
     ball_contours = find_balls_hsv(image, min_size=300, max_size=1000)
     print(f"Found {len(ball_contours)} balls initially.")
+
+
+    if robot_contour is not None:
+        print("Found robot.")
+        x, y, w, h = cv2.boundingRect(robot_contour)
+        center_x = x + w // 2
+        center_y = y + h // 2
+
+        if bottom_left_corner is not None:
+            cartesian_coords = image_to_cartesian((center_x, center_y), bottom_left_corner)
+            robot_coordinates.append(cartesian_coords)
+            print(f"Robot Cartesian Coordinates: {cartesian_coords}")
+
+        cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        cv2.putText(image, "Robot", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+    else:
+        print("No robot found.")
 
     for i, contour in enumerate(ball_contours, 1):
         # Compute the bounding rectangle for each ball contour
@@ -136,8 +183,9 @@ def process_image(image):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+
 if __name__ == "__main__":
-    image_path = "/Users/peterhannibalhildorf/PycharmProjects/GolfBotProject/images/Bane 4 3 ugers/WIN_20240605_10_26_58_Pro.jpg"  # Path to your image
+    image_path = "/Users/peterhannibalhildorf/PycharmProjects/GolfBotProject/images/Bane 4 3 ugers/447581779_1406817973341106_4196241142250562638_n.jpg"  # Path to your image
     image = cv2.imread(image_path)
     if image is not None:
         process_image(image)
