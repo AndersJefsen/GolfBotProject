@@ -157,14 +157,24 @@ class ImageProcessor:
     @staticmethod
     def find_cross_contours(contours):
         cross_contours = []
+        found_cross = False
         for cnt in contours:
             approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
-            if len(approx) == 12:  # Cross typically has around 12 corners after approximation
+            if len(approx) == 12:  # our Cross  has 12 corner.
                 bounding_rect = cv2.boundingRect(cnt)
                 aspect_ratio = bounding_rect[2] / float(bounding_rect[3])
-                if 0.8 <= aspect_ratio <= 1.2:  # Roughly square bounding box
-                    cross_contours.append(approx)
+                if 0.8 <= aspect_ratio <= 1.2:  #Bounds
+                    if not found_cross:  # Locate it.
+                        cross_contours.append(approx)
+                        found_cross = True  # the cross got found folks!
+                        for i, point in enumerate(approx):
+                            x, y = point.ravel()
+                            cv2.putText(image, str(i + 1), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                    else:
+                        break  #stop searching after a cross once found.
         return cross_contours
+
+
 
 
     @staticmethod
