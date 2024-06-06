@@ -126,8 +126,9 @@ class ImageProcessor:
                 bounding_rect = cv2.boundingRect(cnt)
                 aspect_ratio = bounding_rect[2] / float(bounding_rect[3])
                 if 0.8 <= aspect_ratio <= 1.2:  # Roughly square bounding box
-                    cross_contours.append(cnt)
+                    cross_contours.append(approx)
         return cross_contours
+
 
     @staticmethod
     def process_image(image):
@@ -175,14 +176,15 @@ class ImageProcessor:
 
         cross_contours = ImageProcessor.find_cross_contours(filtered_contours)
         for i, cnt in enumerate(cross_contours):
-            cv2.drawContours(image, [cnt], 0, (0, 255, 0), 3)
-            x, y, w, h = cv2.boundingRect(cnt)
-            center_x = x + w // 2
-            center_y = y + h // 2
+            cv2.drawContours(image, [cnt], 0, (255, 0, 0), 3)
+            for point in cnt:
+                x, y = point.ravel()
+                cv2.circle(image, (x, y), 5, (0, 0, 255), -1)
             if bottom_left_corner is not None:
-                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
-                                                                       bottom_right_corner, top_left_corner,
-                                                                       top_right_corner)
+                cartesian_coords = [ImageProcessor.convert_to_cartesian((point[0][0], point[0][1]), bottom_left_corner,
+                                                                        bottom_right_corner, top_left_corner,
+                                                                        top_right_corner) for point in cnt]
+
                 print(f"Cross {i+1} Cartesian Coordinates: {cartesian_coords}")
 
         print(f"Found {len(cross_contours)} crosses.")
