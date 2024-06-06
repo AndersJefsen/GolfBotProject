@@ -27,9 +27,9 @@ while True:
 """
 
 
-class ImageProcessor:
-    def __init__(self):
-        pass
+# cv2.imshow('Processed Image', th)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 
     @staticmethod
     def load_image(image_path):
@@ -38,24 +38,47 @@ class ImageProcessor:
             print(f"Could not load from {image_path}")
             return None
         return image
+@staticmethod
+def find_balls_hsv(image, min_size=300, max_size=1000):  # Størrelsen af hvid, der skal findes
+    # Convert the image to HSV color space
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    @staticmethod
-    def find_balls_hsv(image, min_size=20, max_size=1000):
-        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    # Define range for white color in HSV
+    white_lower = np.array([0, 0, 200], dtype="uint8")
+    white_upper = np.array([180, 60, 255], dtype="uint8")
 
-        white_lower = np.array([0, 0, 190], dtype="uint8")
-        white_upper = np.array([180, 55, 255], dtype="uint8")
+    # Threshold the HSV image to get only white colors
+    white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
 
-        white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
+    # Use morphological operations to clean up the mask
+    kernel = np.ones((5, 5), np.uint8)
+    white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
+    white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
 
-        contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.imshow('Processed Image', white_mask)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
-        ball_contours = [cnt for cnt in contours if min_size <= cv2.contourArea(cnt) <= max_size]
+    # Find contours
+    contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        return ball_contours
+    ball_contours = []
 
-    @staticmethod
-    def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if min_size <= area <= max_size:
+            # Check for circularity
+            perimeter = cv2.arcLength(cnt, True)
+            if perimeter == 0:
+                continue
+            circularity = 4 * np.pi * (area / (perimeter * perimeter))
+            if 0.7 <= circularity <= 1.2:  # Adjust thresholds as needed for your specific conditions
+                ball_contours.append(cnt)
+
+    return ball_contours
+
+@staticmethod
+def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
         # Calculate scaling factors for x and y axes (so there can be a proportion between pixel distance).
         x_scale = 180 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
         y_scale = 120 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
@@ -72,8 +95,8 @@ class ImageProcessor:
 
         return x_cartesian, y_cartesian
 
-    @staticmethod
-    def detect_all_corners(filtered_contours, image_width, image_height):
+@staticmethod
+def detect_all_corners(filtered_contours, image_width, image_height):
         corners = []
         for cnt in filtered_contours:
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
@@ -179,7 +202,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "images/Bane 3 med Gule/WIN_20240207_09_22_41_Pro.jpg"
-    image = ImageProcessor.load_image(image_path)
+    image_path = "images/Bane 3 med Gule/WIN_20240207_09_22_41_Pro.jpg"  # Path to your image
+    image = cv2.imread(image_path)
     if image is not None:
-        ImageProcessor.process_image(image)
+        process_image(image)
