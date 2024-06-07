@@ -309,7 +309,7 @@ def useMask(imageToMask,mask):
 #wincap = WindowCapture(None)    
 arenaCorners = []
 mask = None
-wincap = cv.VideoCapture(0)
+wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
 
 vision_image = Vision('ball.png')
 
