@@ -6,7 +6,10 @@ from hsvfilter import HsvFilter
 from edgefilter import EdgeFilter
 from ultralytics import YOLO
 import numpy as np
-from ComputerVision import ComputerVision
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import ComputerVision 
 
 
 import torch
@@ -264,7 +267,7 @@ def findObstacles(screenshot, output_image):
     contours, hierarchy = cv.findContours(edged,  
     cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
     
-
+    
     for cnt in contours:
         area = cv.contourArea(cnt)
         if maxArea > area > minArea:
@@ -295,30 +298,17 @@ def createMask(imageToDetectOn,points):
     mask = np.zeros(imageToDetectOn.shape[:2], dtype=np.uint8)
     cv.fillPoly(mask, [points], 255)
 
-    # Invert the mask
-    inverted_mask = cv.bitwise_not(mask)
-
-    # Create black background for outside region
-    black_background = np.zeros_like(imageToDetectOn)
-
-    # Isolate the inside region
-    inside_region = cv.bitwise_and(imageToDetectOn, imageToDetectOn, mask=mask)
-
-    # Isolate the outside region
-    outside_region = cv.bitwise_and(black_background, black_background, mask=inverted_mask)
-
-    # Combine inside and outside regions
-    final_image = cv.add(inside_region, outside_region)
-
     return mask
 
+def useMask(imageToMask,mask):
+    return cv.bitwise_and(imageToMask, imageToMask, mask=mask)
 #model = YOLO('best.pt')
 # initialize the WindowCapture class
 
 
 #wincap = WindowCapture(None)    
 arenaCorners = []
-
+mask = None
 wincap = cv.VideoCapture(0)
 
 vision_image = Vision('ball.png')
@@ -333,12 +323,15 @@ while not findArena:
         if screenshot is None:
             print("Failed to capture screenshot.")
             continue
-        findArena, outPutImage,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ComputerVision.find_arena(screenshot, outPutImage)
+        findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
         if findArena:
             arenaCorners.append(bottom_left_corner)
             arenaCorners.append(bottom_right_corner)
-            arenaCorners.append(top_left_corner)
+            
             arenaCorners.append(top_right_corner)
+            arenaCorners.append(top_left_corner)
+            mask = createMask(screenshot,arenaCorners)
+            print("mask Created")
             break
 
     except Exception as e:
@@ -356,10 +349,11 @@ while(True):
             print("Failed to capture screenshot.")
             continue
 
-        cross = ComputerVision.find_cross_contours(screenshot)    
-        outputhsv_image = vision_image.apply_hsv_filter(screenshot)
+        inputimg = useMask(screenshot,mask)
+        #cross = ComputerVision.find_cross_contours(screenshot)    
+        #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
 
-        outputedge_image = vision_image.apply_edge_filter(outputhsv_image)
+        #outputedge_image = vision_image.apply_edge_filter(outputhsv_image)
         #rectangles = vision_image.find(outputhsv_image,0.5,10)
         
         #ret, thresh = cv.threshold(outputedge_image, 127, 255, 0)
@@ -369,23 +363,23 @@ while(True):
          #points = vision_image.get_points(rectangles)
         #output_image = vision_image.draw_rectangles(screenshot, rectangles)
         #output_image = vision_image.draw_crosshairs(output_image, points)
-        inputimg = screenshot
-        edged, output_image = findArena(inputimg,screenshot)
-        outputhsv_image = vision_image.apply_hsv_filter(output_image)
+        #inputimg = screenshot
+        #edged, output_image = findArena(inputimg,screenshot)
+        #outputhsv_image = vision_image.apply_hsv_filter(output_image)
         #edged, output_image = findRobot(inputimg,screenshot)
         #edged, output_image = findOrangeBall(inputimg,screenshot)
         #edged, output_image = findCross(inputimg,screenshot)
         #edged, output_image = findObstacles(outputhsv_image,screenshot)
-        edged, output_image = findRoundObjects(outputhsv_image,screenshot)
-
+        #edged, output_image = findRoundObjects(outputhsv_image,screenshot)
+        '''
         rzhsv = cv.resize(outputhsv_image, (960, 540))
         cv.imshow('hsv', rzhsv)
 
         rze = cv.resize(edged, (960, 540))
         cv.imshow('edges', rze)
-
+        '''
        
-        screenoutput = cv.resize(output_image, (960, 540))
+        screenoutput = cv.resize(inputimg, (960, 540))
         cv.imshow('Computer Vision', screenoutput)
 
         #screengray = cv.resize(imgray, (960, 540))
