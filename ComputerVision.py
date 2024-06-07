@@ -1,5 +1,5 @@
 import cv2
-from sklearn.cluster import KMeans
+
 import numpy as np
 
 
@@ -206,10 +206,10 @@ class ImageProcessor:
         cv2.drawContours(outPutImage, filtered_contours, -1, (0, 255, 0), 2)
 
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
-            ImageProcessor.detect_all_corners(filtered_contours, image.shape[1], image.shape[0])
+            ImageProcessor.detect_all_corners(filtered_contours, inputImage.shape[1], inputImage.shape[0])
         x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner,
                                                                   top_left_corner, top_right_corner)
-        '''
+        
         print("Bottom Left Corner - Pixel Coordinates:", bottom_left_corner)
         print("Bottom Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
 
@@ -221,7 +221,7 @@ class ImageProcessor:
 
         print("Top Right Corner - Pixel Coordinates:", top_right_corner)
         print("Top Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
-        '''
+        
         for cnt in filtered_contours:
             font = cv2.FONT_HERSHEY_COMPLEX
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
