@@ -194,6 +194,17 @@ class ImageProcessor:
             ImageProcessor.detect_all_corners(filtered_contours, image.shape[1], image.shape[0])
         x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner,
                                                                   top_left_corner, top_right_corner)
+        print("Bottom Left Corner - Pixel Coordinates:", bottom_left_corner)
+        print("Bottom Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        print("Bottom Right Corner - Pixel Coordinates:", bottom_right_corner)
+        print("Bottom Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        print("Top Left Corner - Pixel Coordinates:", top_left_corner)
+        print("Top Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        print("Top Right Corner - Pixel Coordinates:", top_right_corner)
+        print("Top Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
 
         for cnt in filtered_contours:
             font = cv2.FONT_HERSHEY_COMPLEX
@@ -265,7 +276,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "images/Bane 4 3 ugers/WIN_20240605_10_27_29_Pro.jpg"  # Path to your image
+    image_path = "images/Bane 4 3 ugers/WIN_20240605_10_26_58_Pro.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)
