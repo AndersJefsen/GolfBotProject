@@ -65,7 +65,10 @@ class ImageProcessor:
                 circularity = 4 * np.pi * (area / (perimeter * perimeter))
                 if 0.7 <= circularity <= 1.2:
                     ball_contours.append(cnt)
-        return ball_contours
+        output_image = image.copy()
+        cv2.drawContours(output_image, ball_contours, -1, (0,255,0),2)
+
+        return ball_contours, output_image
 
     @staticmethod
     def find_orangeballs_hsv(image, min_size=300, max_size=1000000000):
@@ -106,7 +109,8 @@ class ImageProcessor:
 
     @staticmethod
     def find_robot(image, min_size=0, max_size=100000):
-        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        output_image = image.copy()
+        hsv_image = cv2.cvtColor(output_image, cv2.COLOR_BGR2HSV)
         blue_lower = np.array([111, 100, 100], dtype="uint8")
         blue_upper = np.array([131, 255, 255], dtype="uint8")
 
@@ -121,7 +125,7 @@ class ImageProcessor:
         contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if len(contours) == 0:
-            return None
+            return None, output_image
 
         largest_contour = max(contours, key=cv2.contourArea)
         scaled_contour = ImageProcessor.scale_contour(largest_contour, scale=1.2)
@@ -129,8 +133,12 @@ class ImageProcessor:
 
         area = cv2.contourArea(scaled_contour)
         if min_size <= area <= max_size:
-            return scaled_contour
-        return None
+            output_image = image.copy()
+            cv2.drawContours(output_image, scaled_contour, -1, (255, 0, 0), 2)
+            return scaled_contour, output_image
+        else:
+            print("Ingen robot fundet.")
+            return None, output_image
 
     @staticmethod
     def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
@@ -192,17 +200,11 @@ class ImageProcessor:
         return cross_contours
 
 
-
-
     @staticmethod
-    def process_image(image):
-
+    def find_arena(image):
         lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
-
         red = cv2.threshold(lab[:, :, 1], 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-
         edges = cv2.Canny(red, 100, 200)
-
         contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
         max_contour = max(contours, key=cv2.contourArea)
@@ -210,9 +212,65 @@ class ImageProcessor:
         min_contour_area = cv2.contourArea(max_contour) * 0.002
 
         filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
+        for cnt in filtered_contours:
+            font = cv2.FONT_HERSHEY_COMPLEX
+            approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
+            cv2.drawContours(image, [approx], 0, (60, 0, 0), 5)
+        output_image = image.copy()
+        cv2.drawContours(output_image, filtered_contours, -1, (60, 0, 0), 3)
 
-        result = image.copy()
-        cv2.drawContours(result, filtered_contours, -1, (0, 255, 0), 100)
+        return filtered_contours, output_image
+
+    @staticmethod
+    def convert_balls_to_cartesian(image,ball_contours,bottom_left_corner,bottom_right_corner,top_right_corner,top_left_corner):
+        cartesian_coords_list =[]
+        output_image = image.copy()
+
+        for i, contour in enumerate(ball_contours, 1):
+            x, y, w, h = cv2.boundingRect(contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+
+            if bottom_left_corner is not None:
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
+                                                                       bottom_right_corner, top_left_corner,
+                                                                       top_right_corner)
+                print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
+
+            cv2.rectangle(output_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(output_image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        return cartesian_coords_list, output_image
+    @staticmethod
+    def convert_robot_to_cartesian(image,robot_contour,bottom_left_corner,bottom_right_corner,top_right_corner,top_left_corner):
+        robot_coordinates = []
+        output_image = image.copy()
+
+        # OBS! Det skal nok ændres når vi bruger dutter på robotten i stedet for en trekant
+        if robot_contour is not None:
+            print("Found robot.")
+            epsilon = 0.025 * cv2.arcLength(robot_contour, True)
+            approx = cv2.approxPolyDP(robot_contour, epsilon, True)
+            if len(approx) > 3:
+                kmeans = KMeans(n_clusters=3)
+                kmeans.fit(approx.reshape(-1, 2))
+                points = kmeans.cluster_centers_.astype(int)
+            else:
+                points = approx
+            for point in points:
+                cv2.circle(output_image, tuple(point[0]), 5, (0, 255, 0), -1) #OBS! "point[0]" skal justeres alt efter billedet der anvendes"
+                if bottom_left_corner is not None:
+                    cartesian_coords = ImageProcessor.convert_to_cartesian(tuple(point[0]), bottom_left_corner,
+                                                                           bottom_right_corner, top_left_corner,
+                                                                           top_right_corner)
+                    robot_coordinates.append(cartesian_coords)
+                    print(f"Robot Kartesiske Koordinater: {cartesian_coords}")
+            x, y, w, h = cv2.boundingRect(robot_contour)
+            cv2.rectangle(output_image, (x, y), (x + w, y + h), (255, 0, 0), 1)
+            cv2.putText(output_image, "Robot", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        return robot_coordinates, output_image
+    @staticmethod
+    def process_image(image):
+        filtered_contours, output_image = ImageProcessor.find_arena(image)
 
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
             ImageProcessor.detect_all_corners(filtered_contours, image.shape[1], image.shape[0])
@@ -229,45 +287,6 @@ class ImageProcessor:
 
         print("Top Right Corner - Pixel Coordinates:", top_right_corner)
         print("Top Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
-
-        for cnt in filtered_contours:
-            font = cv2.FONT_HERSHEY_COMPLEX
-            approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
-            cv2.drawContours(image, [approx], 0, (60, 0, 0), 5)
-
-
-
-        robot_contour = ImageProcessor.find_robot(image, min_size=0, max_size=100000)
-        robot_coordinates = []
-
-        if robot_contour is not None:
-            print("Found robot.")
-            # Approximere konturen til en polygon og finde hjørnerne (spidserne)
-            epsilon = 0.025 * cv2.arcLength(robot_contour, True)
-            approx = cv2.approxPolyDP(robot_contour, epsilon, True)
-
-            # Use k-means clustering to find the three most distinct points
-            from sklearn.cluster import KMeans
-            if len(approx) > 3:
-                kmeans = KMeans(n_clusters=3)
-                kmeans.fit(approx.reshape(-1, 2))
-                points = kmeans.cluster_centers_.astype(int)
-            else:
-                points = approx
-
-            for point in points:
-                cv2.circle(image, tuple(point[0]), 5, (0, 255, 0), -1)
-                if bottom_left_corner is not None:
-                    cartesian_coords = ImageProcessor.convert_to_cartesian(tuple(point[0]), bottom_left_corner,
-                                                                           bottom_right_corner, top_left_corner,
-                                                                           top_right_corner)
-                    robot_coordinates.append(cartesian_coords)
-                    print(f"Robot Kartesiske Koordinater: {cartesian_coords}")
-            x, y, w, h = cv2.boundingRect(robot_contour)
-            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 1)
-            cv2.putText(image, "Robot", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        else:
-            print("Ingen robot fundet.")
 
         cross_contours = ImageProcessor.find_cross_contours(filtered_contours)
         for i, cnt in enumerate(cross_contours):
@@ -293,22 +312,31 @@ class ImageProcessor:
         if top_right_corner is not None:
             cv2.circle(image, top_right_corner, 10, (255, 0, 135), -1)
 
-        ball_contours = ImageProcessor.find_balls_hsv(image, min_size=300, max_size=1000)
-        for i, contour in enumerate(ball_contours, 1):
-            x, y, w, h = cv2.boundingRect(contour)
-            center_x = x + w // 2
-            center_y = y + h // 2
-            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-            if bottom_left_corner is not None:
-                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
-                                                                       bottom_right_corner, top_left_corner,
-                                                                       top_right_corner)
-                print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
+        ball_contours, image_with_balls = ImageProcessor.find_balls_hsv(image, min_size=300, max_size=1000)
+        cartesian_coords, image_with_balls = ImageProcessor.convert_balls_to_cartesian(image_with_balls, ball_contours,
+                                                                                       bottom_left_corner,
+                                                                                       bottom_right_corner,
+                                                                                       top_right_corner,
+                                                                                       top_left_corner)
 
-        cv2.imshow('image2', image)
+        robot_contour, image_with_robot = ImageProcessor.find_robot(image, min_size=0, max_size=100000)
+        if robot_contour is not None:
+            robot_coordinates, image_with_robot = ImageProcessor.convert_robot_to_cartesian(image_with_robot,
+                                                                                            robot_contour,
+                                                                                            bottom_left_corner,
+                                                                                            bottom_right_corner,
+                                                                                            top_left_corner,
+                                                                                            top_right_corner)
+
+        cv2.imshow('Final Image with Balls and Arena', image_with_balls)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
+        cv2.imshow('Final Image with Robot', image_with_robot)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+
 
 
 
