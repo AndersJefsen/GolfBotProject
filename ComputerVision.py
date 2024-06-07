@@ -1,4 +1,5 @@
 import cv2
+from sklearn.cluster import KMeans
 import numpy as np
 
 
@@ -13,6 +14,21 @@ class ImageProcessor:
             print(f"Could not load from {image_path}")
             return None
         return image
+
+    @staticmethod
+    def scale_contour(contour, scale=1.2):
+        M = cv2.moments(contour)
+        if M['m00'] == 0:
+            return contour
+        cx = int(M['m10'] / M['m00'])
+        cy = int(M['m01'] / M['m00'])
+        scaled_contour = []
+        for point in contour:
+            x, y = point[0]
+            x = cx + scale * (x - cx)
+            y = cy + scale * (y - cy)
+            scaled_contour.append([[int(x), int(y)]])
+        return np.array(scaled_contour, dtype=np.int32)
 
     @staticmethod
     def find_balls_hsv(image, min_size=300, max_size=1000000000):
@@ -51,8 +67,9 @@ class ImageProcessor:
                     ball_contours.append(cnt)
         return ball_contours
 
+
     @staticmethod
-    def find_robot(image, min_size=0, max_size=10000):
+    def find_robot(image, min_size=0, max_size=100000):
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         blue_lower = np.array([111, 100, 100], dtype="uint8")
         blue_upper = np.array([131, 255, 255], dtype="uint8")
@@ -71,11 +88,12 @@ class ImageProcessor:
             return None
 
         largest_contour = max(contours, key=cv2.contourArea)
+        scaled_contour = ImageProcessor.scale_contour(largest_contour, scale=1.2)
         print(f"Largest contour area: {cv2.contourArea(largest_contour)}")
 
-        area = cv2.contourArea(largest_contour)
+        area = cv2.contourArea(scaled_contour)
         if min_size <= area <= max_size:
-            return largest_contour
+            return scaled_contour
         return None
 
     @staticmethod
@@ -179,26 +197,37 @@ class ImageProcessor:
             font = cv2.FONT_HERSHEY_COMPLEX
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
             cv2.drawContours(image, [approx], 0, (60, 0, 0), 5)
-        robot_contour = ImageProcessor.find_robot(image, min_size=0, max_size=100000)
+        robot_contour = ImageProcessor.find_robot(image, min_size=0, max_size=1000000)
         robot_coordinates = []
 
         if robot_contour is not None:
             print("Found robot.")
+            # Approximere konturen til en polygon og finde hjørnerne (spidserne)
+            epsilon = 0.025 * cv2.arcLength(robot_contour, True)
+            approx = cv2.approxPolyDP(robot_contour, epsilon, True)
+
+            # Use k-means clustering to find the three most distinct points
+            from sklearn.cluster import KMeans
+            if len(approx) > 3:
+                kmeans = KMeans(n_clusters=3)
+                kmeans.fit(approx.reshape(-1, 2))
+                points = kmeans.cluster_centers_.astype(int)
+            else:
+                points = approx
+
+            for point in points:
+                cv2.circle(image, tuple(point[0]), 5, (0, 255, 0), -1)
+                if bottom_left_corner is not None:
+                    cartesian_coords = ImageProcessor.convert_to_cartesian(tuple(point[0]), bottom_left_corner,
+                                                                           bottom_right_corner, top_left_corner,
+                                                                           top_right_corner)
+                    robot_coordinates.append(cartesian_coords)
+                    print(f"Robot Kartesiske Koordinater: {cartesian_coords}")
             x, y, w, h = cv2.boundingRect(robot_contour)
-            center_x = x + w // 2
-            center_y = y + h // 2
-
-            if bottom_left_corner is not None:
-                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
-                                                                       bottom_right_corner, top_left_corner,
-                                                                       top_right_corner)
-                robot_coordinates.append(cartesian_coords)
-                print(f"Robot Cartesian Coordinates: {cartesian_coords}")
-
-            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 1)
             cv2.putText(image, "Robot", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
         else:
-            print("No robot found.")
+            print("Ingen robot fundet.")
 
         ball_contours = ImageProcessor.find_balls_hsv(image, min_size=300, max_size=1000)
         for i, contour in enumerate(ball_contours, 1):
@@ -219,7 +248,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "/Users/peterhannibalhildorf/PycharmProjects/GolfBotProject/images/Bane 4 3 ugers/WIN_20240605_10_27_29_Pro.jpg"  # Path to your image
+    image_path = "images/Bane 4 3 ugers/Johansbillede_3uger.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)
