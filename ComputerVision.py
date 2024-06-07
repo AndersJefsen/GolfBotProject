@@ -67,6 +67,42 @@ class ImageProcessor:
                     ball_contours.append(cnt)
         return ball_contours
 
+    @staticmethod
+    def find_orangeballs_hsv(image, min_size=300, max_size=1000000000):
+        # Coneert the image to HSV color space
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+        # Define range for orange color in HSV
+        orange_lower = np.array([150, 50, 20], dtype="uint8")
+        orange_upper = np.array([250, 200, 90], dtype="uint8")
+
+        # Threshhold the HSV image to get only white colors
+        orange_mask = cv2.inRange(hsv_image, orange_lower, orange_upper)
+
+        # Use morphological operations to clean up the mask
+        kernel = np.ones((5, 5), np.uint8)
+        orange_mask = cv2.morphologyEx(orange_mask, cv2.MORPH_CLOSE, kernel)
+        orange_mask = cv2.morphologyEx(orange_mask, cv2.MORPH_OPEN, kernel)
+
+        # Load maskerne på billedet
+        cv2.imshow('Processed Image', orange_mask)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        # Find contours
+        contours, _ = cv2.findContours(orange_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        orangeball_contours = []
+        # Logikken for at finde countours på boldene
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if min_size <= area <= max_size:
+                perimeter = cv2.arcLength(cnt, True)
+                if perimeter == 0:
+                    continue
+                circularity = 4 * np.pi * (area / (perimeter * perimeter))
+                if 0.7 <= circularity <= 1.2:
+                    orangeball_contours.append(cnt)
+        return orangeball_contours
 
     @staticmethod
     def find_robot(image, min_size=0, max_size=100000):
@@ -136,6 +172,29 @@ class ImageProcessor:
         return x_scale, y_scale
 
     @staticmethod
+    def find_cross_contours(contours):
+        cross_contours = []
+        found_cross = False
+        for cnt in contours:
+            approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
+            if len(approx) == 12:  # our Cross  has 12 corner.
+                bounding_rect = cv2.boundingRect(cnt)
+                aspect_ratio = bounding_rect[2] / float(bounding_rect[3])
+                if 0.8 <= aspect_ratio <= 1.2:  #Bounds
+                    if not found_cross:  # Locate it.
+                        cross_contours.append(approx)
+                        found_cross = True  # the cross got found folks!
+                        for i, point in enumerate(approx):
+                            x, y = point.ravel()
+                            cv2.putText(image, str(i + 1), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                    else:
+                        break  #stop searching after a cross once found.
+        return cross_contours
+
+
+
+
+    @staticmethod
     def process_image(image):
 
         lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
@@ -154,50 +213,28 @@ class ImageProcessor:
 
         result = image.copy()
         cv2.drawContours(result, filtered_contours, -1, (0, 255, 0), 2)
+
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
             ImageProcessor.detect_all_corners(filtered_contours, image.shape[1], image.shape[0])
         x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner,
                                                                   top_left_corner, top_right_corner)
-
         print("Bottom Left Corner - Pixel Coordinates:", bottom_left_corner)
-        print("Bottom Left Corner - Cartesian Coordinates:", (round(
-            ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner,
-                                                top_left_corner, top_right_corner)[0], 2), abs(round(
-            ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner,
-                                                top_left_corner, top_right_corner)[1], 2))))
-        print("Bottom Right Corner - Pixel Coordinates:", bottom_right_corner)
-        print("Bottom Right Corner - Cartesian Coordinates:", (round(
-            ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner,
-                                                top_left_corner, top_right_corner)[0], 2), abs(round(
-            ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner,
-                                                top_left_corner, top_right_corner)[1], 2))))
-        print("Top Left Corner - Pixel Coordinates:", top_left_corner)
-        print("Top Left Corner - Cartesian Coordinates:", (round(
-            ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner,
-                                                top_left_corner, top_right_corner)[0], 2), abs(round(
-            ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner,
-                                                top_left_corner, top_right_corner)[1], 2))))
-        print("Top Right Corner - Pixel Coordinates:", top_right_corner)
-        print("Top Right Corner - Cartesian Coordinates:", (round(
-            ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner,
-                                                top_left_corner, top_right_corner)[0], 2), abs(round(
-            ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner,
-                                                top_left_corner, top_right_corner)[1], 2))))
+        print("Bottom Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
 
-        if bottom_left_corner is not None:
-            cv2.circle(image, bottom_left_corner, 10, (0, 0, 255), -1)
-        if bottom_right_corner is not None:
-            cv2.circle(image, bottom_right_corner, 10, (0, 255, 0), -1)
-        if top_left_corner is not None:
-            cv2.circle(image, top_left_corner, 10, (255, 135, 0), -1)
-        if top_right_corner is not None:
-            cv2.circle(image, top_right_corner, 10, (255, 0, 135), -1)
+        print("Bottom Right Corner - Pixel Coordinates:", bottom_right_corner)
+        print("Bottom Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        print("Top Left Corner - Pixel Coordinates:", top_left_corner)
+        print("Top Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        print("Top Right Corner - Pixel Coordinates:", top_right_corner)
+        print("Top Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
 
         for cnt in filtered_contours:
             font = cv2.FONT_HERSHEY_COMPLEX
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
             cv2.drawContours(image, [approx], 0, (60, 0, 0), 5)
-        robot_contour = ImageProcessor.find_robot(image, min_size=0, max_size=1000000)
+        robot_contour = ImageProcessor.find_robot(image, min_size=0, max_size=100000)
         robot_coordinates = []
 
         if robot_contour is not None:
@@ -229,6 +266,30 @@ class ImageProcessor:
         else:
             print("Ingen robot fundet.")
 
+        cross_contours = ImageProcessor.find_cross_contours(filtered_contours)
+        for i, cnt in enumerate(cross_contours):
+            cv2.drawContours(image, [cnt], 0, (255, 0, 0), 3)
+            for point in cnt:
+                x, y = point.ravel()
+                cv2.circle(image, (x, y), 5, (0, 0, 255), -1)
+            if bottom_left_corner is not None:
+                cartesian_coords = [ImageProcessor.convert_to_cartesian((point[0][0], point[0][1]), bottom_left_corner,
+                                                                        bottom_right_corner, top_left_corner,
+                                                                        top_right_corner) for point in cnt]
+
+                print(f"Cross {i+1} Cartesian Coordinates: {cartesian_coords}")
+
+        print(f"Found {len(cross_contours)} crosses.")
+
+        if bottom_left_corner is not None:
+            cv2.circle(image, bottom_left_corner, 10, (0, 0, 255), -1)
+        if bottom_right_corner is not None:
+            cv2.circle(image, bottom_right_corner, 10, (0, 255, 0), -1)
+        if top_left_corner is not None:
+            cv2.circle(image, top_left_corner, 10, (255, 135, 0), -1)
+        if top_right_corner is not None:
+            cv2.circle(image, top_right_corner, 10, (255, 0, 135), -1)
+
         ball_contours = ImageProcessor.find_balls_hsv(image, min_size=300, max_size=1000)
         for i, contour in enumerate(ball_contours, 1):
             x, y, w, h = cv2.boundingRect(contour)
@@ -245,6 +306,7 @@ class ImageProcessor:
         cv2.imshow('image2', image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
 
 
 if __name__ == "__main__":
