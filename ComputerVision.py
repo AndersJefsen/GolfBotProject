@@ -1,5 +1,5 @@
 import cv2
-from sklearn.cluster import KMeans
+
 import numpy as np
 
 
@@ -192,7 +192,54 @@ class ImageProcessor:
         return cross_contours
 
 
+    @staticmethod
+    def find_Arena(inputImage,outPutImage):
+        lab = cv2.cvtColor(inputImage, cv2.COLOR_BGR2LAB)
+        red = cv2.threshold(lab[:, :, 1], 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        edges = cv2.Canny(red, 100, 200)
+        contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+        max_contour = max(contours, key=cv2.contourArea)
+        max_contour_area = cv2.contourArea(max_contour) * 0.99
+        min_contour_area = cv2.contourArea(max_contour) * 0.002
+        filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
+        
+        cv2.drawContours(outPutImage, filtered_contours, -1, (0, 255, 0), 2)
 
+        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
+            ImageProcessor.detect_all_corners(filtered_contours, inputImage.shape[1], inputImage.shape[0])
+        x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner,
+                                                                  top_left_corner, top_right_corner)
+        
+        print("Bottom Left Corner - Pixel Coordinates:", bottom_left_corner)
+        print("Bottom Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        print("Bottom Right Corner - Pixel Coordinates:", bottom_right_corner)
+        print("Bottom Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        print("Top Left Corner - Pixel Coordinates:", top_left_corner)
+        print("Top Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+
+        print("Top Right Corner - Pixel Coordinates:", top_right_corner)
+        print("Top Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
+        
+        for cnt in filtered_contours:
+            font = cv2.FONT_HERSHEY_COMPLEX
+            approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
+            cv2.drawContours(inputImage, [approx], 0, (60, 0, 0), 5)
+
+        if bottom_left_corner is not None:
+            cv2.circle(outPutImage, bottom_left_corner, 10, (0, 0, 255), -1)
+        if bottom_right_corner is not None:
+            cv2.circle(outPutImage, bottom_right_corner, 10, (0, 255, 0), -1)
+        if top_left_corner is not None:
+            cv2.circle(outPutImage, top_left_corner, 10, (255, 135, 0), -1)
+        if top_right_corner is not None:
+            cv2.circle(outPutImage, top_right_corner, 10, (255, 0, 135), -1)
+
+        if (bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner) is not None:
+            return True,outPutImage,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner
+        else:
+            return False, None, None, None, None, None 
 
     @staticmethod
     def process_image(image):
