@@ -4,7 +4,7 @@ import cv2 as cv
 from vision import Vision
 from hsvfilter import HsvFilter
 from edgefilter import EdgeFilter
-from ultralytics import YOLO
+
 import numpy as np
 import sys
 import os
@@ -12,7 +12,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision 
 
 
-import torch
+
 
 def detect_objects(imageToDetectOn, imageToDrawOn, hsv_filter, maxThreshold,minThreshold,minArea,maxArea,name,rgb_Color):
     #this hsv filter is used to find the edges of the obstacles
@@ -305,102 +305,128 @@ def useMask(imageToMask,mask):
 #model = YOLO('best.pt')
 # initialize the WindowCapture class
 
+def main(mode):
+    if mode == "camera":  
+        wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
+        print("camera mode")
+    if mode == "window":
+        wincap = WindowCapture(None)
+        print("window mode")
+    elif mode == "test":
+        print("test mode")
+    else:
+        print("Invalid mode")
+        return
+    
+    arenaCorners = []
+    mask = None
+    
 
-#wincap = WindowCapture(None)    
-arenaCorners = []
-mask = None
-wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
+    vision_image = Vision('ball.png')
 
-vision_image = Vision('ball.png')
+    vision_image.init_control_gui()
 
-vision_image.init_control_gui()
-
-findArena = False
-while not findArena:
-    try:
-        ret, screenshot = wincap.read()
-        output_image = screenshot.copy()
-        if screenshot is None:
-            print("Failed to capture screenshot.")
-            continue
-        findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
-        if findArena:
-            arenaCorners.append(bottom_left_corner)
-            arenaCorners.append(bottom_right_corner)
+    findArena = False
+    while not findArena:
+        try:
+            if mode == "camera":
+                ret, screenshot = wincap.read()
+            elif mode == "window":
+                screenshot = wincap.get_screenshot()
+            elif mode == "test":
+                screenshot = cv.imread('testpic.jpg')
+            output_image = screenshot.copy()
             
-            arenaCorners.append(top_right_corner)
-            arenaCorners.append(top_left_corner)
-            mask = createMask(screenshot,arenaCorners)
-            print("mask Created")
+            if screenshot is None:
+                print("Failed to capture screenshot.")
+                continue
+            findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
+            if findArena:
+                arenaCorners.append(bottom_left_corner)
+                arenaCorners.append(bottom_right_corner)
+                
+                arenaCorners.append(top_right_corner)
+                arenaCorners.append(top_left_corner)
+                mask = createMask(screenshot,arenaCorners)
+                print("mask Created")
+                break
+
+        except Exception as e:
+            print(f"An error occurred while trying to detect arena: {e}")
             break
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        break
+            
+
+    loop_time = time()
+    while(True):
+        try:
+            if mode == "camera":
+                ret, screenshot = wincap.read()
+            elif mode == "window":
+                screenshot = wincap.get_screenshot()
+            elif mode == "test":
+                screenshot = cv.imread('testpic.jpg')
+            if screenshot is None:
+                print("Failed to capture screenshot.")
+                continue
+
+            inputimg = useMask(screenshot,mask)
+            #cross = ComputerVision.find_cross_contours(screenshot)    
+            #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
+
+            #outputedge_image = vision_image.apply_edge_filter(outputhsv_image)
+            #rectangles = vision_image.find(outputhsv_image,0.5,10)
+            
+            #ret, thresh = cv.threshold(outputedge_image, 127, 255, 0)
+            #contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+            #output_image = cv.drawContours(screenshot, contours, -1, (0,255,0), 3)
+            #points are only used for crosshair
+            #points = vision_image.get_points(rectangles)
+            #output_image = vision_image.draw_rectangles(screenshot, rectangles)
+            #output_image = vision_image.draw_crosshairs(output_image, points)
+            #inputimg = screenshot
+            #edged, output_image = findArena(inputimg,screenshot)
+            #outputhsv_image = vision_image.apply_hsv_filter(output_image)
+            #edged, output_image = findRobot(inputimg,screenshot)
+            #edged, output_image = findOrangeBall(inputimg,screenshot)
+            #edged, output_image = findCross(inputimg,screenshot)
+            #edged, output_image = findObstacles(outputhsv_image,screenshot)
+            #edged, output_image = findRoundObjects(outputhsv_image,screenshot)
+            '''
+            rzhsv = cv.resize(outputhsv_image, (960, 540))
+            cv.imshow('hsv', rzhsv)
+
+            rze = cv.resize(edged, (960, 540))
+            cv.imshow('edges', rze)
+            '''
+        
+            screenoutput = cv.resize(inputimg, (960, 540))
+            cv.imshow('Computer Vision', screenoutput)
+
+            #screengray = cv.resize(imgray, (960, 540))
+            
+            #screenhsvimg = cv.resize(outputhsv_image, (960, 540))
+            #screenedgeimg = cv.resize(outputedge_image, (960, 540))
+            #cv.imshow('gray', screengray)
+            #cv.imshow('hsv', screenhsvimg)
+            #cv.imshow('edge', screenedgeimg)
 
         
 
-loop_time = time()
-while(True):
-    try:
-        #screenshot = wincap.get_screenshot()
-        ret, screenshot = wincap.read()
-        if screenshot is None:
-            print("Failed to capture screenshot.")
-            continue
-
-        inputimg = useMask(screenshot,mask)
-        #cross = ComputerVision.find_cross_contours(screenshot)    
-        #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
-
-        #outputedge_image = vision_image.apply_edge_filter(outputhsv_image)
-        #rectangles = vision_image.find(outputhsv_image,0.5,10)
-        
-        #ret, thresh = cv.threshold(outputedge_image, 127, 255, 0)
-        #contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        #output_image = cv.drawContours(screenshot, contours, -1, (0,255,0), 3)
-         #points are only used for crosshair
-         #points = vision_image.get_points(rectangles)
-        #output_image = vision_image.draw_rectangles(screenshot, rectangles)
-        #output_image = vision_image.draw_crosshairs(output_image, points)
-        #inputimg = screenshot
-        #edged, output_image = findArena(inputimg,screenshot)
-        #outputhsv_image = vision_image.apply_hsv_filter(output_image)
-        #edged, output_image = findRobot(inputimg,screenshot)
-        #edged, output_image = findOrangeBall(inputimg,screenshot)
-        #edged, output_image = findCross(inputimg,screenshot)
-        #edged, output_image = findObstacles(outputhsv_image,screenshot)
-        #edged, output_image = findRoundObjects(outputhsv_image,screenshot)
-        '''
-        rzhsv = cv.resize(outputhsv_image, (960, 540))
-        cv.imshow('hsv', rzhsv)
-
-        rze = cv.resize(edged, (960, 540))
-        cv.imshow('edges', rze)
-        '''
-       
-        screenoutput = cv.resize(inputimg, (960, 540))
-        cv.imshow('Computer Vision', screenoutput)
-
-        #screengray = cv.resize(imgray, (960, 540))
-        
-        #screenhsvimg = cv.resize(outputhsv_image, (960, 540))
-        #screenedgeimg = cv.resize(outputedge_image, (960, 540))
-        #cv.imshow('gray', screengray)
-        #cv.imshow('hsv', screenhsvimg)
-        #cv.imshow('edge', screenedgeimg)
-
-      
-
-        if cv.waitKey(1) & 0xFF == ord('q'):
+            if cv.waitKey(1) & 0xFF == ord('q'):
+                break
+        except Exception as e:
+            print(f"An error occurred while trying to detect objects: {e}")
             break
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        break
 
-cv.destroyAllWindows()
-wincap.release()
-print('Done.')
+    cv.destroyAllWindows()
+    wincap.release()
+    print('Done.')
 
 
 
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        main(sys.argv[1])
+    else:
+        print("No mode specified. Usage: python script_name.py <test|window|camera>")

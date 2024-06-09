@@ -202,9 +202,12 @@ class ImageProcessor:
         max_contour_area = cv2.contourArea(max_contour) * 0.99
         min_contour_area = cv2.contourArea(max_contour) * 0.002
         filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
+       
+        if len(filtered_contours) != 4:
+            return False, None, None, None, None, None
         
         cv2.drawContours(outPutImage, filtered_contours, -1, (0, 255, 0), 2)
-
+    
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
             ImageProcessor.detect_all_corners(filtered_contours, inputImage.shape[1], inputImage.shape[0])
         x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner,
