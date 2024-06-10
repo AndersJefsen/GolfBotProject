@@ -310,7 +310,7 @@ def main(mode):
     if mode == "camera":  
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
-    if mode == "window":
+    elif mode == "window":
         wincap = WindowCapture(None)
         print("window mode")
     elif mode == "test":
@@ -336,8 +336,8 @@ def main(mode):
                 screenshot = wincap.get_screenshot()
             elif mode == "test":
                 screenshot = cv.imread('testpic.jpg')
-            output_image = screenshot.copy()
             
+            output_image = screenshot.copy()
             if screenshot is None:
                 print("Failed to capture screenshot.")
                 continue
@@ -375,7 +375,7 @@ def main(mode):
 
           
             #ballcon, output_image = ComputerVision.ImageProcessor.find_balls(inputimg, inputimg)
-            edged, output_image = findObstacles(inputimg,output_image)
+            edged, output_image = findObstacles(inputimg,inputimg)
 
             #cross = ComputerVision.find_cross_contours(screenshot)    
             #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
@@ -405,8 +405,8 @@ def main(mode):
             rze = cv.resize(edged, (960, 540))
             cv.imshow('edges', rze)
             '''
-        
-            screenoutput = cv.resize(output_image, (960, 540))
+
+            screenoutput = cv.resize(inputimg, (960, 540))
             cv.imshow('Computer Vision', screenoutput)
 
             #screengray = cv.resize(imgray, (960, 540))
