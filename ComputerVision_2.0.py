@@ -180,25 +180,25 @@ class ImageProcessor:
         return x_scale, y_scale
 
     @staticmethod
-    def find_cross_contours(contours):
-        cross_contours = []
+    def find_cross_contours(filtered_contours, image):
         found_cross = False
-        for cnt in contours:
+        cross_contours = []
+        for cnt in filtered_contours:
             approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
-            if len(approx) == 12:  # our Cross  has 12 corner.
+            if len(approx) == 12:  # our Cross has 12 corners.
                 bounding_rect = cv2.boundingRect(cnt)
                 aspect_ratio = bounding_rect[2] / float(bounding_rect[3])
-                if 0.8 <= aspect_ratio <= 1.2:  #Bounds
+                if 0.8 <= aspect_ratio <= 1.2:  # Bounds
                     if not found_cross:  # Locate it.
                         cross_contours.append(approx)
-                        found_cross = True  # the cross got found folks!
+                        found_cross = True  # the cross got found!
                         for i, point in enumerate(approx):
                             x, y = point.ravel()
                             cv2.putText(image, str(i + 1), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                     else:
-                        break  #stop searching after a cross once found.
-        return cross_contours
-
+                        break  # stop searching after a cross once found.
+        output_image = image.copy()
+        return cross_contours, output_image
 
     @staticmethod
     def find_arena(image):
@@ -221,6 +221,25 @@ class ImageProcessor:
 
         return filtered_contours, output_image
 
+    @staticmethod
+    def convert_cross_to_cartesian(cross_contours, image, bottom_left_corner, bottom_right_corner, top_left_corner,
+                                   top_right_corner):
+        cartesian_coords_list = []
+        output_image = image.copy()
+
+        for i, cnt in enumerate(cross_contours):
+            for point in cnt:
+                x, y = point.ravel()
+                cv2.circle(output_image, (x, y), 5, (0, 0, 255), -1)
+            if bottom_left_corner is not None:
+                cartesian_coords = [ImageProcessor.convert_to_cartesian((point[0][0], point[0][1]), bottom_left_corner,
+                                                                        bottom_right_corner, top_left_corner,
+                                                                        top_right_corner) for point in cnt]
+                cartesian_coords_list.append(cartesian_coords)
+                print(f"Cross {i + 1} Cartesian Coordinates:")
+                for coord in cartesian_coords:
+                    print(f"    {coord}")
+        return cartesian_coords_list, output_image
     @staticmethod
     def convert_balls_to_cartesian(image,ball_contours,bottom_left_corner,bottom_right_corner,top_right_corner,top_left_corner):
         cartesian_coords_list =[]
@@ -288,20 +307,12 @@ class ImageProcessor:
         print("Top Right Corner - Pixel Coordinates:", top_right_corner)
         print("Top Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
 
-        cross_contours = ImageProcessor.find_cross_contours(filtered_contours)
-        for i, cnt in enumerate(cross_contours):
-            cv2.drawContours(image, [cnt], 0, (255, 0, 0), 3)
-            for point in cnt:
-                x, y = point.ravel()
-                cv2.circle(image, (x, y), 5, (0, 0, 255), -1)
-            if bottom_left_corner is not None:
-                cartesian_coords = [ImageProcessor.convert_to_cartesian((point[0][0], point[0][1]), bottom_left_corner,
-                                                                        bottom_right_corner, top_left_corner,
-                                                                        top_right_corner) for point in cnt]
-
-                print(f"Cross {i+1} Cartesian Coordinates: {cartesian_coords}")
-
-        print(f"Found {len(cross_contours)} crosses.")
+        cross_contours, image_with_cross = ImageProcessor.find_cross_contours(filtered_contours, output_image)
+        cartesian_coords_list, image_with_cross = ImageProcessor.convert_cross_to_cartesian(cross_contours, output_image,
+                                                                                        bottom_left_corner,
+                                                                                        bottom_right_corner,
+                                                                                        top_left_corner,
+                                                                                        top_right_corner)
 
         if bottom_left_corner is not None:
             cv2.circle(image, bottom_left_corner, 10, (0, 0, 255), -1)
@@ -327,6 +338,10 @@ class ImageProcessor:
                                                                                             bottom_right_corner,
                                                                                             top_left_corner,
                                                                                             top_right_corner)
+
+        cv2.imshow('Final Image with cross', image_with_cross)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
         cv2.imshow('Final Image with Balls and Arena', image_with_balls)
         cv2.waitKey(0)
