@@ -1,7 +1,7 @@
 import cv2
 
 import numpy as np
-import sklearn as sklearn
+
 
 
 class ImageProcessor:
@@ -243,11 +243,76 @@ class ImageProcessor:
                 if 0.7 <= circularity <= 1.2:
                     ball_contours.append(cnt)
         return ball_contours
-    
+    @staticmethod
+    def find_robot_withOutput(inputImage,outPutImage, min_size=100, max_size=100000,bottom_left_corner=None, bottom_right_corner=None, top_left_corner=None, top_right_corner=None):
+        hsv_image = cv2.cvtColor(inputImage, cv2.COLOR_BGR2HSV)
+        blue_lower = np.array([78,100,100], dtype="uint8")
+        blue_upper = np.array([131, 255, 255], dtype="uint8")
+
+        # Threshhold the HSV image image to get only blue colors
+        blue_mask = cv2.inRange(hsv_image, blue_lower, blue_upper)
+       
+        # Load maskerne på billedet
+
+        contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        kernel = np.ones((5, 5), np.uint8)
+        blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, kernel)
+        blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, kernel)
+
+        # Load maskerne på billedet
+        
+
+        # Find contours
+        contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        ball_contours = []
+        # Logikken for at finde countours på boldene
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if min_size <= area <= max_size:
+                perimeter = cv2.arcLength(cnt, True)
+                if perimeter == 0:
+                    continue
+                circularity = 4 * np.pi * (area / (perimeter * perimeter))
+                if 0.7 <= circularity <= 1.2:
+                    ball_contours.append(cnt)
+        
+        roboball = ball_contours 
+        for i, contour in enumerate(roboball, 1):
+            x, y, w, h = cv2.boundingRect(contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+            cv2.rectangle(outPutImage, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(outPutImage, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            if bottom_left_corner is not None:
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
+                                                                       bottom_right_corner, top_left_corner,
+                                                                       top_right_corner)
+                #print(f"roboBall {i} Cartesian Coordinates: {cartesian_coords}")
+ 
+        midpoint, direction = ImageProcessor.find_direction(roboball)
+        if roboball and len(roboball) == 3:
+            if midpoint and direction:
+                    # Draw the direction from the midpoint
+                endpoint = (midpoint[0] + direction[0], midpoint[1] + direction[1])
+                cv2.circle(outPutImage, midpoint, 10, (0, 0, 255), -1)  # Red dot at midpoint
+                cv2.line(outPutImage, midpoint, endpoint, (255, 0, 0), 3)  # Blue line indicating direction
+                #print("Midpoint:", midpoint)
+                #print("Direction to third point:", direction)
+                
+        #else:
+            #print("Could not find exactly three balls., found ", len(roboball))        
+
+        angle = None
+        if direction:
+            angle = ImageProcessor.calculate_angle(direction)
+        
+        if angle is not None:
+            print(f"Angle: {angle} degrees")
+        return ball_contours, outPutImage, angle, midpoint
     @staticmethod
     def find_direction(contours):
         if len(contours) != 3:
-            print("Error: Expected exactly three contours.")
+           # print("Error: Expected exactly three contours.")
             return None, None
 
         # Use the first point of each contour directly
@@ -356,18 +421,46 @@ class ImageProcessor:
         red = cv2.threshold(lab[:, :, 1], 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
         edges = cv2.Canny(red, 100, 200)
         contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
-        max_contour = max(contours, key=cv2.contourArea)
-        max_contour_area = cv2.contourArea(max_contour) * 0.99
-        min_contour_area = cv2.contourArea(max_contour) * 0.002
-        filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
        
-        if len(filtered_contours) != 4:
+    
+       
+        if not contours:
+            print("No contours found")
+            return False, None, None, None, None, None
+
+        max_contour = max(contours, key=cv2.contourArea)
+        #max_contour_area = cv2.contourArea(max_contour) * 0.99
+        #min_contour_area = cv2.contourArea(max_contour) * 0.002
+        max_contour_area = 1000000
+        min_contour_area = 5000
+
+
+        filtered_contours = []
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if max_contour_area > area > min_contour_area:
+                peri = cv2.arcLength(cnt, True)
+                approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
+                if len(approx) == 4:  # Only consider contours with exactly 4 points
+                    filtered_contours.append(approx)
+
+        print(f"Total contours found: {len(contours)}")
+        print(f"Filtered contours: {len(filtered_contours)}")
+        for cnt in filtered_contours:
+            print(f"Contour area: {cv2.contourArea(cnt)}")
+        
+        if len(filtered_contours) < 1:
+            print("Not enough filtered contours")
             return False, None, None, None, None, None
         
         cv2.drawContours(outPutImage, filtered_contours, -1, (0, 255, 0), 2)
     
-        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
-            ImageProcessor.detect_all_corners(filtered_contours, inputImage.shape[1], inputImage.shape[0])
+        try:
+            bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
+                ImageProcessor.detect_all_corners(filtered_contours, inputImage.shape[1], inputImage.shape[0])
+        except ValueError as e:
+            print(f"Error in detecting corners: {e}")
+            return False, None, None, None, None, None
         x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner,
                                                                   top_left_corner, top_right_corner)
         
