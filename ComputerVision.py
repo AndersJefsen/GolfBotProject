@@ -147,8 +147,8 @@ class ImageProcessor:
         corners = []
         for cnt in filtered_contours:
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
-        if len(approx) == 4:
-            corners.extend(approx)
+            if len(approx) == 4:
+                corners.extend(approx)
 
         corners.sort(key=lambda point: point[0][0] + point[0][1])
         top_left_corner = corners[0][0]
@@ -271,14 +271,17 @@ class ImageProcessor:
         max_contour_area = cv2.contourArea(max_contour) * 0.99
         min_contour_area = cv2.contourArea(max_contour) * 0.002
         filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
-       
+        '''
         if len(filtered_contours) != 4:
+            print("No arena found")
             return False, None, None, None, None, None
-        
+        '''
         cv2.drawContours(outPutImage, filtered_contours, -1, (0, 255, 0), 2)
-    
+        
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
             ImageProcessor.detect_all_corners(filtered_contours, inputImage.shape[1], inputImage.shape[0])
+        
+        
         x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner,
                                                                   top_left_corner, top_right_corner)
         
@@ -298,7 +301,7 @@ class ImageProcessor:
             font = cv2.FONT_HERSHEY_COMPLEX
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
             cv2.drawContours(inputImage, [approx], 0, (60, 0, 0), 5)
-
+        
         if bottom_left_corner is not None:
             cv2.circle(outPutImage, bottom_left_corner, 10, (0, 0, 255), -1)
         if bottom_right_corner is not None:
@@ -309,8 +312,10 @@ class ImageProcessor:
             cv2.circle(outPutImage, top_right_corner, 10, (255, 0, 135), -1)
 
         if (bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner) is not None:
+            print("arena found")
             return True,outPutImage,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner
         else:
+            print("arena not found")
             return False, None, None, None, None, None 
 
     @staticmethod
