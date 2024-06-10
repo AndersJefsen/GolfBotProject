@@ -1,10 +1,10 @@
-from windowcapture import WindowCapture
+#from windowcapture import WindowCapture
 from time import time
 import cv2 as cv
 from vision import Vision
 from hsvfilter import HsvFilter
-from edgefilter import EdgeFilter
-from ultralytics import YOLO
+#from edgefilter import EdgeFilter
+#from ultralytics import YOLO
 import numpy as np
 import sys
 import os
@@ -12,7 +12,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision 
 
 
-import torch
+#import torch
 
 def detect_objects(imageToDetectOn, imageToDrawOn, hsv_filter, maxThreshold,minThreshold,minArea,maxArea,name,rgb_Color):
     #this hsv filter is used to find the edges of the obstacles
