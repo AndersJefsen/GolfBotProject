@@ -22,7 +22,7 @@ def command_robot(robot_position, balls, robot_orientation):
         print(robot_orientation)
         robot_position = robot_position#ImageProcessor.get_robot_position()
         balls = balls #ImageProcessor.get_robot_position().get_balls()
-        robot_orientation =(robot_orientation+90)%360  #ImageProcessor.get_robot_orientation()
+        robot_orientation =(-(robot_orientation)-180)  #ImageProcessor.get_robot_orientation()
         closest_ball, distance_to_ball, angle_to_turn = find_closest_ball(robot_position, balls, robot_orientation)
         print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
     

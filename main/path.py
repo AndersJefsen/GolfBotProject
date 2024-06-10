@@ -11,9 +11,8 @@ def find_closest_ball(robot_position, balls,robot_orientation):
         dx = ball_position[0] - robot_position[0]
         angle_radians = math.atan2(dy, dx)
         angle_degrees = math.degrees(angle_radians)
-        relative_angle = angle_degrees - robot_orientation
-        normalized_angle = (relative_angle + 180) % 360 - 180
-        return normalized_angle
+        relative_angle = -((angle_degrees - robot_orientation)%360)
+        return relative_angle
     
     closest_ball = None
     min_distance = float('inf')
