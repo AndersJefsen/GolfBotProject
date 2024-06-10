@@ -46,6 +46,35 @@ def find_balls_hsv(image, min_size=300, max_size=1000):  # Størrelsen af hvid, 
 
     return ball_contours
 
+def find_blue_contours(image, min_size=300, max_size=1000):
+    # Convert the image to HSV color space
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    # Define range for blue color in HSV
+    blue_lower = np.array([100, 150, 0], dtype="uint8")
+    blue_upper = np.array([140, 255, 255], dtype="uint8")
+
+    # Threshold the HSV image to get only blue colors
+    blue_mask = cv2.inRange(hsv_image, blue_lower, blue_upper)
+
+    # Use morphological operations to clean up the mask
+    kernel = np.ones((5, 5), np.uint8)
+    blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, kernel)
+    blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, kernel)
+
+    # Find contours
+    contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    blue_contours = []
+
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if min_size <= area <= max_size:
+            blue_contours.append(cnt)
+
+    return blue_contours
+
+
 def image_to_cartesian(image_point, origin):  # Funktionen som converter til koordinater
     x, y = image_point
     origin_x, origin_y = origin
