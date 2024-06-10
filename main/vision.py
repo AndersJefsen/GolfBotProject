@@ -140,6 +140,11 @@ class Vision:
         cv.createTrackbar('threshold max', self.TRACKBAR_WINDOW, 0, 255, nothing)
         cv.setTrackbarPos('threshold min', self.TRACKBAR_WINDOW, 0) 
         cv.setTrackbarPos('threshold max', self.TRACKBAR_WINDOW, 255)
+
+        cv.createTrackbar('minPoints', self.TRACKBAR_WINDOW, 1, 100, nothing)
+        cv.setTrackbarPos('minPoints', self.TRACKBAR_WINDOW, 1)
+        cv.createTrackbar('maxPoints', self.TRACKBAR_WINDOW, 1, 100, nothing)
+        cv.setTrackbarPos('maxPoints', self.TRACKBAR_WINDOW, 100)
     def get_hsv_filter_from_controls(self):
         # Get current positions of all trackbars
         hsv_filter = HsvFilter()

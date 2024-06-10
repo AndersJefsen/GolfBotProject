@@ -1,3 +1,4 @@
+#Victor Justesen
 import math
 
 def find_closest_ball(robot_position, balls,robot_orientation):
@@ -32,4 +33,4 @@ def find_closest_ball(robot_position, balls,robot_orientation):
 # balls = [(3, 4), (1, 2), (5, 5)]  # Example balls positions
 # robot_orientation=0
 # closest_ball, distance_to_ball, angle_to_turn = find_closest_ball(robot_position, balls, robot_orientation)
-# print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
+# print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}"
