@@ -105,7 +105,7 @@ class ImageProcessor:
         return orangeball_contours
 
     @staticmethod
-    def find_robot(image, min_size=0, max_size=100000):
+    def find_robot(input, min_size=0, max_size=100000):
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         blue_lower = np.array([111, 100, 100], dtype="uint8")
         blue_upper = np.array([131, 255, 255], dtype="uint8")
@@ -170,9 +170,42 @@ class ImageProcessor:
         x_scale = 180 / max(bottom_width, top_width)
         y_scale = 120 / max(left_height, right_height)
         return x_scale, y_scale
-
     @staticmethod
-    def find_cross_contours(contours):
+    def find_balls(inputImage,outputImage, min_size=300, max_size=1000000000):
+        # Coneert the image to HSV color space
+        hsv_image = cv2.cvtColor(inputImage, cv2.COLOR_BGR2HSV)
+
+        # Define range for white color in HSV
+        white_lower = np.array([0, 0, 200], dtype="uint8")
+        white_upper = np.array([180, 60, 255], dtype="uint8")
+
+        # Threshhold the HSV image to get only white colors
+        white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
+
+        # Use morphological operations to clean up the mask
+        kernel = np.ones((5, 5), np.uint8)
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
+
+        # Find contours
+        contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        ball_contours = []
+        # Logikken for at finde countours på boldene
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if min_size <= area <= max_size:
+                perimeter = cv2.arcLength(cnt, True)
+                if perimeter == 0:
+                    continue
+                circularity = 4 * np.pi * (area / (perimeter * perimeter))
+                if 0.7 <= circularity <= 1.2:
+                    ball_contours.append(cnt)
+        cv2.drawContours(outputImage, ball_contours, -1, (0,255,0),2)
+
+        return ball_contours, outputImage
+    
+    @staticmethod
+    def find_cross_contours(contours, outPutImage):
         cross_contours = []
         found_cross = False
         for cnt in contours:
@@ -186,12 +219,48 @@ class ImageProcessor:
                         found_cross = True  # the cross got found folks!
                         for i, point in enumerate(approx):
                             x, y = point.ravel()
-                            cv2.putText(image, str(i + 1), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                            cv2.putText(outPutImage, str(i + 1), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                     else:
                         break  #stop searching after a cross once found.
-        return cross_contours
+        return cross_contours, outPutImage
 
+    @staticmethod
+    def find_Cross(inputImage,outPutImage):
+        lab = cv2.cvtColor(inputImage, cv2.COLOR_BGR2LAB)
 
+        red = cv2.threshold(lab[:, :, 1], 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+        edges = cv2.Canny(red, 100, 200)
+        
+        contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+       
+        max_contour = max(contours, key=cv2.contourArea)
+        max_contour_area = cv2.contourArea(max_contour) * 0.99
+        min_contour_area = cv2.contourArea(max_contour) * 0.002
+       
+        filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
+        
+        cross_contours, outPutImage = ImageProcessor.find_cross_contours(filtered_contours,outPutImage)
+        
+        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
+            ImageProcessor.detect_all_corners(filtered_contours, inputImage.shape[1], inputImage.shape[0])
+        print("here")
+        for i, cnt in enumerate(cross_contours):
+            cv2.drawContours(outPutImage, [cnt], 0, (255, 0, 0), 3)
+            for point in cnt:
+                x, y = point.ravel()
+                cv2.circle(outPutImage, (x, y), 5, (0, 0, 255), -1)
+            if bottom_left_corner is not None:
+                cartesian_coords = [ImageProcessor.convert_to_cartesian((point[0][0], point[0][1]), bottom_left_corner,
+                                                                        bottom_right_corner, top_left_corner,
+                                                                        top_right_corner) for point in cnt]
+
+                print(f"Cross {i+1} Cartesian Coordinates: {cartesian_coords}")
+
+        print(f"Found {len(cross_contours)} crosses.")
+       
+        return outPutImage
+    
     @staticmethod
     def find_Arena(inputImage,outPutImage):
         lab = cv2.cvtColor(inputImage, cv2.COLOR_BGR2LAB)

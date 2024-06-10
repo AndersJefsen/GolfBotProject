@@ -4,12 +4,13 @@ import cv2 as cv
 from vision import Vision
 from hsvfilter import HsvFilter
 from edgefilter import EdgeFilter
-
+import vision 
 import numpy as np
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision 
+
 
 
 
@@ -371,6 +372,11 @@ def main(mode):
                 continue
 
             inputimg = useMask(screenshot,mask)
+
+          
+            #ballcon, output_image = ComputerVision.ImageProcessor.find_balls(inputimg, inputimg)
+            edged, output_image = findObstacles(inputimg,output_image)
+
             #cross = ComputerVision.find_cross_contours(screenshot)    
             #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
 
@@ -400,7 +406,7 @@ def main(mode):
             cv.imshow('edges', rze)
             '''
         
-            screenoutput = cv.resize(inputimg, (960, 540))
+            screenoutput = cv.resize(output_image, (960, 540))
             cv.imshow('Computer Vision', screenoutput)
 
             #screengray = cv.resize(imgray, (960, 540))
@@ -420,7 +426,8 @@ def main(mode):
             break
 
     cv.destroyAllWindows()
-    wincap.release()
+    if mode == "window":
+        wincap.release()
     print('Done.')
 
 
