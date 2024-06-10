@@ -1,6 +1,7 @@
 import cv2
 
 import numpy as np
+import sklearn as sklearn
 
 
 class ImageProcessor:
@@ -68,13 +69,86 @@ class ImageProcessor:
         return ball_contours
 
     @staticmethod
+    def find_balls_threshold(image, min_size=300, max_size=1000000000, threshold=180):
+        # Convert the image to grayscale
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # Apply a binary threshold to the grayscale image
+        _, thresh_image = cv2.threshold(gray_image, threshold, 255, cv2.THRESH_BINARY)
+
+        # Use morphological operations to clean up the mask
+        kernel = np.ones((5, 5), np.uint8)
+        thresh_image = cv2.morphologyEx(thresh_image, cv2.MORPH_CLOSE, kernel)
+        thresh_image = cv2.morphologyEx(thresh_image, cv2.MORPH_OPEN, kernel)
+
+        # Display the processed image
+        cv2.imshow('Processed Image', thresh_image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        # Find contours
+        contours, _ = cv2.findContours(thresh_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        ball_contours = []
+
+        # Logic to find contours of the balls
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if min_size <= area <= max_size:
+                perimeter = cv2.arcLength(cnt, True)
+                if perimeter == 0:
+                    continue
+                circularity = 4 * np.pi * (area / (perimeter * perimeter))
+                if 0.7 <= circularity <= 1.2:
+                    ball_contours.append(cnt)
+
+        return ball_contours
+
+    @staticmethod
+    def find_bigball_threshold(image, min_size=300, max_size=1000000000, threshold=180):
+        # Convert the image to grayscale
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # Apply a binary threshold to the grayscale image
+        _, thresh_image = cv2.threshold(gray_image, threshold, 255, cv2.THRESH_BINARY)
+
+        # Use morphological operations to clean up the mask
+        kernel = np.ones((5, 5), np.uint8)
+        thresh_image = cv2.morphologyEx(thresh_image, cv2.MORPH_CLOSE, kernel)
+        thresh_image = cv2.morphologyEx(thresh_image, cv2.MORPH_OPEN, kernel)
+
+        # Display the processed image
+        cv2.imshow('Processed Image', thresh_image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        # Find contours
+        contours, _ = cv2.findContours(thresh_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        big_ball_contour = None
+
+        # Logic to find the biggest ball
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if min_size <= area <= max_size:
+                perimeter = cv2.arcLength(cnt, True)
+                if perimeter == 0:
+                    continue
+                circularity = 4 * np.pi * (area / (perimeter * perimeter))
+                if 0.0001 <= circularity <= 500:
+                    big_ball_contour = cnt
+                    max_area = area
+
+        return big_ball_contour
+
+
+
+    @staticmethod
     def find_orangeballs_hsv(image, min_size=300, max_size=1000000000):
         # Coneert the image to HSV color space
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
         # Define range for orange color in HSV
-        orange_lower = np.array([150, 50, 20], dtype="uint8")
-        orange_upper = np.array([250, 200, 90], dtype="uint8")
+        orange_lower = np.array([15, 100, 20], dtype="uint8")
+        orange_upper = np.array([25, 255, 255], dtype="uint8")
 
         # Threshhold the HSV image to get only white colors
         orange_mask = cv2.inRange(hsv_image, orange_lower, orange_upper)
@@ -202,9 +276,12 @@ class ImageProcessor:
         max_contour_area = cv2.contourArea(max_contour) * 0.99
         min_contour_area = cv2.contourArea(max_contour) * 0.002
         filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
+       
+        if len(filtered_contours) != 4:
+            return False, None, None, None, None, None
         
         cv2.drawContours(outPutImage, filtered_contours, -1, (0, 255, 0), 2)
-
+    
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
             ImageProcessor.detect_all_corners(filtered_contours, inputImage.shape[1], inputImage.shape[0])
         x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner,
@@ -341,6 +418,9 @@ class ImageProcessor:
             cv2.circle(image, top_right_corner, 10, (255, 0, 135), -1)
 
         ball_contours = ImageProcessor.find_balls_hsv(image, min_size=300, max_size=1000)
+        orange_ballcontours = ImageProcessor.find_orangeballs_hsv(image, min_size=300, max_size=1000)
+
+        ball_contours = ImageProcessor.find_balls_threshold(image, min_size=300, max_size=1000)
         for i, contour in enumerate(ball_contours, 1):
             x, y, w, h = cv2.boundingRect(contour)
             center_x = x + w // 2
@@ -353,6 +433,37 @@ class ImageProcessor:
                                                                        top_right_corner)
                 print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
 
+        # Process orange ball contour
+        if orange_ballcontours:
+            contour = orange_ballcontours[0]
+            x, y, w, h = cv2.boundingRect(contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(image, "Orange Ball", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            if bottom_left_corner is not None:
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
+                                                                               bottom_right_corner, top_left_corner,
+                                                                               top_right_corner)
+                print(f"Orange Ball Cartesian Coordinates: {cartesian_coords}")
+
+
+        big_ball_contour = ImageProcessor.find_bigball_threshold(image, min_size=1000, max_size=5000)
+        if big_ball_contour is not None:
+            x, y, w, h = cv2.boundingRect(big_ball_contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(image, "EGG", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            if bottom_left_corner is not None:
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
+                                                               bottom_right_corner, top_left_corner,
+                                                               top_right_corner)
+        print(f"Big Ball Cartesian Coordinates: {cartesian_coords}")
+
+
+
+
         cv2.imshow('image2', image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -360,7 +471,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "images/Bane 4 3 ugers/Johansbillede_3uger.jpg"  # Path to your image
+    image_path = "/Users/mikkel/Desktop/4.Semester/CDIO/Code/Python/images/Bane 4 3 ugers/WIN_20240605_10_32_31_Pro.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)
