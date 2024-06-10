@@ -206,6 +206,90 @@ class ImageProcessor:
             return scaled_contour
         return None
 
+
+    @staticmethod
+    def find_robot2(image, min_size=100, max_size=100000):
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        blue_lower = np.array([78,100,100], dtype="uint8")
+        blue_upper = np.array([131, 255, 255], dtype="uint8")
+
+        # Threshhold the HSV image image to get only blue colors
+        blue_mask = cv2.inRange(hsv_image, blue_lower, blue_upper)
+
+        cv2.imshow('Processed Image', blue_mask)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        # Load maskerne på billedet
+
+        contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        kernel = np.ones((5, 5), np.uint8)
+        blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, kernel)
+        blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, kernel)
+
+        # Load maskerne på billedet
+        
+
+        # Find contours
+        contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        ball_contours = []
+        # Logikken for at finde countours på boldene
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if min_size <= area <= max_size:
+                perimeter = cv2.arcLength(cnt, True)
+                if perimeter == 0:
+                    continue
+                circularity = 4 * np.pi * (area / (perimeter * perimeter))
+                if 0.7 <= circularity <= 1.2:
+                    ball_contours.append(cnt)
+        return ball_contours
+    
+    @staticmethod
+    def find_direction(contours):
+        if len(contours) != 3:
+            print("Error: Expected exactly three contours.")
+            return None, None
+
+        # Use the first point of each contour directly
+        points = [contour[0][0] for contour in contours]  # Take the first point from each contour
+
+        # Calculate pairwise distances and find the shortest
+        dists = []
+        pairs = []
+        for i in range(len(points)):
+            for j in range(i + 1, len(points)):
+                dist = np.linalg.norm(np.array(points[i]) - np.array(points[j]))
+                dists.append(dist)
+                pairs.append((points[i], points[j]))
+
+        # Find the shortest edge
+        min_dist_index = np.argmin(dists)
+        point_a, point_b = pairs[min_dist_index]
+
+        # Calculate the midpoint of this shortest edge
+        midpoint = ((point_a[0] + point_b[0]) // 2, (point_a[1] + point_b[1]) // 2)
+
+        # Identify the third point
+        third_point = next(p for p in points if not (np.array_equal(p, point_a) or np.array_equal(p, point_b)))
+
+        # Compute direction vector from the midpoint to the third point
+        direction_vector = (third_point[0] - midpoint[0], third_point[1] - midpoint[1])
+
+        return midpoint, direction_vector
+
+    @staticmethod
+    def calculate_angle(direction_vector):
+    # Calculate angle in radians
+        angle_radians = np.arctan2(direction_vector[1], direction_vector[0])
+        
+        # Convert angle to degrees
+        angle_degrees = np.degrees(angle_radians)
+        
+        # Normalize angle to be between 0 and 360
+        angle_degrees = angle_degrees % 360
+        
+        return angle_degrees
+    
     @staticmethod
     def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
         x_scale = 180 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
@@ -361,38 +445,71 @@ class ImageProcessor:
 
 
 
-        robot_contour = ImageProcessor.find_robot(image, min_size=0, max_size=100000)
-        robot_coordinates = []
+        # robot_contour = ImageProcessor.find_robot(image, min_size=0, max_size=100000)
+        # robot_coordinates = []
 
-        if robot_contour is not None:
-            print("Found robot.")
-            # Approximere konturen til en polygon og finde hjørnerne (spidserne)
-            epsilon = 0.025 * cv2.arcLength(robot_contour, True)
-            approx = cv2.approxPolyDP(robot_contour, epsilon, True)
+        # if robot_contour is not None:
+        #     print("Found robot.")
+        #     # Approximere konturen til en polygon og finde hjørnerne (spidserne)
+        #     epsilon = 0.025 * cv2.arcLength(robot_contour, True)
+        #     approx = cv2.approxPolyDP(robot_contour, epsilon, True)
 
-            # Use k-means clustering to find the three most distinct points
-            from sklearn.cluster import KMeans
-            if len(approx) > 3:
-                kmeans = KMeans(n_clusters=3)
-                kmeans.fit(approx.reshape(-1, 2))
-                points = kmeans.cluster_centers_.astype(int)
-            else:
-                points = approx
+        #     # Use k-means clustering to find the three most distinct points
+        #     from sklearn.cluster import KMeans
+        #     if len(approx) > 3:
+        #         kmeans = KMeans(n_clusters=3)
+        #         kmeans.fit(approx.reshape(-1, 2))
+        #         points = kmeans.cluster_centers_.astype(int)
+        #     else:
+        #         points = approx
 
-            for point in points:
-                cv2.circle(image, tuple(point[0]), 5, (0, 255, 0), -1)
-                if bottom_left_corner is not None:
-                    cartesian_coords = ImageProcessor.convert_to_cartesian(tuple(point[0]), bottom_left_corner,
-                                                                           bottom_right_corner, top_left_corner,
-                                                                           top_right_corner)
-                    robot_coordinates.append(cartesian_coords)
-                    print(f"Robot Kartesiske Koordinater: {cartesian_coords}")
-            x, y, w, h = cv2.boundingRect(robot_contour)
-            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 1)
-            cv2.putText(image, "Robot", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        #     for point in points:
+        #         cv2.circle(image, tuple(point[0]), 5, (0, 255, 0), -1)
+        #         if bottom_left_corner is not None:
+        #             cartesian_coords = ImageProcessor.convert_to_cartesian(tuple(point[0]), bottom_left_corner,
+        #                                                                    bottom_right_corner, top_left_corner,
+        #                                                                    top_right_corner)
+        #             robot_coordinates.append(cartesian_coords)
+        #             print(f"Robot Kartesiske Koordinater: {cartesian_coords}")
+        #     x, y, w, h = cv2.boundingRect(robot_contour)
+        #     cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 1)
+        #     cv2.putText(image, "Robot", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        # else:
+        #     print("Ingen robot fundet.")
+
+
+        roboball = ImageProcessor.find_robot2(image, min_size=50, max_size=100000)
+        for i, contour in enumerate(roboball, 1):
+            x, y, w, h = cv2.boundingRect(contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            if bottom_left_corner is not None:
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
+                                                                       bottom_right_corner, top_left_corner,
+                                                                       top_right_corner)
+                print(f"roboBall {i} Cartesian Coordinates: {cartesian_coords}")
+ 
+        midpoint, direction = ImageProcessor.find_direction(roboball)
+        if roboball and len(roboball) == 3:
+            if midpoint and direction:
+                    # Draw the direction from the midpoint
+                endpoint = (midpoint[0] + direction[0], midpoint[1] + direction[1])
+                cv2.circle(image, midpoint, 10, (0, 0, 255), -1)  # Red dot at midpoint
+                cv2.line(image, midpoint, endpoint, (255, 0, 0), 3)  # Blue line indicating direction
+                print("Midpoint:", midpoint)
+                print("Direction to third point:", direction)
+                cv2.imshow('Directional Image', image)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
         else:
-            print("Ingen robot fundet.")
+            print("Could not find exactly three balls., found ", len(roboball))        
 
+        angle = ImageProcessor.calculate_angle(direction)
+        
+        if angle is not None:
+            print(f"Angle: {angle} degrees")
         cross_contours = ImageProcessor.find_cross_contours(filtered_contours)
         for i, cnt in enumerate(cross_contours):
             cv2.drawContours(image, [cnt], 0, (255, 0, 0), 3)
@@ -471,7 +588,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "/Users/mikkel/Desktop/4.Semester/CDIO/Code/Python/images/Bane 4 3 ugers/WIN_20240605_10_32_31_Pro.jpg"  # Path to your image
+    image_path = "3ball.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)
