@@ -14,44 +14,96 @@ import ComputerVision
 
 
 
-def detect_objects(imageToDetectOn, imageToDrawOn, hsv_filter, maxThreshold,minThreshold,minArea,maxArea,name,rgb_Color):
-    #this hsv filter is used to find the edges of the obstacles
-    
+def detect_objects(imageToDetectOn, imageToDrawOn,vision_image, hsv_filter, maxThreshold,minThreshold,minArea,maxArea,name,rgb_Color,threshold,minPoints,maxPoints):
+       #this hsv filter is used to find the edges of the obstacle
     img = vision_image.apply_hsv_filter(imageToDetectOn, hsv_filter)
     h, s, v = cv.split(img)
-  
     imgray = v
-    #the strength of the edge detection where edxes between are considered weak edges and
-    # are only shown if they are connected to strong edges which is above maxVal
-    maxVal = maxThreshold
-    minVal = minThreshold
-    minArea = minArea
-    maxArea = maxArea
+    blur = cv.GaussianBlur(imgray, (7, 7), cv.BORDER_DEFAULT)
+   
+    _, threshold = cv.threshold(blur, threshold,255, cv.THRESH_BINARY)
     # Find Canny edges 
-    edged = cv.Canny(imgray,minVal, maxVal) 
+    edged = cv.Canny(threshold,minThreshold, maxThreshold) 
+
+
+
     contours, hierarchy = cv.findContours(edged,  
-    cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+    cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
     
 
     for cnt in contours:
         area = cv.contourArea(cnt)
         if maxArea > area > minArea:
-            cv.drawContours(imageToDrawOn, cnt, -1, rgb_Color, 3) 
+            
             peri = cv.arcLength(cnt, True)
             approx = cv.approxPolyDP(cnt, 0.02 * peri, True)
-          
-            x, y, w, h = cv.boundingRect(approx)
-            #cv.rectangle(imageToDrawOn, (x, y), (x + w, y + h), (255, 0, 0), 5)
-            cv.putText(imageToDrawOn, name, (x + w + 20, y + 20), cv.FONT_HERSHEY_COMPLEX, .7, rgb_Color, 2)
-            cv.putText(imageToDrawOn, "Points: " + str(len(approx)), (x + w + 20, y + 45), cv.FONT_HERSHEY_COMPLEX, .7, rgb_Color, 2)
-            cv.putText(imageToDrawOn, "Area: " + str(int(area)), (x + w + 20, y + 70), cv.FONT_HERSHEY_COMPLEX, .7, rgb_Color, 2)
-            for point in approx:
-                cv.circle(imageToDrawOn, tuple(point[0]), 5, (255, 0, 0), 3)  # Adjust circle radius
+            if minPoints <= len(approx) <= maxPoints:
+                cv.drawContours(imageToDrawOn, cnt, -1, (rgb_Color), 3) 
+                x, y, w, h = cv.boundingRect(approx)
+                #cv.rectangle(imageToDrawOn, (x, y), (x + w, y + h), (252, 3, 3), 5)
+                cv.putText(imageToDrawOn, name+ ":" + str(len(approx)), (x + w + 20, y + -5), cv.FONT_HERSHEY_COMPLEX, .7, (rgb_Color), 2)
+                cv.putText(imageToDrawOn, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv.FONT_HERSHEY_COMPLEX, .7, (rgb_Color), 2)
+                cv.putText(imageToDrawOn, "Area: " + str(int(area)), (x + w + 20, y + 45), cv.FONT_HERSHEY_COMPLEX, .7, (rgb_Color), 2)
+                for point in approx:
+                    cv.circle(imageToDrawOn, tuple(point[0]), 5, (rgb_Color), 3)  # Adjust circle radius
+
+    return edged,imageToDrawOn
+def findWhiteBalls(imageToDetectOn, imageToDrawOn,vision_image):
+       #this hsv filter is used to find the edges of the obstacles
+    hsv_filter = HsvFilter(0, 0, 0, 179, 28, 255, 0, 0, 0, 0)
+    img = vision_image.apply_hsv_filter(imageToDetectOn, hsv_filter)
+    
+
+    h, s, v = cv.split(img)
+    #imgBlur = cv.GaussianBlur(imageToFindObstaclesIn, (7, 7), 1)
+    #cv.imshow('blur', imgBlur)
+    #so i proberly allready have the gray scale image
 
     
-    
-    return edged, imageToDrawOn
+    imgray = v
 
+
+    blur = cv.GaussianBlur(imgray, (7, 7), cv.BORDER_DEFAULT)
+    thresholdmin= 161
+    thresholdmax = 255
+    _, threshold = cv.threshold(blur, thresholdmin,thresholdmax, cv.THRESH_BINARY)
+    #rzb = cv.resize(threshold, (960, 540))
+    #cv.imshow('thresh', rzb)
+    
+    #the strength of the edge detection where edxes between are considered weak edges and
+    # are only shown if they are connected to strong edges which is above maxVal
+  
+    threshold1 = 0
+    threshold2 = 200
+    minArea = 50
+    maxArea = 200
+
+    # Find Canny edges 
+    edged = cv.Canny(threshold,threshold1, threshold2) 
+
+
+
+    contours, hierarchy = cv.findContours(edged,  
+    cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    
+
+    for cnt in contours:
+        area = cv.contourArea(cnt)
+        if maxArea > area > minArea:
+            
+            peri = cv.arcLength(cnt, True)
+            approx = cv.approxPolyDP(cnt, 0.02 * peri, True)
+            if 6 <= len(approx) <= 10:
+                cv.drawContours(imageToDrawOn, cnt, -1, (0, 0, 255), 3) 
+                x, y, w, h = cv.boundingRect(approx)
+                #cv.rectangle(imageToDrawOn, (x, y), (x + w, y + h), (252, 3, 3), 5)
+                cv.putText(imageToDrawOn, "Balls: " + str(len(approx)), (x + w + 20, y + -5), cv.FONT_HERSHEY_COMPLEX, .7, (0, 0, 255), 2)
+                cv.putText(imageToDrawOn, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv.FONT_HERSHEY_COMPLEX, .7, (0, 0, 255), 2)
+                cv.putText(imageToDrawOn, "Area: " + str(int(area)), (x + w + 20, y + 45), cv.FONT_HERSHEY_COMPLEX, .7, (0, 0, 255), 2)
+                for point in approx:
+                    cv.circle(imageToDrawOn, tuple(point[0]), 5, (255, 0, 0), 3)  # Adjust circle radius
+
+    return edged,imageToDrawOn
 def findRoundObjects(imageToDetectOn, imageToDrawOn):
        #this hsv filter is used to find the edges of the obstacles
     #hsv_filter = HsvFilter(0, 155, 0, 179, 255, 255, 0, 0, 0, 0)
@@ -87,7 +139,8 @@ def findRoundObjects(imageToDetectOn, imageToDrawOn):
     threshold2 = cv.getTrackbarPos('threshold2', 'Trackbars')
     minArea = cv.getTrackbarPos('minArea', 'Trackbars')
     maxArea = cv.getTrackbarPos('maxArea', 'Trackbars')
-
+    minPoints = cv.getTrackbarPos('minPoints', 'Trackbars')
+    maxPoints = cv.getTrackbarPos('maxPoints', 'Trackbars')
     #minArea = 15000
     # Find Canny edges 
     edged = cv.Canny(threshold,threshold1, threshold2) 
@@ -106,16 +159,17 @@ def findRoundObjects(imageToDetectOn, imageToDrawOn):
     for cnt in contours:
         area = cv.contourArea(cnt)
         if maxArea > area > minArea:
-            cv.drawContours(imageToDrawOn, cnt, -1, (0, 255, 0), 3) 
+            
             peri = cv.arcLength(cnt, True)
             approx = cv.approxPolyDP(cnt, 0.02 * peri, True)
-          
-            x, y, w, h = cv.boundingRect(approx)
-            cv.rectangle(imageToDrawOn, (x, y), (x + w, y + h), (255, 0, 0), 5)
-            cv.putText(imageToDrawOn, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv.FONT_HERSHEY_COMPLEX, .7, (0, 255, 0), 2)
-            cv.putText(imageToDrawOn, "Area: " + str(int(area)), (x + w + 20, y + 45), cv.FONT_HERSHEY_COMPLEX, .7, (0, 255, 0), 2)
-            for point in approx:
-                cv.circle(imageToDrawOn, tuple(point[0]), 5, (255, 0, 0), 3)  # Adjust circle radius
+            if minPoints <= len(approx) <= maxPoints:
+                cv.drawContours(imageToDrawOn, cnt, -1, (0, 255, 0), 3) 
+                x, y, w, h = cv.boundingRect(approx)
+                cv.rectangle(imageToDrawOn, (x, y), (x + w, y + h), (255, 0, 0), 5)
+                cv.putText(imageToDrawOn, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv.FONT_HERSHEY_COMPLEX, .7, (0, 255, 0), 2)
+                cv.putText(imageToDrawOn, "Area: " + str(int(area)), (x + w + 20, y + 45), cv.FONT_HERSHEY_COMPLEX, .7, (0, 255, 0), 2)
+                for point in approx:
+                    cv.circle(imageToDrawOn, tuple(point[0]), 5, (255, 0, 0), 3)  # Adjust circle radius
 
     #https://docs.opencv.org/4.x/d9/d61/tutorial_py_morphological_ops.html
     #removes noise from image 
@@ -126,11 +180,11 @@ def findRoundObjects(imageToDetectOn, imageToDrawOn):
 # since findContours alters the image 
     
     
-    return edged, output_image
+    return edged,imageToDrawOn
 
 def findArena(imageToDetectOn, imageToDrawOn): 
     hsv_filter = HsvFilter(0, 104, 0, 179, 255, 255, 0, 0, 0, 0)
-    img = vision_image.apply_hsv_filter(imageToDetectOn, hsv_filter)
+    img = Vision.apply_hsv_filter(imageToDetectOn, hsv_filter)
     h, s, v = cv.split(img)
     imgray = v
     blur = cv.GaussianBlur(imgray, (7, 7), cv.BORDER_DEFAULT)
@@ -309,7 +363,7 @@ def main(mode):
     if mode == "camera":  
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
-    if mode == "window":
+    elif mode == "window":
         wincap = WindowCapture(None)
         print("window mode")
     elif mode == "test":
@@ -371,6 +425,17 @@ def main(mode):
                 continue
 
             inputimg = useMask(screenshot,mask)
+            output_image = inputimg.copy()
+            #ballcon, output_image = ComputerVision.ImageProcessor.find_balls(inputimg,output_image)
+            outputhsv_image = vision_image.apply_hsv_filter(inputimg)
+            #outputedge_image = vision_image.apply_edge_filter(outputhsv_image)
+            edged, output_image = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 255, 255, 124, 0, 0, 0), 1000,1000,400,800,"cross",(0, 255, 255),182,8,12)
+            #egg
+            edged, output_image = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 243, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=100,maxArea=600,name ="egg",rgb_Color=(255, 0, 204),threshold=227,minPoints=7,maxPoints=12)
+            #orange
+            edged, output_image = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 54, 0, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=50,maxArea=200,name ="orange",rgb_Color=(255, 102, 102),threshold=178,minPoints=6,maxPoints=10)
+            edged, output_image = findWhiteBalls(inputimg,output_image,vision_image)
+            edged, output_image = findRoundObjects(outputhsv_image,output_image)
             #cross = ComputerVision.find_cross_contours(screenshot)    
             #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
 
@@ -392,15 +457,15 @@ def main(mode):
             #edged, output_image = findCross(inputimg,screenshot)
             #edged, output_image = findObstacles(outputhsv_image,screenshot)
             #edged, output_image = findRoundObjects(outputhsv_image,screenshot)
-            '''
+            
             rzhsv = cv.resize(outputhsv_image, (960, 540))
             cv.imshow('hsv', rzhsv)
 
             rze = cv.resize(edged, (960, 540))
             cv.imshow('edges', rze)
-            '''
+            
         
-            screenoutput = cv.resize(inputimg, (960, 540))
+            screenoutput = cv.resize(output_image, (960, 540))
             cv.imshow('Computer Vision', screenoutput)
 
             #screengray = cv.resize(imgray, (960, 540))
