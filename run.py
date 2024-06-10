@@ -1,36 +1,43 @@
+import paramiko
 from path import find_closest_ball
-from degrees_gyro import turn_to_target
+from ComputerVision import ImageProcessor
 
-from pybricks.hubs import EV3Brick
-from pybricks.ev3devices import Motor, TouchSensor, ColorSensor, InfraredSensor, UltrasonicSensor, GyroSensor
-from pybricks.parameters import Port, Stop, Direction, Button, Color
-from pybricks.tools import wait, StopWatch, DataLog
-from pybricks.robotics import DriveBase
-from pybricks.media.ev3dev import SoundFile, ImageFile
+def send_commands_via_ssh(host, port, username, password, commands):
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(host, port, username, password)
+        
+        for command in commands:
+            stdin, stdout, stderr = client.exec_command(command)
+            print(f"Output: {stdout.read().decode()}")
+            err = stderr.read().decode()
+            if err:
+                print(f"Error: {err}")
+                
+    finally:
+        client.close()
 
+if __name__ == "__main__":
+    # Example robot parameters
+    robot_position = (0,0)#ImageProcessor.get_robot_position()
+    balls = [(1,1)] #ImageProcessor.get_robot_position().get_balls()
+    robot_orientation =0  #ImageProcessor.get_robot_orientation()
 
-
-robot_position = (0, 0)  # Example robot position get pos
-robot_angle=0 #get angle
-balls = [(3, 4), (1, 2), (5, 5)]  # Example balls positions get balls
-closest_ball, distance_to_ball, angle_to_turn = find_closest_ball(robot_position, balls, robot_angle)
-
-print(closest_ball, distance_to_ball, angle_to_turn)
-
-
-ev3 = EV3Brick()
-
-# Initialize the motors.
-left_motor = Motor(Port.B)
-right_motor = Motor(Port.C)
-
-# Initialize the drive base.
-robot = DriveBase(left_motor, right_motor, wheel_diameter=4.32, axle_track=13.3)
-gyro_sensor = GyroSensor(Port.S1)
-
-
-gyro_sensor.reset_angle(0)
+    # Call imported functions
+    closest_ball, distance_to_ball, angle_to_turn = find_closest_ball(robot_position, balls, robot_orientation)
+    print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
 
 
-turn_to_target(robot, gyro_sensor, angle_to_turn)
+    # Define SSH connection details and commands based on previous results
+    host = '172.20.10.3'
+    port = 1024
+    username = 'robot'
+    password = 'maker'
+    commands = [
+        f"TURN {angle_to_turn}",
+        f"FORWARD {distance_to_ball}"
+    ]
 
+    # Send commands via SSH
+    send_commands_via_ssh(host, port, username, password, commands)

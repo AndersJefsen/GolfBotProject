@@ -25,11 +25,11 @@ def find_closest_ball(robot_position, balls,robot_orientation):
             closest_ball = ball
             angle_to_turn = calculate_angle(robot_position, ball,robot_orientation)
     
-    return closest_ball, min_distance, angle_to_turn
+    return  closest_ball,distance, angle_to_turn
 
 # Example usage:
-robot_position = (0, 0)  # Example robot position
-balls = [(3, 4), (1, 2), (5, 5)]  # Example balls positions
-robot_orientation=0
-closest_ball, distance_to_ball, angle_to_turn = find_closest_ball(robot_position, balls, robot_orientation)
-
+# robot_position = (0, 0)  # Example robot position
+# balls = [(3, 4), (1, 2), (5, 5)]  # Example balls positions
+# robot_orientation=0
+# closest_ball, distance_to_ball, angle_to_turn = find_closest_ball(robot_position, balls, robot_orientation)
+# print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
