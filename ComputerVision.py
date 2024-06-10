@@ -1,6 +1,7 @@
 import cv2
 
 import numpy as np
+import sklearn as sklearn
 
 
 class ImageProcessor:
@@ -139,15 +140,15 @@ class ImageProcessor:
         return big_ball_contour
 
 
-    
+
     @staticmethod
     def find_orangeballs_hsv(image, min_size=300, max_size=1000000000):
         # Coneert the image to HSV color space
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
         # Define range for orange color in HSV
-        orange_lower = np.array([150, 50, 20], dtype="uint8")
-        orange_upper = np.array([250, 200, 90], dtype="uint8")
+        orange_lower = np.array([15, 100, 20], dtype="uint8")
+        orange_upper = np.array([25, 255, 255], dtype="uint8")
 
         # Threshhold the HSV image to get only white colors
         orange_mask = cv2.inRange(hsv_image, orange_lower, orange_upper)
@@ -533,6 +534,9 @@ class ImageProcessor:
         if top_right_corner is not None:
             cv2.circle(image, top_right_corner, 10, (255, 0, 135), -1)
 
+        ball_contours = ImageProcessor.find_balls_hsv(image, min_size=300, max_size=1000)
+        orange_ballcontours = ImageProcessor.find_orangeballs_hsv(image, min_size=300, max_size=1000)
+
         ball_contours = ImageProcessor.find_balls_threshold(image, min_size=300, max_size=1000)
         for i, contour in enumerate(ball_contours, 1):
             x, y, w, h = cv2.boundingRect(contour)
@@ -545,6 +549,21 @@ class ImageProcessor:
                                                                        bottom_right_corner, top_left_corner,
                                                                        top_right_corner)
                 print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
+
+        # Process orange ball contour
+        if orange_ballcontours:
+            contour = orange_ballcontours[0]
+            x, y, w, h = cv2.boundingRect(contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(image, "Orange Ball", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            if bottom_left_corner is not None:
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
+                                                                               bottom_right_corner, top_left_corner,
+                                                                               top_right_corner)
+                print(f"Orange Ball Cartesian Coordinates: {cartesian_coords}")
+
 
         big_ball_contour = ImageProcessor.find_bigball_threshold(image, min_size=1000, max_size=5000)
         if big_ball_contour is not None:
