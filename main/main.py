@@ -4,17 +4,18 @@ import cv2 as cv
 from vision import Vision
 from hsvfilter import HsvFilter
 from edgefilter import EdgeFilter
-
+from com import command_robot
 import numpy as np
 import sys
 import os
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision 
 
 
 
 
-def detect_objects(imageToDetectOn, imageToDrawOn,vision_image, hsv_filter, maxThreshold,minThreshold,minArea,maxArea,name,rgb_Color,threshold,minPoints,maxPoints):
+def detect_objects(imageToDetectOn, imageToDrawOn,vision_image, hsv_filter, maxThreshold,minThreshold,minArea,maxArea,name,rgb_Color,threshold,minPoints,maxPoints,arenaCorners):
        #this hsv filter is used to find the edges of the obstacle
     img = vision_image.apply_hsv_filter(imageToDetectOn, hsv_filter)
     h, s, v = cv.split(img)
@@ -30,6 +31,7 @@ def detect_objects(imageToDetectOn, imageToDrawOn,vision_image, hsv_filter, maxT
     contours, hierarchy = cv.findContours(edged,  
     cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
     
+    cordinats = []
 
     for cnt in contours:
         area = cv.contourArea(cnt)
@@ -40,14 +42,20 @@ def detect_objects(imageToDetectOn, imageToDrawOn,vision_image, hsv_filter, maxT
             if minPoints <= len(approx) <= maxPoints:
                 cv.drawContours(imageToDrawOn, cnt, -1, (rgb_Color), 3) 
                 x, y, w, h = cv.boundingRect(approx)
-                #cv.rectangle(imageToDrawOn, (x, y), (x + w, y + h), (252, 3, 3), 5)
-                cv.putText(imageToDrawOn, name+ ":" + str(len(approx)), (x + w + 20, y + -5), cv.FONT_HERSHEY_COMPLEX, .7, (rgb_Color), 2)
-                cv.putText(imageToDrawOn, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv.FONT_HERSHEY_COMPLEX, .7, (rgb_Color), 2)
-                cv.putText(imageToDrawOn, "Area: " + str(int(area)), (x + w + 20, y + 45), cv.FONT_HERSHEY_COMPLEX, .7, (rgb_Color), 2)
+                center_x = x + w // 2
+                center_y = y + h // 2
+                x_cart, y_cart = ComputerVision.ImageProcessor.convert_to_cartesian((center_x, center_y), arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+                x_cart = round(x_cart, 2)
+                y_cart = round(y_cart, 2)
+                cv.putText(imageToDrawOn, f"{name}: {len(approx)}", (x + w + 20, y - 5), cv.FONT_HERSHEY_COMPLEX, 0.7, rgb_Color, 1)
+                cv.putText(imageToDrawOn, f"Points: {len(approx)}", (x + w + 20, y + 20), cv.FONT_HERSHEY_COMPLEX, 0.7, rgb_Color, 1)
+                cv.putText(imageToDrawOn, f"Area: {int(area)}", (x + w + 20, y + 45), cv.FONT_HERSHEY_COMPLEX, 0.7, rgb_Color, 1)
+                cv.putText(imageToDrawOn, f"(x,y): ({x_cart},{y_cart})", (x + w + 20, y + 70), cv.FONT_HERSHEY_COMPLEX, 0.7, rgb_Color, 1)
+                cordinats.append((x_cart, y_cart))
                 for point in approx:
-                    cv.circle(imageToDrawOn, tuple(point[0]), 5, (rgb_Color), 3)  # Adjust circle radius
+                    cv.circle(imageToDrawOn, tuple(point[0]), 5, (rgb_Color), 1)  # Adjust circle radius
 
-    return edged,imageToDrawOn
+    return edged,imageToDrawOn,cordinats
 def findWhiteBalls(imageToDetectOn, imageToDrawOn,vision_image):
        #this hsv filter is used to find the edges of the obstacles
     hsv_filter = HsvFilter(0, 0, 0, 179, 28, 255, 0, 0, 0, 0)
@@ -244,43 +252,10 @@ def findArena(imageToDetectOn, imageToDrawOn):
         print("No points found.")
         return edged, imageToDrawOn
 
-def findRobot(imageToDetectOn, imageToDrawOn):
-    #this hsv filter is used to find the edges of the obstacles
-    hsv_filter = HsvFilter(98, 74, 0, 145, 255, 255, 0, 0, 0, 0)
-    maxVal = 200
-    minVal = 100
-    minArea = 259
-    maxArea = 10000
-    color = (0, 42, 255)
-    name = "robot"
-    
-    return detect_objects(imageToDetectOn, imageToDrawOn, hsv_filter, maxVal, minVal, minArea, maxArea, name, color)
 
-def findCross(imageToDetectOn, imageToDrawOn):
-    hsv_filter = HsvFilter(0, 96, 137, 179, 255, 227, 0, 0, 0, 0)
-    maxVal = 0
-    minVal = 0
-    minArea = 3539
-    maxArea = 5181
-    color = (157, 50, 168)
-    name = "cross"
 
-    return detect_objects(imageToDetectOn, imageToDrawOn, hsv_filter, maxVal, minVal, minArea, maxArea, name, color)
-#still missing folowing functions
-def findOrangeBall(imageToDetectOn, imageToDrawOn):
-    hsv_filter = HsvFilter(0, 107, 209, 179, 255, 255, 0, 0, 0, 0)
-    maxVal = 100
-    minVal = 200
-    minArea = 311
-    maxArea = 1000
-    color = (255, 0, 200)
-    name = "orange ball"
 
-    return detect_objects(imageToDetectOn, imageToDrawOn, hsv_filter, maxVal, minVal, minArea, maxArea, name, color)
 
-#def findWhiteBall(imageToDetectOn, imageToDrawOn):
-#def findEgg(imageToDetectOn, imageToDrawOn):
-#def findArena(imageToDetectOn, imageToDrawOn):
 
 def findObstacles(screenshot, output_image):
     #this hsv filter is used to find the edges of the obstacles
@@ -381,6 +356,7 @@ def main(mode):
     vision_image.init_control_gui()
 
     findArena = False
+    
     while not findArena:
         try:
             if mode == "camera":
@@ -408,7 +384,7 @@ def main(mode):
         except Exception as e:
             print(f"An error occurred while trying to detect arena: {e}")
             break
-
+    
             
 
     loop_time = time()
@@ -423,19 +399,43 @@ def main(mode):
             if screenshot is None:
                 print("Failed to capture screenshot.")
                 continue
+            
+            ballcordinats = []
+            eggcordinats = []
+            orangecordinats = []
+            robotcordinats = []
+            crosscordinats = []
 
             inputimg = useMask(screenshot,mask)
+            #inputimg = screenshot
             output_image = inputimg.copy()
             #ballcon, output_image = ComputerVision.ImageProcessor.find_balls(inputimg,output_image)
             outputhsv_image = vision_image.apply_hsv_filter(inputimg)
             #outputedge_image = vision_image.apply_edge_filter(outputhsv_image)
-            edged, output_image = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 255, 255, 124, 0, 0, 0), 1000,1000,400,800,"cross",(0, 255, 255),182,8,12)
+            edged, output_image,crosscordinats = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 255, 255, 124, 0, 0, 0), 1000,1000,400,800,"cross",(0, 255, 255),182,8,12,arenaCorners)
             #egg
-            edged, output_image = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 243, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=100,maxArea=600,name ="egg",rgb_Color=(255, 0, 204),threshold=227,minPoints=7,maxPoints=12)
+            edged, output_image,eggcordinats = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 243, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=100,maxArea=600,name ="egg",rgb_Color=(255, 0, 204),threshold=227,minPoints=7,maxPoints=12,arenaCorners=arenaCorners)
             #orange
-            edged, output_image = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 54, 0, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=50,maxArea=200,name ="orange",rgb_Color=(255, 102, 102),threshold=178,minPoints=6,maxPoints=10)
-            edged, output_image = findWhiteBalls(inputimg,output_image,vision_image)
-            edged, output_image = findRoundObjects(outputhsv_image,output_image)
+            edged, output_image,orangecordinats = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 54, 0, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=50,maxArea=200,name ="orange",rgb_Color=(183, 102, 52),threshold=178,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
+            #robot
+            #edged, output_image = detect_objects(inputimg,output_image,vision_image, HsvFilter(91, 107, 0, 154, 255, 207, 0, 0, 0, 0), minThreshold=0,maxThreshold=1000,minArea=30,maxArea=200,name ="robot",rgb_Color=(0, 42, 255),threshold=28,minPoints=8,maxPoints=8)
+
+            #edged, output_image = findWhiteBalls(inputimg,output_image,vision_image)
+            edged, output_image,ballcordinats = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 28, 255, 0, 0, 0, 0), minThreshold=0,maxThreshold=200,minArea=50,maxArea=200,name ="ball",rgb_Color=(0, 0, 255),threshold=161,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
+
+            ballcon, output_image,angle, midpoint = ComputerVision.ImageProcessor.find_robot_withOutput(inputimg,output_image,bottom_left_corner=arenaCorners[0], bottom_right_corner=arenaCorners[1], top_left_corner=arenaCorners[3], top_right_corner=arenaCorners[2])
+            
+            
+
+            if(angle is not None and midpoint is not None):
+             correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+             print(correctmid)
+             screenoutput = cv.resize(output_image, (960, 540))
+             cv.imshow('Computer Vision', screenoutput)
+             cv.waitKey(0)
+             command_robot(correctmid, ballcordinats, angle)
+             break
+            # edged, output_image = findRoundObjects(outputhsv_image,output_image)
             #cross = ComputerVision.find_cross_contours(screenshot)    
             #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
 
@@ -458,15 +458,15 @@ def main(mode):
             #edged, output_image = findObstacles(outputhsv_image,screenshot)
             #edged, output_image = findRoundObjects(outputhsv_image,screenshot)
             
-            rzhsv = cv.resize(outputhsv_image, (960, 540))
-            cv.imshow('hsv', rzhsv)
-
+            #rzhsv = cv.resize(outputhsv_image, (960, 540))
+            #cv.imshow('hsv', rzhsv)
+            screenoutput = cv.resize(output_image, (960, 540))
+            cv.imshow('Computer Vision', screenoutput)
             rze = cv.resize(edged, (960, 540))
             cv.imshow('edges', rze)
             
         
-            screenoutput = cv.resize(output_image, (960, 540))
-            cv.imshow('Computer Vision', screenoutput)
+            
 
             #screengray = cv.resize(imgray, (960, 540))
             

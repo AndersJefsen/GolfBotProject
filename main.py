@@ -322,6 +322,7 @@ vision_image = Vision('ball.png')
 vision_image.init_control_gui()
 
 findArena = False
+'''
 while not findArena:
     try:
         ret, screenshot = wincap.read()
@@ -340,7 +341,7 @@ while not findArena:
     except Exception as e:
         print(f"An error occurred: {e}")
         break
-
+'''
         
 
 loop_time = time()
