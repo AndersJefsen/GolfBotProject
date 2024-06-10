@@ -38,10 +38,10 @@ if __name__ == "__main__":
     ]
 
     # Send commands via SSH
-    #send_commands_via_ssh(host, port, username, password, commands)
-    
+    send_commands_via_ssh(host, port, username, password, commands)
+    '''
     #tests, right from camera is robot orientation 0
-test_cases = [
+    test_cases = [
     {"robot_position": (0, 0), "balls": [(0, 1)], "robot_orientation": 0, "expected_angle": -90},
     {"robot_position": (0, 0), "balls": [(0, 1)], "robot_orientation": 180, "expected_angle": 90},
     {"robot_position": (0, 0), "balls": [(1, 1)], "robot_orientation": 0, "expected_angle": -45},
@@ -57,3 +57,4 @@ for case in test_cases:
     print(f"Test: Robot at {case['robot_position']} with orientation {case['robot_orientation']}°")
     print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball:.2f}, Angle to turn: {angle_to_turn}°")
     print(f"Expected Angle to turn: {case['expected_angle']}°\n")
+    '''
