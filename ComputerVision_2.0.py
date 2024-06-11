@@ -57,13 +57,13 @@ class ImageProcessor:
         return ball_contours, output_image
 
     @staticmethod
-    def find_orangeballs_hsv(image, min_size=300, max_size=1000000000):
+    def find_orangeball_hsv(image, min_size=300, max_size=1000000000):
         # Coneert the image to HSV color space
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
         # Define range for orange color in HSV
-        orange_lower = np.array([150, 50, 20], dtype="uint8")
-        orange_upper = np.array([250, 200, 90], dtype="uint8")
+        orange_lower = np.array([15, 100, 20], dtype="uint8")
+        orange_upper = np.array([30, 255, 255], dtype="uint8")
 
         # Threshhold the HSV image to get only white colors
         orange_mask = cv2.inRange(hsv_image, orange_lower, orange_upper)
@@ -74,7 +74,7 @@ class ImageProcessor:
         orange_mask = cv2.morphologyEx(orange_mask, cv2.MORPH_OPEN, kernel)
 
         # Load maskerne på billedet
-        cv2.imshow('Processed Image', orange_mask)
+        cv2.imshow('Processed Image Orange ball', orange_mask)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
@@ -91,7 +91,10 @@ class ImageProcessor:
                 circularity = 4 * np.pi * (area / (perimeter * perimeter))
                 if 0.7 <= circularity <= 1.2:
                     orangeball_contours.append(cnt)
-        return orangeball_contours
+        output_image = image.copy()
+        cv2.drawContours(output_image, orangeball_contours, -1, (0, 255, 0), 2)
+
+        return orangeball_contours, output_image
 
     @staticmethod
     def find_robot(image, min_size=0, max_size=100000):
@@ -297,6 +300,29 @@ class ImageProcessor:
         return robot_coordinates, output_image
 
     @staticmethod
+    def convert_orangeball_to_cartesian(image, orangeball_contours, bottom_left_corner, bottom_right_corner, top_right_corner,
+                                        top_left_corner):
+        output_image = image.copy()
+        cartesian_coords = None
+
+        if orangeball_contours:
+            contour = orangeball_contours[0]
+            x, y, w, h = cv2.boundingRect(contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+
+            if bottom_left_corner is not None:
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
+                                                                       bottom_right_corner, top_left_corner,
+                                                                       top_right_corner)
+                print(f"Orange Ball Cartesian Coordinates: {cartesian_coords}")
+
+            cv2.rectangle(output_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(output_image, "1", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+        return cartesian_coords, output_image
+
+    @staticmethod
     def process_image(image):
         filtered_contours, output_image = ImageProcessor.find_arena(image)
 
@@ -371,6 +397,15 @@ class ImageProcessor:
                                                                                             top_left_corner,
                                                                                             top_right_corner)
 
+        orangeball_contours, image_with_orangeballs = ImageProcessor.find_orangeball_hsv(output_image, min_size=300,
+                                                                                          max_size=1000)
+        cartesian_coords_orange, image_with_orangeballs = ImageProcessor.convert_orangeball_to_cartesian(output_image,
+                                                                                                         orangeball_contours,
+                                                                                                         bottom_left_corner,
+                                                                                                         bottom_right_corner,
+                                                                                                         top_right_corner,
+                                                                                                         top_left_corner)
+
         cv2.imshow('Final Image with cross', image_with_cross)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -383,9 +418,13 @@ class ImageProcessor:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
+        cv2.imshow('Final Image with Orange Balls', image_with_orangeballs)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
-    image_path = "images/Bane 4 3 ugers/447741015_744745830924918_635656015372946539_n.jpg"  # Path to your image
+    image_path = "images/Bane 4 3 ugers/447706714_323209107495625_5657033470690724482_n.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)

@@ -1,4 +1,3 @@
-from windowcapture import WindowCapture
 from time import time
 import cv2 as cv
 from vision import Vision
