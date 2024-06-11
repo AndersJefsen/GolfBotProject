@@ -166,9 +166,8 @@ class ImageProcessor:
 
     #PETERS VERSION
     @staticmethod
-    def find_robot(image, min_size=0, max_size=100000):
-        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        output_Image = image.copy()
+    def find_robot(indput_Image, min_size=0, max_size=100000):
+        hsv_image = cv2.cvtColor(indput_Image, cv2.COLOR_BGR2HSV)
 
         blue_lower = np.array([105, 100, 100], dtype="uint8")
         blue_upper = np.array([131, 255, 255], dtype="uint8")
@@ -180,15 +179,16 @@ class ImageProcessor:
         kernel = np.ones((5, 5), np.uint8)
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, kernel)
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, kernel)
-
+        """ koden for at se masken bliver brugt
         cv2.imshow('Processed Image Robot', blue_mask)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+        """
         # Find contours
         contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if len(contours) == 0:
-            return None, output_Image
+            return None
 
         robot_counters = []
         for cnt in contours:
@@ -204,13 +204,13 @@ class ImageProcessor:
 
         if len(robot_counters) == 0:
             print("No round contours found.")
-            return None, output_Image
+            return None
 
         # Sort the round contours by area and select the three largest
         robot_counters = sorted(robot_counters, key=cv2.contourArea, reverse=True)[:3]
 
 
-        return robot_counters, output_Image
+        return robot_counters
 
 
     """
@@ -329,23 +329,23 @@ class ImageProcessor:
         return angle_degrees
 
     @staticmethod
-    def calculate_robot_midpoint_and_angle(cartesian_coords, outPutImage):
+    def calculate_robot_midpoint_and_angle(cartesian_coords, output_Image):
         if len(cartesian_coords) != 3:
             print("Error: Expected exactly three coordinates for the robot.")
-            return None, None, outPutImage
+            return None, None, output_Image
 
         midpoint, direction = ImageProcessor.find_direction(cartesian_coords)
         if midpoint and direction:
             # Draw the direction from the midpoint
             endpoint = (int(midpoint[0] + direction[0]), int(midpoint[1] + direction[1]))
-            cv2.circle(outPutImage, (int(midpoint[0]), int(midpoint[1])), 10, (0, 0, 255), -1)  # Red dot at midpoint
-            cv2.line(outPutImage, (int(midpoint[0]), int(midpoint[1])), endpoint, (255, 0, 0),
+            cv2.circle(output_Image, (int(midpoint[0]), int(midpoint[1])), 10, (0, 0, 255), -1)  # Red dot at midpoint
+            cv2.line(output_Image, (int(midpoint[0]), int(midpoint[1])), endpoint, (255, 0, 0),
                      3)  # Blue line indicating direction
 
             angle = ImageProcessor.calculate_angle(direction)
-            return midpoint, angle, outPutImage
+            return midpoint, angle, output_Image
 
-        return None, None, outPutImage
+        return None, None, output_Image
 
     @staticmethod
     def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
@@ -584,6 +584,13 @@ class ImageProcessor:
 
         return cartesian_coords, output_Image
 
+    def process_robot(indput_Image,output_Image,bottom_left_corner, bottom_right_corner,top_right_corner,top_left_corner):
+
+        contours = ImageProcessor.find_robot(indput_Image, output_Image)
+        cartesian_coords, output_Image = ImageProcessor.convert_robot_to_cartesian(indput_Image,contours,bottom_left_corner, bottom_right_corner,top_right_corner,top_left_corner)
+        midtpunkt,angle,output_Image = ImageProcessor.calculate_robot_midpoint_and_angle(cartesian_coords, output_Image)
+
+        return midtpunkt, angle, output_Image
     @staticmethod
     def process_image(image):
 
