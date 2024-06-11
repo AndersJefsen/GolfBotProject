@@ -37,7 +37,7 @@ while True:
     distance_traveled = robot.distance() 
 
     # Check if the robot has traveled 100cm
-    if distance_traveled >= 206:
+    if distance_traveled >= 103:
         # Stop the robot
         robot.stop()
         break
