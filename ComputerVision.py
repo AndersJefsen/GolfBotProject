@@ -471,7 +471,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "/Users/mikkel/Desktop/4.Semester/CDIO/Code/Python/images/Bane 4 3 ugers/WIN_20240605_10_32_31_Pro.jpg"  # Path to your image
+    image_path = "/Users/mikkel/Desktop/4.Semester/CDIO/Code/Python/images/Bane (blå trekant) 3 ugers/WIN_20240606_12_34_00_Pro.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)
