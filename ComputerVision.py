@@ -506,7 +506,7 @@ class ImageProcessor:
     @staticmethod
     def convert_balls_to_cartesian(image, ball_contours, bottom_left_corner, bottom_right_corner, top_right_corner,
                                    top_left_corner):
-        cartesian_coords_list = []
+        cartesian_coords = []
         output_Image = image.copy()
 
         for i, contour in enumerate(ball_contours, 1):
@@ -515,14 +515,14 @@ class ImageProcessor:
             center_y = y + h // 2
 
             if bottom_left_corner is not None:
-                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
+                cartesian_coords.append(ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
                                                                        bottom_right_corner, top_left_corner,
-                                                                       top_right_corner)
+                                                                       top_right_corner))
                 print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
 
             cv2.rectangle(output_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
             cv2.putText(output_Image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        return cartesian_coords_list, output_Image
+        return cartesian_coords, output_Image
 
     @staticmethod
     def convert_robot_to_cartesian(output_image, robot_contours, bottom_left_corner, bottom_right_corner, top_left_corner,
@@ -602,13 +602,12 @@ class ImageProcessor:
         midtpunkt = None
         angle = None
         contours = ImageProcessor.find_robot(indput_Image, output_Image)
-        print("contours works")
+       
         cartesian_coords, output_Image = ImageProcessor.convert_robot_to_cartesian(output_Image,contours,bottom_left_corner, bottom_right_corner,top_right_corner,top_left_corner)
-        print("cartesian works")
-        print(cartesian_coords)
+        
         if(contours is not None):
             midtpunkt,angle,output_Image = ImageProcessor.calculate_robot_midpoint_and_angle(contours, output_Image)
-        print("midtpunkt works")
+        
 
         return midtpunkt, angle, output_Image
     @staticmethod

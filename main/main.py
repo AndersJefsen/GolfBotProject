@@ -446,16 +446,26 @@ def main(mode):
           
             midpoint, angle, output_image = ComputerVision.ImageProcessor.process_robot(inputimg,output_image,bottom_left_corner= arenaCorners[0], bottom_right_corner=arenaCorners[1],top_right_corner = arenaCorners[2],top_left_corner= arenaCorners[3])
            
-            display_thread = threading.Thread(target=show_image, args=(output_image,))
-            display_thread.start()
+            #display_thread = threading.Thread(target=show_image, args=(output_image,))
+            #display_thread.start()
+            screenoutput = cv.resize(output_image, (960, 540))
+            cv.imshow('Computer Vision', screenoutput)
             if(mode == "robot"):
-                if(angle is not None and midpoint is not None):
+                if(angle is not None and midpoint is not None and ballcordinats):
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+                    '''
+                    print("ballcord length:")
+                    print(len(ballcordinats))
+                    print("ballcontours length:")
+                    print(len(ballcontours))
+                    print("correct mid")
                     print(correctmid)
                     
+                    print("ball cords")
+                    print(ballcordinats)
+                    '''
+                    com.command_robot(correctmid, ballcordinats, angle,socket)
                     
-                    com.command_robot(correctmid, ballcordinats, angle)
-                    break
             
             edged, output_image = findRoundObjects(outputhsv_image,output_image)
             #cross = ComputerVision.find_cross_contours(screenshot)    
