@@ -30,7 +30,66 @@ class ImageProcessor:
             y = cy + scale * (y - cy)
             scaled_contour.append([[int(x), int(y)]])
         return np.array(scaled_contour, dtype=np.int32)
+    @staticmethod
+    def convert_balls_to_cartesian(output_image,ball_contours,bottom_left_corner,bottom_right_corner,top_right_corner,top_left_corner):
+        cartesian_coords =[]
+        
 
+        for i, contour in enumerate(ball_contours, 1):
+            x, y, w, h = cv2.boundingRect(contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+
+            if bottom_left_corner is not None:
+                cartesian_coords.append(ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
+                                                                       bottom_right_corner, top_left_corner,
+                                                                       top_right_corner))
+                print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
+
+            cv2.rectangle(output_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(output_image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+           
+        return cartesian_coords, output_image
+    @staticmethod
+    def find_balls_hsv(inputImage,output_image, min_size=80, max_size=200): #Størrelsen af farven hvid der skal findes
+        # Coneert the image to HSV color space
+        hsv_image = cv2.cvtColor(inputImage, cv2.COLOR_BGR2HSV)
+
+        # Define range for white color in HSV
+        white_lower = np.array([0, 0, 200], dtype="uint8")
+        white_upper = np.array([180, 60, 255], dtype="uint8")
+
+        # Threshhold the HSV image to get only white colors
+        white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
+
+        # Use morphological operations to clean up the mask
+        kernel = np.ones((5, 5), np.uint8)
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
+        white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
+
+        # Load maskerne på billedet
+       
+
+        # Find contours
+        contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        ball_contours = []
+        # Logikken for at finde countours på boldene
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if min_size <= area <= max_size:
+                perimeter = cv2.arcLength(cnt, True)
+                if perimeter == 0:
+                    continue
+                circularity = 4 * np.pi * (area / (perimeter * perimeter))
+                if 0.7 <= circularity <= 1.2:
+                    ball_contours.append(cnt)
+        
+        cv2.drawContours(output_image, ball_contours, -1, (0,255,0),2)
+    
+      
+        return ball_contours, output_image
+    '''
     @staticmethod
     def find_balls_hsv(image, min_size=300, max_size=1000000000):
         # Coneert the image to HSV color space
@@ -67,7 +126,7 @@ class ImageProcessor:
                 if 0.7 <= circularity <= 1.2:
                     ball_contours.append(cnt)
         return ball_contours
-
+    '''
     @staticmethod
     def find_balls_threshold(image, min_size=300, max_size=1000000000, threshold=180):
         # Convert the image to grayscale
@@ -277,6 +336,7 @@ class ImageProcessor:
                     ball_contours.append(cnt)
         
         roboball = ball_contours 
+        
         for i, contour in enumerate(roboball, 1):
             x, y, w, h = cv2.boundingRect(contour)
             center_x = x + w // 2
@@ -288,7 +348,8 @@ class ImageProcessor:
                                                                        bottom_right_corner, top_left_corner,
                                                                        top_right_corner)
                 #print(f"roboBall {i} Cartesian Coordinates: {cartesian_coords}")
- 
+                
+        
         midpoint, direction = ImageProcessor.find_direction(roboball)
         if roboball and len(roboball) == 3:
             if midpoint and direction:
@@ -301,6 +362,7 @@ class ImageProcessor:
                 
         #else:
             #print("Could not find exactly three balls., found ", len(roboball))        
+        
 
         angle = None
         if direction:
@@ -308,6 +370,7 @@ class ImageProcessor:
         
         if angle is not None:
             print(f"Angle: {angle} degrees")
+        print("here")
         return ball_contours, outPutImage, angle, midpoint
     @staticmethod
     def find_direction(contours):

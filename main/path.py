@@ -23,7 +23,7 @@ def find_closest_ball(robot_position, balls,robot_orientation):
         if distance < min_distance:
             min_distance = distance
             closest_ball = ball
-            angle_to_turn = calculate_angle(robot_position, ball,robot_orientation)
+            angle_to_turn = calculate_angle(robot_position, ball,robot_orientation)+180
     
     return  closest_ball,distance, angle_to_turn
 

@@ -17,9 +17,9 @@ class ImageProcessor:
 
 
     @staticmethod
-    def find_balls_hsv(image, min_size=300, max_size=1000000000): #Størrelsen af farven hvid der skal findes
+    def find_balls_hsv(inputImage,output_image, min_size=300, max_size=1000000000): #Størrelsen af farven hvid der skal findes
         # Coneert the image to HSV color space
-        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        hsv_image = cv2.cvtColor(inputImage, cv2.COLOR_BGR2HSV)
 
         # Define range for white color in HSV
         white_lower = np.array([0, 0, 200], dtype="uint8")
@@ -51,7 +51,7 @@ class ImageProcessor:
                 circularity = 4 * np.pi * (area / (perimeter * perimeter))
                 if 0.7 <= circularity <= 1.2:
                     ball_contours.append(cnt)
-        output_image = image.copy()
+        
         cv2.drawContours(output_image, ball_contours, -1, (0,255,0),2)
 
         return ball_contours, output_image
