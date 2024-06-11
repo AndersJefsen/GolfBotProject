@@ -139,12 +139,12 @@ class ImageProcessor:
 
     @staticmethod
     def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
-        x_scale = 180 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
-        y_scale = 120 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
+        x_scale = 166 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
+        y_scale = 121 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
         x_cartesian = (pixel_coords[0] - bottom_left[0]) * x_scale
-        y_cartesian = 120 - (pixel_coords[1] - top_left[1]) * y_scale
-        x_cartesian = max(min(x_cartesian, 180), 0)
-        y_cartesian = max(min(y_cartesian, 120), 0)
+        y_cartesian = 121 - (pixel_coords[1] - top_left[1]) * y_scale
+        x_cartesian = max(min(x_cartesian, 166), 0)
+        y_cartesian = max(min(y_cartesian, 121), 0)
         return x_cartesian, y_cartesian
 
     @staticmethod
@@ -172,8 +172,8 @@ class ImageProcessor:
         top_width = np.linalg.norm(np.array(top_left) - np.array(top_right))
         left_height = np.linalg.norm(np.array(bottom_left) - np.array(top_left))
         right_height = np.linalg.norm(np.array(bottom_right) - np.array(top_right))
-        x_scale = 180 / max(bottom_width, top_width)
-        y_scale = 120 / max(left_height, right_height)
+        x_scale = 166 / max(bottom_width, top_width)
+        y_scale = 121 / max(left_height, right_height)
         return x_scale, y_scale
 
     @staticmethod
