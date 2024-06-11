@@ -583,9 +583,8 @@ class ImageProcessor:
             cv2.putText(output_Image, "1", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
         return cartesian_coords, output_Image
-
+    @staticmethod
     def process_robot(indput_Image,output_Image,bottom_left_corner, bottom_right_corner,top_right_corner,top_left_corner):
-
         contours = ImageProcessor.find_robot(indput_Image, output_Image)
         cartesian_coords, output_Image = ImageProcessor.convert_robot_to_cartesian(indput_Image,contours,bottom_left_corner, bottom_right_corner,top_right_corner,top_left_corner)
         midtpunkt,angle,output_Image = ImageProcessor.calculate_robot_midpoint_and_angle(cartesian_coords, output_Image)
