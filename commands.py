@@ -12,6 +12,10 @@ def send_command(command):
         s.connect((SERVER_ADDRESS, SERVER_PORT))
         # Send the command
         s.sendall(command.encode('utf-8'))
+        # Receive the response from the server
+        response = s.recv(1024).decode('utf-8')
+        print(f"Response from server: {response}")
+
         # Close the connection
         s.close()
     except Exception as e:
