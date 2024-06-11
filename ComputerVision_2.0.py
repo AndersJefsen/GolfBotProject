@@ -83,6 +83,7 @@ class ImageProcessor:
                     axes[1, 1].imshow(unknown, cmap='gray')
                     axes[1, 1].set_title('Unknown')
 
+                    # Viser watershed
                     plt.show()
 
                     # Marker labelling
@@ -114,7 +115,7 @@ class ImageProcessor:
 
                     sub_contours, _ = cv2.findContours(orange_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-                    # Display the segmented image
+                    # Display the segmented image / Bruger orange mask nemmere end hvid
                     cv2.imshow('Watershed Segmented Image', orange_mask)
                     cv2.waitKey(0)
 
@@ -142,18 +143,6 @@ class ImageProcessor:
                     circularity = 4 * np.pi * (area / (perimeter * perimeter))
                     if 0.7 <= circularity <= 1.2:
                         ball_contours.append(cnt)
-        """"
-        # Logikken for at finde countours på boldene
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            if min_size <= area <= max_size:
-                perimeter = cv2.arcLength(cnt, True)
-                if perimeter == 0:
-                    continue
-                circularity = 4 * np.pi * (area / (perimeter * perimeter))
-                if 0.7 <= circularity <= 1.2:
-                    ball_contours.append(cnt)
-        """
         output_image = image.copy()
 
         cv2.drawContours(output_image, ball_contours, -1, (0,255,0),2)
@@ -210,10 +199,11 @@ class ImageProcessor:
         kernel = np.ones((5, 5), np.uint8)
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, kernel)
         blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, kernel)
-
+        """
         cv2.imshow('Processed Image Robot', blue_mask)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+        """
         # Find contours
         contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -313,9 +303,11 @@ class ImageProcessor:
         contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
         # Show the mask used to find the arena contours
+        """
         cv2.imshow('Arena Mask', red)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+        """
 
         if len(contours) == 0:
             print("No contours found in arena.")  # Debug statement
@@ -474,19 +466,19 @@ class ImageProcessor:
                                                                                             bottom_right_corner,
                                                                                             top_left_corner,
                                                                                             top_right_corner)
-
+        """
         cv2.imshow('Final Image with cross', image_with_cross)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
+        """
         cv2.imshow('Final Image with Balls and Arena', image_with_balls)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
+        """
         cv2.imshow('Final Image with Robot', image_with_robot)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
+        """
 
 if __name__ == "__main__":
     image_path = "images/Bane 2 med Gule/WIN_20240207_09_35_30_Pro.jpg"  # Path to your image
