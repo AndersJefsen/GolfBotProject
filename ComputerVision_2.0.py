@@ -99,6 +99,8 @@ class ImageProcessor:
     @staticmethod
     def find_robot(image, min_size=0, max_size=100000):
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        output_image = image.copy()
+
         blue_lower = np.array([105, 100, 100], dtype="uint8")
         blue_upper = np.array([131, 255, 255], dtype="uint8")
 
@@ -117,7 +119,7 @@ class ImageProcessor:
         contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if len(contours) == 0:
-            return None, image
+            return None, output_image
 
         robot_counters = []
         for cnt in contours:
@@ -133,12 +135,12 @@ class ImageProcessor:
 
         if len(robot_counters) == 0:
             print("No round contours found.")
-            return None, image
+            return None, output_image
 
         # Sort the round contours by area and select the three largest
         robot_counters = sorted(robot_counters, key=cv2.contourArea, reverse=True)[:3]
 
-        return robot_counters, image
+        return robot_counters, output_image
 
     @staticmethod
     def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
