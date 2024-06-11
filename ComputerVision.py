@@ -17,28 +17,31 @@ class ImageProcessor:
         return image
 
     @staticmethod
-    def find_balls_hsv(image, min_size=300, max_size=1000000000):
+    def find_balls_hsv(input_image, min_size=50, max_size=200):
         # Coneert the image to HSV color space
-        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        hsv_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2HSV)
 
         # Define range for white color in HSV
         white_lower = np.array([0, 0, 200], dtype="uint8")
         white_upper = np.array([180, 60, 255], dtype="uint8")
 
         # Threshhold the HSV image to get only white colors
+        print("Thresholding image")
         white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
-
+        print("after thres")
         # Use morphological operations to clean up the mask
         kernel = np.ones((5, 5), np.uint8)
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
 
         # Load maskerne på billedet
+        '''
         cv2.imshow('Processed Image', white_mask)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
+        '''
         # Find contours
+        print("Finding contours")
         contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         ball_contours = []
         # Logikken for at finde countours på boldene

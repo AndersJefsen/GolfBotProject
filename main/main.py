@@ -424,12 +424,17 @@ def main(mode):
             #edged, output_image = findWhiteBalls(inputimg,output_image,vision_image)
 
             #edged, output_image,ballcordinats = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 28, 255, 0, 0, 0, 0), minThreshold=0,maxThreshold=200,minArea=50,maxArea=200,name ="ball",rgb_Color=(0, 0, 255),threshold=161,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
-            ballcontours, output_image = ComputerVision.ImageProcessor.find_balls_hsv(inputimg,output_image)
-
+            print("beforeballs")
+            ballcontours = ComputerVision.ImageProcessor.find_balls_hsv(input_image= inputimg)
+            print("afterballs")
             ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours, arenaCorners[0], arenaCorners[1], arenaCorners[2], arenaCorners[3])
             
-            ballcon, output_image,angle, midpoint = ComputerVision.ImageProcessor.find_robot_withOutput(inputimg,output_image,bottom_left_corner=arenaCorners[0], bottom_right_corner=arenaCorners[1], top_left_corner=arenaCorners[3], top_right_corner=arenaCorners[2])
-        
+            #ballcon, output_image,angle, midpoint = ComputerVision.ImageProcessor.find_robot_withOutput(inputimg,output_image,bottom_left_corner=arenaCorners[0], bottom_right_corner=arenaCorners[1], top_left_corner=arenaCorners[3], top_right_corner=arenaCorners[2])
+            print("before")
+            midpoint, angle, output_image = ComputerVision.ImageProcessor.process_robot(inputimg,output_image,bottom_left_corner= arenaCorners[0], bottom_right_corner=arenaCorners[1],top_right_corner = arenaCorners[2],top_left_corner= arenaCorners[3])
+            print("after")
+            print(midpoint)
+            print(angle)
             '''
             if(angle is not None and midpoint is not None):
              correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
