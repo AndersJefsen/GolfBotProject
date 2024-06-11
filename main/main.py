@@ -419,14 +419,14 @@ def main(mode):
             edged, output_image,orangecordinats = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 54, 0, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=50,maxArea=200,name ="orange",rgb_Color=(183, 102, 52),threshold=178,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
             #robot
             #edged, output_image = detect_objects(inputimg,output_image,vision_image, HsvFilter(91, 107, 0, 154, 255, 207, 0, 0, 0, 0), minThreshold=0,maxThreshold=1000,minArea=30,maxArea=200,name ="robot",rgb_Color=(0, 42, 255),threshold=28,minPoints=8,maxPoints=8)
-
+            
             #edged, output_image = findWhiteBalls(inputimg,output_image,vision_image)
             edged, output_image,ballcordinats = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 28, 255, 0, 0, 0, 0), minThreshold=0,maxThreshold=200,minArea=50,maxArea=200,name ="ball",rgb_Color=(0, 0, 255),threshold=161,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
 
             ballcon, output_image,angle, midpoint = ComputerVision.ImageProcessor.find_robot_withOutput(inputimg,output_image,bottom_left_corner=arenaCorners[0], bottom_right_corner=arenaCorners[1], top_left_corner=arenaCorners[3], top_right_corner=arenaCorners[2])
             
             
-
+            '''
             if(angle is not None and midpoint is not None):
              correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
              print(correctmid)
@@ -435,6 +435,7 @@ def main(mode):
              cv.waitKey(0)
              command_robot(correctmid, ballcordinats, angle)
              break
+            '''
             # edged, output_image = findRoundObjects(outputhsv_image,output_image)
             #cross = ComputerVision.find_cross_contours(screenshot)    
             #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
