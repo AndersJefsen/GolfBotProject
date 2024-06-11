@@ -1,6 +1,7 @@
 import cv2
 from sklearn.cluster import KMeans
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class ImageProcessor:
@@ -17,7 +18,7 @@ class ImageProcessor:
 
 
     @staticmethod
-    def find_balls_hsv(image, min_size=300, max_size=1000000000): #Størrelsen af farven hvid der skal findes
+    def find_balls_hsv(image, min_size=300, max_size=1000000000, white_area_size=800): #Størrelsen af farven hvid der skal findes
         # Coneert the image to HSV color space
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -33,6 +34,7 @@ class ImageProcessor:
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
 
+
         # Load maskerne på billedet
         cv2.imshow('Processed Image Balls', white_mask)
         cv2.waitKey(0)
@@ -41,6 +43,98 @@ class ImageProcessor:
         # Find contours
         contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         ball_contours = []
+
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            print(f"Contour area: {area}")
+            if min_size <= area < 2000:
+                print(f"Inside min_size <= area <= max_size block for area: {area}")
+                if area > white_area_size:
+                    print("Entering area > white_area_size block")
+                    # Create subplots with 1 row and 2 columns
+                    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 8))
+
+                    # Extract the region of interest
+                    x, y, w, h = cv2.boundingRect(cnt)
+
+                    sub_image = white_mask[y:y + h, x:x + w]
+
+                    # sure background area
+                    sure_bg = cv2.dilate(sub_image, kernel, iterations=3)
+                    axes[0, 0].imshow(sure_bg, cmap='gray')
+                    axes[0, 0].set_title('Sure Background')
+
+                    # Distance transform
+                    dist = cv2.distanceTransform(sub_image, cv2.DIST_L2, 0)
+                    axes[0, 1].imshow(dist, cmap='gray')
+                    axes[0, 1].set_title('Distance Transform')
+
+                    # foreground area
+                    ret, sure_fg = cv2.threshold(dist, 0.5 * dist.max(), 255, cv2.THRESH_BINARY)
+                    sure_fg = sure_fg.astype(np.uint8)
+                    axes[1, 0].imshow(sure_fg, cmap='gray')
+                    axes[1, 0].set_title('Sure Foreground')
+
+                    # unknown area
+                    unknown = cv2.subtract(sure_bg, sure_fg)
+                    axes[1, 1].imshow(unknown, cmap='gray')
+                    axes[1, 1].set_title('Unknown')
+
+                    plt.show()
+
+                    # Marker labelling
+                    # sure foreground
+                    ret, markers = cv2.connectedComponents(sure_fg)
+
+                    # Add one to all labels so that background is not 0, but 1
+                    markers = markers + 1
+
+                    # mark the region of unknown with zero
+                    markers[unknown == 255] = 0
+
+                    # Apply watershed
+                    markers = cv2.watershed(cv2.cvtColor(sub_image, cv2.COLOR_GRAY2BGR), markers)
+
+                    # Find sub-contours in the watershed segmented image
+                    markers[markers == -1] = 0  # Set the borders to 0
+                    markers = markers.astype(np.uint8)
+                    sub_contours, _ = cv2.findContours(markers, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+                    # Visualize the result after watershed
+                    markers = markers.astype(np.uint8)
+                    markers_visual = cv2.applyColorMap(cv2.convertScaleAbs(markers, alpha=255 / markers.max()),
+                                                       cv2.COLORMAP_JET)
+
+                    # Display the segmented image
+                    cv2.imshow('Watershed Segmented Image', markers_visual)
+                    cv2.waitKey(0)
+
+                    valid_sub_contours = 0
+
+                    for sub_cnt in sub_contours:
+                        sub_area = cv2.contourArea(sub_cnt)
+                        print("I GONNA CUM")
+                        if min_size <= sub_area:
+                            print("I SHITTING")
+                            perimeter = cv2.arcLength(sub_cnt, True)
+                            if perimeter == 0:
+                                continue
+                            circularity = 4 * np.pi * (sub_area / (perimeter * perimeter))
+                            if 0.7 <= circularity <= 1.2:
+
+                                valid_sub_contours += 1
+
+                    if valid_sub_contours >= 2:
+                        ball_contours.append(cnt)
+                else:
+                    print("Entering else block for singular balls")
+                    perimeter = cv2.arcLength(cnt, True)
+                    if perimeter == 0:
+                        continue
+                    circularity = 4 * np.pi * (area / (perimeter * perimeter))
+                    if 0.7 <= circularity <= 1.2:
+                        ball_contours.append(cnt)
+        """"
         # Logikken for at finde countours på boldene
         for cnt in contours:
             area = cv2.contourArea(cnt)
@@ -51,7 +145,9 @@ class ImageProcessor:
                 circularity = 4 * np.pi * (area / (perimeter * perimeter))
                 if 0.7 <= circularity <= 1.2:
                     ball_contours.append(cnt)
+        """
         output_image = image.copy()
+
         cv2.drawContours(output_image, ball_contours, -1, (0,255,0),2)
 
         return ball_contours, output_image
@@ -385,7 +481,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "images/Bane 4 3 ugers/447741015_744745830924918_635656015372946539_n.jpg"  # Path to your image
+    image_path = "images/Bane 2 med Gule/WIN_20240207_09_35_30_Pro.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)
