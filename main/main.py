@@ -4,7 +4,8 @@ import cv2 as cv
 from vision import Vision
 from hsvfilter import HsvFilter
 from edgefilter import EdgeFilter
-from com import command_robot
+import com
+import threading
 import numpy as np
 import sys
 import os
@@ -333,9 +334,16 @@ def useMask(imageToMask,mask):
     return cv.bitwise_and(imageToMask, imageToMask, mask=mask)
 #model = YOLO('best.pt')
 # initialize the WindowCapture class
+def show_image(image):
+    while True:
+        screenoutput = cv.resize(image, (960, 540))            
+        cv.imshow('Computer Vision', screenoutput)
+        if cv.waitKey(1) & 0xFF == ord('q'):
+            break
+    cv.destroyAllWindows()
 
 def main(mode):
-    if mode == "camera":  
+    if mode == "camera" or mode == "robot":  
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
     elif mode == "window":
@@ -347,9 +355,14 @@ def main(mode):
         print("Invalid mode")
         return
     
+    socket = None
+    if mode == "robot":
+        socket = com.connect_to_robot()
+
+
     arenaCorners = []
     mask = None
-    
+   
 
     vision_image = Vision('ball.png')
 
@@ -359,7 +372,7 @@ def main(mode):
     
     while not findArena:
         try:
-            if mode == "camera":
+            if mode == "camera" or mode == "robot":
                 ret, screenshot = wincap.read()
             elif mode == "window":
                 screenshot = wincap.get_screenshot()
@@ -390,7 +403,7 @@ def main(mode):
     loop_time = time()
     while(True):
         try:
-            if mode == "camera":
+            if mode == "camera" or mode == "robot":
                 ret, screenshot = wincap.read()
             elif mode == "window":
                 screenshot = wincap.get_screenshot()
@@ -424,27 +437,26 @@ def main(mode):
             #edged, output_image = findWhiteBalls(inputimg,output_image,vision_image)
 
             #edged, output_image,ballcordinats = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 28, 255, 0, 0, 0, 0), minThreshold=0,maxThreshold=200,minArea=50,maxArea=200,name ="ball",rgb_Color=(0, 0, 255),threshold=161,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
-            print("beforeballs")
+            
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv(input_image= inputimg)
-            print("afterballs")
+          
             ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours, arenaCorners[0], arenaCorners[1], arenaCorners[2], arenaCorners[3])
             
             #ballcon, output_image,angle, midpoint = ComputerVision.ImageProcessor.find_robot_withOutput(inputimg,output_image,bottom_left_corner=arenaCorners[0], bottom_right_corner=arenaCorners[1], top_left_corner=arenaCorners[3], top_right_corner=arenaCorners[2])
-            print("before")
+          
             midpoint, angle, output_image = ComputerVision.ImageProcessor.process_robot(inputimg,output_image,bottom_left_corner= arenaCorners[0], bottom_right_corner=arenaCorners[1],top_right_corner = arenaCorners[2],top_left_corner= arenaCorners[3])
-            print("after")
-            print(midpoint)
-            print(angle)
-            '''
-            if(angle is not None and midpoint is not None):
-             correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
-             print(correctmid)
-             screenoutput = cv.resize(output_image, (960, 540))
-             cv.imshow('Computer Vision', screenoutput)
-             cv.waitKey(0)
-             command_robot(correctmid, ballcordinats, angle)
-             break
-            '''
+           
+            display_thread = threading.Thread(target=show_image, args=(output_image,))
+            display_thread.start()
+            if(mode == "robot"):
+                if(angle is not None and midpoint is not None):
+                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+                    print(correctmid)
+                    
+                    
+                    com.command_robot(correctmid, ballcordinats, angle)
+                    break
+            
             edged, output_image = findRoundObjects(outputhsv_image,output_image)
             #cross = ComputerVision.find_cross_contours(screenshot)    
             #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
@@ -470,11 +482,12 @@ def main(mode):
             
             #rzhsv = cv.resize(outputhsv_image, (960, 540))
             #cv.imshow('hsv', rzhsv)
+            '''
             screenoutput = cv.resize(output_image, (960, 540))
             cv.imshow('Computer Vision', screenoutput)
             rze = cv.resize(edged, (960, 540))
             cv.imshow('edges', rze)
-            
+            '''
         
             
 
@@ -496,6 +509,8 @@ def main(mode):
 
     cv.destroyAllWindows()
     wincap.release()
+    if(socket != None):
+        com.close_connection(socket)
     print('Done.')
 
 

@@ -540,7 +540,7 @@ class ImageProcessor:
             if M["m00"] != 0:
                 cX = int(M["m10"] / M["m00"])
                 cY = int(M["m01"] / M["m00"])
-                cv2.circle(output_image, (cX, cY), 5, (0, 255, 0), -1)  # Mark the blue dots on the image
+                cv2.circle(output_image, (cX, cY), 3, (0, 255, 0), -1)  # Mark the blue dots on the image
                 if bottom_left_corner is not None:
                     cartesian_coords = ImageProcessor.convert_to_cartesian((cX, cY), bottom_left_corner,
                                                                            bottom_right_corner, top_left_corner,
