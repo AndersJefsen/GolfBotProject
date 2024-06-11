@@ -96,12 +96,12 @@ class ImageProcessor:
 
     @staticmethod
     def draw_rectangle(image, cm_start, cm_end, bottom_left, bottom_right, top_left, top_right):
-        # Convert cm coordinates to pixel coordinates
+        # Convert cm coordinates to pixel coordinates, so it can draw between the Y-axis between corners,
         start_pixel = ImageProcessor.convert_to_pixel(cm_start, bottom_left, bottom_right, top_left, top_right)
         end_pixel = ImageProcessor.convert_to_pixel(cm_end, bottom_left, bottom_right, top_left, top_right)
 
-        # Draw the rectangle on the image
-        cv2.rectangle(image, start_pixel, end_pixel, (0, 255, 0), 2)
+        # Draw at pixel coord.
+        cv2.rectangle(image, start_pixel, end_pixel, (0, 255, 0), 4)
 
         return image
 
