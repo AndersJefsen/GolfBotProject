@@ -583,6 +583,8 @@ class ImageProcessor:
             cv2.putText(output_Image, "1", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
         return cartesian_coords, output_Image
+
+    #GKOPERGPOKEROPKG KOM NU JOHAN VS CODE STINKER
     @staticmethod
     def process_robot(indput_Image,output_Image,bottom_left_corner, bottom_right_corner,top_right_corner,top_left_corner):
         contours = ImageProcessor.find_robot(indput_Image, output_Image)
