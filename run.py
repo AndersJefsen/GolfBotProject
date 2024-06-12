@@ -1,4 +1,4 @@
-from path import find_closest_ball
+from path_deprecated import find_closest_ball
 
 def send_commands_via_ssh(host, port, username, password, commands):
     try:

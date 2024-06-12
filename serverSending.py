@@ -2,7 +2,7 @@ import socket
 
 # Server settings
 #the third number needs to be changed each time the hotspot changes
-HOST = '192.168.123.243'  # The IP address of your EV3 brick
+HOST = '172.20.10.3'  # The IP address of your EV3 brick
 PORT = 1024  # The same port as used by the server
 
 def send_command(command):
