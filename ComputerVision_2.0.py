@@ -52,7 +52,7 @@ class ImageProcessor:
                 if area > white_area_size:
 
                     # Create subplots with 1 row and 2 columns
-                    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 8))
+                    # fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 8))
 
                     # Extract the region of interest
                     x, y, w, h = cv2.boundingRect(cnt)
@@ -64,27 +64,27 @@ class ImageProcessor:
 
                     # sure background area
                     sure_bg = cv2.dilate(sub_image, kernel, iterations=3)
-                    axes[0, 0].imshow(sure_bg, cmap='gray')
-                    axes[0, 0].set_title('Sure Background')
+                    # axes[0, 0].imshow(sure_bg, cmap='gray')
+                    # axes[0, 0].set_title('Sure Background')
 
                     # Distance transform
                     dist = cv2.distanceTransform(sub_image, cv2.DIST_L2, 0)
-                    axes[0, 1].imshow(dist, cmap='gray')
-                    axes[0, 1].set_title('Distance Transform')
+                    # axes[0, 1].imshow(dist, cmap='gray')
+                    # axes[0, 1].set_title('Distance Transform')
 
                     # foreground area
                     ret, sure_fg = cv2.threshold(dist, 0.5 * dist.max(), 255, cv2.THRESH_BINARY)
                     sure_fg = sure_fg.astype(np.uint8)
-                    axes[1, 0].imshow(sure_fg, cmap='gray')
-                    axes[1, 0].set_title('Sure Foreground')
+                    # axes[1, 0].imshow(sure_fg, cmap='gray')
+                    # axes[1, 0].set_title('Sure Foreground')
 
                     # unknown area
                     unknown = cv2.subtract(sure_bg, sure_fg)
-                    axes[1, 1].imshow(unknown, cmap='gray')
-                    axes[1, 1].set_title('Unknown')
+                    # axes[1, 1].imshow(unknown, cmap='gray')
+                    # axes[1, 1].set_title('Unknown')
 
                     # Viser watershed
-                    plt.show()
+                    # plt.show()
 
                     # Marker labelling
                     # sure foreground
