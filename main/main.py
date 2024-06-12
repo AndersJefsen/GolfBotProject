@@ -3,6 +3,7 @@ import cv2 as cv
 from vision import Vision
 from hsvfilter import HsvFilter
 from edgefilter import EdgeFilter
+from path import find_close_ball
 import com
 import threading
 import numpy as np
@@ -483,7 +484,15 @@ def main(mode):
                     print("Robot orientation:")
                     print(angle)
                     com.command_robot(correctmid, ballcordinats, angle,socket)
-                    
+            if(mode == "test"):
+                  if(angle is not None and midpoint is not None and ballcordinats):
+                        print("Robot orientation:")
+                        print(angle)
+                        correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+                        closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid, ballcordinats, angle)
+                        print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
+    
+                        print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
            
                     
                     
