@@ -1,4 +1,3 @@
-from windowcapture import WindowCapture
 from time import time
 import cv2 as cv
 from vision import Vision
@@ -354,6 +353,8 @@ def main(mode):
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
     elif mode == "window":
+        from windowcapture import WindowCapture
+
         wincap = WindowCapture(None)
         print("window mode")
     elif mode == "test":
@@ -463,7 +464,7 @@ def main(mode):
            
             #display_thread = threading.Thread(target=show_image, args=(output_image,))
             #display_thread.start()
-            image_queue.put(output_image)
+            cv.imshow("pic",output_image)
 
             if(mode == "robot"):
                 if(angle is not None and midpoint is not None and ballcordinats):
@@ -483,7 +484,9 @@ def main(mode):
                     print(angle)
                     com.command_robot(correctmid, ballcordinats, angle,socket)
                     
-            
+           
+                    
+                    
             #edged, output_image = findRoundObjects(outputhsv_image,output_image)
             #cross = ComputerVision.find_cross_contours(screenshot)    
             #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
@@ -535,7 +538,8 @@ def main(mode):
             break
 
     cv.destroyAllWindows()
-    wincap.release()
+    if mode == "window":
+        wincap.release()
     if(socket != None):
         com.close_connection(socket)
     print('Done.')
