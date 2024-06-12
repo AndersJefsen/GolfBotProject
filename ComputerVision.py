@@ -434,16 +434,15 @@ class ImageProcessor:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-
         if not contours:
             print("No contours found")
             return False, None, None, None, None, None
 
         max_contour = max(contours, key=cv2.contourArea)
-        max_contour_area = cv2.contourArea(max_contour) * 0.99
-        min_contour_area = cv2.contourArea(max_contour) * 0.002
-        #max_contour_area = 1000000
-        #min_contour_area = 5000
+        #max_contour_area = cv2.contourArea(max_contour) * 0.99
+        #min_contour_area = cv2.contourArea(max_contour) * 0.002
+        max_contour_area = 1000000
+        min_contour_area = 5000
 
         filtered_contours = [cnt for cnt in contours if max_contour_area > cv2.contourArea(cnt) > min_contour_area]
         for cnt in filtered_contours:

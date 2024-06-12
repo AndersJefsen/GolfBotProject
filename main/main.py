@@ -192,6 +192,7 @@ def findRoundObjects(imageToDetectOn, imageToDrawOn):
     
     return edged,imageToDrawOn
 
+
 def findArena(imageToDetectOn, imageToDrawOn): 
     hsv_filter = HsvFilter(0, 104, 0, 179, 255, 255, 0, 0, 0, 0)
     img = Vision.apply_hsv_filter(imageToDetectOn, hsv_filter)
@@ -211,7 +212,7 @@ def findArena(imageToDetectOn, imageToDrawOn):
     maxArea = 357513
 
     points = []
-
+    print("HEEEEEJ")
     for cnt in contours:
         area = cv.contourArea(cnt)
         if maxArea > area > minArea:
@@ -248,6 +249,7 @@ def findArena(imageToDetectOn, imageToDrawOn):
         final_image = cv.add(inside_region, outside_region)
 
         rzb = cv.resize(final_image, (960, 540))
+
         cv.imshow('masked', rzb)
         return edged, final_image
     else:
@@ -460,7 +462,7 @@ def main(mode):
             ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours, arenaCorners[0], arenaCorners[1], arenaCorners[2], arenaCorners[3])
             
             #ballcon, output_image,angle, midpoint = ComputerVision.ImageProcessor.find_robot_withOutput(inputimg,output_image,bottom_left_corner=arenaCorners[0], bottom_right_corner=arenaCorners[1], top_left_corner=arenaCorners[3], top_right_corner=arenaCorners[2])
-          
+
             midpoint, angle, output_image = ComputerVision.ImageProcessor.process_robot(inputimg,output_image,bottom_left_corner= arenaCorners[0], bottom_right_corner=arenaCorners[1],top_right_corner = arenaCorners[2],top_left_corner= arenaCorners[3])
            
             #display_thread = threading.Thread(target=show_image, args=(output_image,))
