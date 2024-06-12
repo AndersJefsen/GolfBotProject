@@ -597,11 +597,27 @@ class ImageProcessor:
 
         return cartesian_coords, output_Image
 
+    @staticmethod
+    def process_robot(indput_Image, output_Image, bottom_left_corner, bottom_right_corner, top_right_corner,
+                      top_left_corner):
+        midtpunkt = None
+        angle = None
+        contours = ImageProcessor.find_robot(indput_Image, output_Image)
+
+        cartesian_coords, output_Image = ImageProcessor.convert_robot_to_cartesian(output_Image, contours,
+                                                                                   bottom_left_corner,
+                                                                                   bottom_right_corner,
+                                                                                   top_right_corner, top_left_corner)
+
+        if (contours is not None):
+            midtpunkt, angle, output_Image = ImageProcessor.calculate_robot_midpoint_and_angle(contours, output_Image)
+
+        return midtpunkt, angle, output_Image
 
 
 
     @staticmethod
-    def process_robot(indput_Image,output_Image,bottom_left_corner, bottom_right_corner,top_right_corner,top_left_corner):
+    def process_robotForTesting(indput_Image,output_Image,bottom_left_corner, bottom_right_corner,top_right_corner,top_left_corner):
         midtpunkt = None
         angle = None
         contours = ImageProcessor.find_robot(indput_Image, output_Image)
@@ -628,7 +644,7 @@ class ImageProcessor:
         balls_contour = ImageProcessor.find_balls_hsv(output_image_with_cross,200,3000)
         cartesian_balls_list, output_image_with_balls = ImageProcessor.convert_balls_to_cartesian(image,balls_contour, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
 
-        midtpunkt, angle, output_image_with_robot, contours = ImageProcessor.process_robot(image,image.copy(),bottom_left_corner, bottom_right_corner,top_right_corner,top_left_corner)
+        midtpunkt, angle, output_image_with_robot, contours = ImageProcessor.process_robotForTesting(image,image.copy(),bottom_left_corner, bottom_right_corner,top_right_corner,top_left_corner)
 
 
         cv2.imshow('Final Image arena', output_image_with_arena)
