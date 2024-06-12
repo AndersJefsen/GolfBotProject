@@ -95,7 +95,7 @@ class ImageProcessor:
 
 
     @staticmethod
-    def draw_rectangle(image, cm_start, cm_end, bottom_left, bottom_right, top_left, top_right):
+    def draw_Goals(image, cm_start, cm_end, bottom_left, bottom_right, top_left, top_right):
         # Convert cm coordinates to pixel coordinates, so it can draw between the Y-axis between corners,
         start_pixel = ImageProcessor.convert_to_pixel(cm_start, bottom_left, bottom_right, top_left, top_right)
         end_pixel = ImageProcessor.convert_to_pixel(cm_end, bottom_left, bottom_right, top_left, top_right)
@@ -103,11 +103,23 @@ class ImageProcessor:
         # Draw at pixel coord.
         cv2.rectangle(image, start_pixel, end_pixel, (0, 255, 0), 4)
 
+
+
+        return image
+
+    @staticmethod
+    def draw_midpointGoal(image, cm_center, bottom_left, bottom_right, top_left, top_right):
+
+        cm_center = ImageProcessor.convert_to_pixel(cm_center, bottom_left, bottom_right, top_left, top_right)
+
+
+        cv2.circle(image, cm_center,10, (255, 0, 0), -1)
+
         return image
 
     @staticmethod
     def convert_to_pixel(cm_coords, bottom_left, bottom_right, top_left, top_right):
-        # Scaling factors
+        # Only usuable for Goal definition (reverting CM's to pixel alignment)!
         x_scale = max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0]) / 166.7
         y_scale = max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1]) / 121
 
@@ -360,18 +372,28 @@ class ImageProcessor:
             ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner,
                                                 top_left_corner, top_right_corner)[1], 2))))
 
-        # Example rectangle placement
-        cm_position_1_start = (0, 56)
-        cm_position_1_end = (0, 65)
+        #Goal positions, 1 is small, 2 is big.
+        cm_position_1_start = (0, 57)
+        cm_position_1_midpoint = (0, 61.5)
+        cm_position_1_end = (0, 66)
         cm_position_2_start = (166, 53)
-        cm_position_2_end = (166, 69)
+        cm_position_2_midpoint = (166, 60.9)
+        cm_position_2_end = (166, 68.8)
 
-        output_image = ImageProcessor.draw_rectangle(output_image, cm_position_1_start, cm_position_1_end,
-                                                     bottom_left_corner, bottom_right_corner, top_left_corner,
-                                                     top_right_corner)
-        output_image = ImageProcessor.draw_rectangle(output_image, cm_position_2_start, cm_position_2_end,
-                                                     bottom_left_corner, bottom_right_corner, top_left_corner,
-                                                     top_right_corner)
+        output_image = ImageProcessor.draw_Goals(output_image, cm_position_1_start, cm_position_1_end,
+                                                 bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                 top_right_corner)
+        output_image = ImageProcessor.draw_Goals(output_image, cm_position_2_start, cm_position_2_end,
+                                                 bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                 top_right_corner)
+
+        output_image = ImageProcessor.draw_midpointGoal(output_image, cm_position_1_midpoint,
+                                                        bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                        top_right_corner)
+
+        output_image = ImageProcessor.draw_midpointGoal(output_image, cm_position_2_midpoint,
+                                                        bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                        top_right_corner)
 
         cross_contours, image_with_cross = ImageProcessor.find_cross_contours(filtered_contours, output_image)
         cartesian_coords_list, image_with_cross = ImageProcessor.convert_cross_to_cartesian(cross_contours,
