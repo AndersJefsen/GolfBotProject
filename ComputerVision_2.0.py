@@ -18,7 +18,7 @@ class ImageProcessor:
 
 
     @staticmethod
-    def find_balls_hsv(image, min_size=300, max_size=1000000000, white_area_size=800, padding=15, min_size2=100): #Størrelsen af farven hvid der skal findes
+    def find_balls_hsv(image, min_size=300, max_size=1000000000, white_area_size=800, padding=15, min_size2=400): #Størrelsen af farven hvid der skal findes
         # Coneert the image to HSV color space
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -46,11 +46,11 @@ class ImageProcessor:
 
         for cnt in contours:
             area = cv2.contourArea(cnt)
-            print(f"Contour area: {area}")
+
             if min_size <= area < 10000:
-                print(f"Inside min_size <= area <= max_size block for area: {area}")
+
                 if area > white_area_size:
-                    print("Entering area > white_area_size block")
+
                     # Create subplots with 1 row and 2 columns
                     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 8))
 
@@ -93,9 +93,6 @@ class ImageProcessor:
                     # Add one to all labels so that background is not 0, but 1
                     markers += 1
 
-                    # mark the region of unknown with zero
-                    # markers[unknown == 255] = 0
-
                     # Apply watershed
                     sub_image_color = cv2.cvtColor(sub_image, cv2.COLOR_GRAY2BGR)
                     markers = cv2.watershed(cv2.cvtColor(sub_image, cv2.COLOR_GRAY2BGR), markers)
@@ -116,27 +113,25 @@ class ImageProcessor:
                     sub_contours, _ = cv2.findContours(orange_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
                     # Display the segmented image / Bruger orange mask nemmere end hvid
-                    cv2.imshow('Watershed Segmented Image', orange_mask)
-                    cv2.waitKey(0)
+                    # cv2.imshow('Watershed Segmented Image', orange_mask)
+                    # cv2.waitKey(0)
 
                     for sub_cnt in sub_contours:
                         sub_area = cv2.contourArea(sub_cnt)
-                        print("iaosidjaosijdosi")
-                        print(f"sub area: {sub_area}")
-                        if min_size2 <= sub_area:
-                            print("I SHITTING")
+                        if min_size2 >= sub_area:
+
                             perimeter = cv2.arcLength(sub_cnt, True)
                             if perimeter == 0:
-                                print("Perimeter")
+
                                 continue
                             circularity = 4 * np.pi * (sub_area / (perimeter * perimeter))
-                            if 0.4 <= circularity <= 1.5:
-                                print("Circularity")
+                            if 0.7 <= circularity <= 1.2 or sub_area > 100:
+                                # konvertere fokuseret region tilbage til original størrelse så de rigtige kordinate angives
                                 sub_cnt = sub_cnt + np.array([[x_pad, y_pad]])
                                 ball_contours.append(sub_cnt)
 
                 else:
-                    print("Entering else block for singular balls")
+
                     perimeter = cv2.arcLength(cnt, True)
                     if perimeter == 0:
                         continue
@@ -481,7 +476,7 @@ class ImageProcessor:
         """
 
 if __name__ == "__main__":
-    image_path = "images/Bane 2 med Gule/WIN_20240207_09_35_30_Pro.jpg"  # Path to your image
+    image_path = "images/Bane 2 uden gule/WIN_20240207_09_38_49_Pro.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)
