@@ -273,7 +273,7 @@ class ImageProcessor:
         found_cross = False
         cross_contours = []
         for cnt in filtered_contours:
-            approx = cv2.approxPolyDP(cnt, 0.015 * cv2.arcLength(cnt, True), True) # justere efter billede
+            approx = cv2.approxPolyDP(cnt, 0.015 * cv2.arcLength(cnt, True), True) #justere efter billede
             print(f"Contour length: {len(approx)}")  # Debug statement
             if len(approx) == 12:  # Our cross has 12 corners.
                 bounding_rect = cv2.boundingRect(cnt)
@@ -356,6 +356,10 @@ class ImageProcessor:
         text_position = (DropPositionGoalsmall[0] + 15, DropPositionGoalsmall[1])
         cv2.putText(image, text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1, cv2.LINE_AA)
 
+        ##Implement Angle Desired, and - from current robot's angle.
+        #Small is 180
+
+
         return image
 
     @staticmethod
@@ -380,6 +384,14 @@ class ImageProcessor:
         y_pixel = int((121 - cm_coords[1]) * y_scale + top_left[1])
 
         return x_pixel, y_pixel
+
+    def compare_angles(angleRobot, angleGoalDesired):
+        angleRobot = angleRobot % 360
+        angleGoalDesired = angleGoalDesired % 360
+        diff = abs(angleRobot - angleGoalDesired)
+        if diff > 180:
+            diff = 360 - diff
+        return diff
 
     @staticmethod
     def convert_cross_to_cartesian(cross_contours, image, bottom_left_corner, bottom_right_corner, top_left_corner,
