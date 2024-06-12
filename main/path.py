@@ -10,16 +10,22 @@ def find_close_ball(robot_position, balls,robot_orientation):
         print(f"p2: {p2}, type: {type(p2)}")
         '''
         return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
-    
-    def calculate_angle(robot_position, ball_position,robot_orientation):
-        print("robot orientation:")
-        dy = ball_position[1] - robot_position[1]
-        dx = ball_position[0] - robot_position[0]
-        angle_radians = math.atan2(dy, dx)
-        angle_degrees = math.degrees(angle_radians)
-        relative_angle = -((angle_degrees - robot_orientation)%360)
-        return relative_angle
-    
+    def calculate_angle(robot_position, ball_position, robot_orientation):
+          
+            dy = ball_position[1] - robot_position[1]
+            dx = ball_position[0] - robot_position[0]
+            angle_to_target_radians = math.atan2(dy, dx)
+            angle_to_target_degrees = math.degrees(angle_to_target_radians)
+            #print(angle_to_target_degrees)
+            # Adjust from East (atan2 default) to North
+            angle=angle_to_target_degrees-robot_orientation
+            if abs(angle) > 180:
+                angle=abs(angle)-360
+                        
+            # Calculate relative angle considering current robot orientation
+        
+            
+            return -angle
 
     
     closest_ball = None
@@ -31,7 +37,7 @@ def find_close_ball(robot_position, balls,robot_orientation):
         if distance < min_distance:
             min_distance = distance
             closest_ball = ball
-            angle_to_turn = calculate_angle(robot_position, ball,robot_orientation)+180
+            angle_to_turn = calculate_angle(robot_position, ball,robot_orientation)
     
     return  closest_ball,distance, angle_to_turn
 
