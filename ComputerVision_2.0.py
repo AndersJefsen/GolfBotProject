@@ -305,7 +305,7 @@ class ImageProcessor:
         found_cross = False
         cross_contours = []
         for cnt in filtered_contours:
-            approx = cv2.approxPolyDP(cnt, 0.015 * cv2.arcLength(cnt, True), True) # justere efter billede
+            approx = cv2.approxPolyDP(cnt, 0.015 * cv2.arcLength(cnt, True), True) #justere efter billede
             print(f"Contour length: {len(approx)}")  # Debug statement
             if len(approx) == 12:  # Our cross has 12 corners.
                 bounding_rect = cv2.boundingRect(cnt)
@@ -355,6 +355,75 @@ class ImageProcessor:
 
         print(f"Filtered contours: {len(filtered_contours)}")  # Debug statement
         return filtered_contours, output_image
+
+    @staticmethod
+    def draw_Goals(image, cm_start, cm_end, bottom_left, bottom_right, top_left, top_right):
+        # Convert cm coordinates to pixel coordinates, so it can draw between the Y-axis between corners,
+        start_pixel = ImageProcessor.convert_to_pixel(cm_start, bottom_left, bottom_right, top_left, top_right)
+        end_pixel = ImageProcessor.convert_to_pixel(cm_end, bottom_left, bottom_right, top_left, top_right)
+
+        # Draw at pixel coord.
+        cv2.rectangle(image, start_pixel, end_pixel, (0, 255, 0), 4)
+
+
+
+        return image
+
+    @staticmethod
+    def draw_midpointGoal(image, cm_center, bottom_left, bottom_right, top_left, top_right):
+
+        cm_center = ImageProcessor.convert_to_pixel(cm_center, bottom_left, bottom_right, top_left, top_right)
+
+
+        cv2.circle(image, cm_center,10, (255, 0, 0), -1)
+
+        return image
+
+    @staticmethod
+    def routeRobotGoalSmall(image, DropPositionGoalsmall, bottom_left, bottom_right, top_left, top_right):
+        DropPositionGoalsmall = ImageProcessor.convert_to_pixel(DropPositionGoalsmall, bottom_left, bottom_right, top_left, top_right)
+        cv2.circle(image, DropPositionGoalsmall, 10, (255, 205, 0), -1)
+
+        text = "GoalSmallDrop"
+        text_position = (DropPositionGoalsmall[0] + 15, DropPositionGoalsmall[1])
+        cv2.putText(image, text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1, cv2.LINE_AA)
+
+        ##Implement Angle Desired, and - from current robot's angle.
+        #Small is 180
+
+
+        return image
+
+    @staticmethod
+    def routeRobotGoalBig(image, DropPositionGoalbig, bottom_left, bottom_right, top_left, top_right):
+
+        DropPositionGoalbig = ImageProcessor.convert_to_pixel(DropPositionGoalbig, bottom_left, bottom_right, top_left, top_right)
+        cv2.circle(image, DropPositionGoalbig, 10, (255, 205, 0), -1)
+        text = "GoalBigDrop"
+        text_position = (DropPositionGoalbig[0] + 15, DropPositionGoalbig[1])
+        cv2.putText(image, text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1, cv2.LINE_AA)
+        return image
+
+
+
+    @staticmethod
+    def convert_to_pixel(cm_coords, bottom_left, bottom_right, top_left, top_right):
+        # Only usuable for Goal definition (reverting CM's to pixel alignment for UI)!
+        x_scale = max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0]) / 166.7
+        y_scale = max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1]) / 121
+
+        x_pixel = int(cm_coords[0] * x_scale + bottom_left[0])
+        y_pixel = int((121 - cm_coords[1]) * y_scale + top_left[1])
+
+        return x_pixel, y_pixel
+
+    def compare_angles(angleRobot, angleGoalDesired):
+        angleRobot = angleRobot % 360
+        angleGoalDesired = angleGoalDesired % 360
+        diff = abs(angleRobot - angleGoalDesired)
+        if diff > 180:
+            diff = 360 - diff
+        return diff
 
     @staticmethod
     def convert_cross_to_cartesian(cross_contours, image, bottom_left_corner, bottom_right_corner, top_left_corner,
@@ -535,8 +604,38 @@ class ImageProcessor:
                                                                                             top_left_corner,
                                                                                             top_right_corner)
 
+        #Goal positions, 1 is small, 2 is big.
+        cm_position_1_start = (0, 57)
+        cm_position_1_midpoint = (0, 61.5)
+        cm_position_1_end = (0, 66)
+        cm_position_2_start = (166, 53)
+        cm_position_2_midpoint = (166, 60.9)
+        cm_position_2_end = (166, 68.8)
 
+        cm_position_goaldrop_small = (12, 61.5)
+        cm_position_goaldrop_big = (154, 61)
 
+        output_image = ImageProcessor.draw_Goals(output_image, cm_position_1_start, cm_position_1_end,
+                                                 bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                 top_right_corner)
+        output_image = ImageProcessor.draw_Goals(output_image, cm_position_2_start, cm_position_2_end,
+                                                 bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                 top_right_corner)
+
+        output_image = ImageProcessor.draw_midpointGoal(output_image, cm_position_1_midpoint,
+                                                        bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                        top_right_corner)
+
+        output_image = ImageProcessor.draw_midpointGoal(output_image, cm_position_2_midpoint,
+                                                        bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                        top_right_corner)
+        output_image = ImageProcessor.routeRobotGoalSmall(output_image, cm_position_goaldrop_small,
+                                                          bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                          top_right_corner)
+
+        output_image = ImageProcessor.routeRobotGoalBig(output_image, cm_position_goaldrop_big,
+                                                        bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                        top_right_corner)
 
 
         orangeball_contours, image_with_orangeballs = ImageProcessor.find_orangeball_hsv(output_image, min_size=300,

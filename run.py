@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     # Send commands via SSH
     send_commands_via_ssh(host, port, username, password, commands)
-    '''
+    
     #tests, right from camera is robot orientation 0
     test_cases = [
     {"robot_position": (0, 0), "balls": [(0, 1)], "robot_orientation": 0, "expected_angle": -90},
@@ -47,7 +47,9 @@ if __name__ == "__main__":
     {"robot_position": (0, 0), "balls": [(1, 1)], "robot_orientation": 0, "expected_angle": -45},
     {"robot_position": (0, 0), "balls": [(1, 1)], "robot_orientation": 180, "expected_angle": 135},
     {"robot_position": (0, 0), "balls": [(1, 0)], "robot_orientation": 0, "expected_angle": 0},
-    {"robot_position": (0, 0), "balls": [(1, 0)], "robot_orientation": 180, "expected_angle": 180}
+    {"robot_position": (0, 0), "balls": [(1, 0)], "robot_orientation": 180, "expected_angle": 180},
+        {"robot_position": (75, 48), "balls": [(151, 100)], "robot_orientation": 3.51, "expected_angle": -45},
+    {"robot_position": (102, 32), "balls": [(119, 88)], "robot_orientation": 123, "expected_angle": 180},
 ]
 
 for case in test_cases:
@@ -57,4 +59,4 @@ for case in test_cases:
     print(f"Test: Robot at {case['robot_position']} with orientation {case['robot_orientation']}°")
     print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball:.2f}, Angle to turn: {angle_to_turn}°")
     print(f"Expected Angle to turn: {case['expected_angle']}°\n")
-    '''
+    
