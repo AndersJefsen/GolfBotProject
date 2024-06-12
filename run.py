@@ -1,6 +1,4 @@
-import paramiko
-from path import find_closest_ball
-from ComputerVision import ImageProcessor
+from path_deprecated import find_closest_ball
 
 def send_commands_via_ssh(host, port, username, password, commands):
     try:
@@ -41,3 +39,22 @@ if __name__ == "__main__":
 
     # Send commands via SSH
     send_commands_via_ssh(host, port, username, password, commands)
+    '''
+    #tests, right from camera is robot orientation 0
+    test_cases = [
+    {"robot_position": (0, 0), "balls": [(0, 1)], "robot_orientation": 0, "expected_angle": -90},
+    {"robot_position": (0, 0), "balls": [(0, 1)], "robot_orientation": 180, "expected_angle": 90},
+    {"robot_position": (0, 0), "balls": [(1, 1)], "robot_orientation": 0, "expected_angle": -45},
+    {"robot_position": (0, 0), "balls": [(1, 1)], "robot_orientation": 180, "expected_angle": 135},
+    {"robot_position": (0, 0), "balls": [(1, 0)], "robot_orientation": 0, "expected_angle": 0},
+    {"robot_position": (0, 0), "balls": [(1, 0)], "robot_orientation": 180, "expected_angle": 180}
+]
+
+for case in test_cases:
+    closest_ball, distance_to_ball, angle_to_turn = find_closest_ball(
+        case["robot_position"], case["balls"], case["robot_orientation"]
+    )
+    print(f"Test: Robot at {case['robot_position']} with orientation {case['robot_orientation']}°")
+    print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball:.2f}, Angle to turn: {angle_to_turn}°")
+    print(f"Expected Angle to turn: {case['expected_angle']}°\n")
+    '''
