@@ -584,7 +584,7 @@ class ImageProcessor:
 
         return cartesian_coords, output_Image
 
-    #GKOPERGPOKEROPKG KOM NU JOHAN VS CODE STINKER
+
     @staticmethod
     def process_robot(indput_Image,output_Image,bottom_left_corner, bottom_right_corner,top_right_corner,top_left_corner):
         contours = ImageProcessor.find_robot(indput_Image, output_Image)
@@ -779,7 +779,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "images/Bane 4 3 ugers/3ball.jpg"  # Path to your image
+    image_path = "images/images after cv2/3ball.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)

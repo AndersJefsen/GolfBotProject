@@ -1,5 +1,4 @@
 import cv2
-from sklearn.cluster import KMeans
 import numpy as np
 
 
