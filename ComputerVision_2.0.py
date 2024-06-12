@@ -181,6 +181,38 @@ class ImageProcessor:
         return x_scale, y_scale
 
     @staticmethod
+    def calculate_angle(direction_vector):
+        # Calculate angle in radians
+        angle_radians = np.arctan2(direction_vector[1], direction_vector[0])
+
+        # Convert angle to degrees
+        angle_degrees = np.degrees(angle_radians)
+
+        # Normalize angle to be between 0 and 360
+        angle_degrees = angle_degrees % 360
+
+        return angle_degrees
+
+    @staticmethod
+    def calculate_robot_midpoint_and_angle(cartesian_coords, output_Image):
+        if len(cartesian_coords) != 3:
+            print("Error: Expected exactly three coordinates for the robot.")
+            return None, None, output_Image
+
+        midpoint, direction = ImageProcessor.find_direction(cartesian_coords)
+        if midpoint and direction:
+            # Draw the direction from the midpoint
+            endpoint = (int(midpoint[0] + direction[0]), int(midpoint[1] + direction[1]))
+            cv2.circle(output_Image, (int(midpoint[0]), int(midpoint[1])), 10, (0, 0, 255), -1)  # Red dot at midpoint
+            cv2.line(output_Image, (int(midpoint[0]), int(midpoint[1])), endpoint, (255, 0, 0),
+                     3)  # Blue line indicating direction
+
+            angle = ImageProcessor.calculate_angle(direction)
+            return midpoint, angle, output_Image
+
+        return None, None, output_Image
+
+    @staticmethod
     def find_cross_contours(filtered_contours, image):
         found_cross = False
         cross_contours = []
@@ -279,18 +311,18 @@ class ImageProcessor:
     def convert_robot_to_cartesian(image, robot_contours, bottom_left_corner, bottom_right_corner, top_left_corner,
                                    top_right_corner):
         robot_coordinates = []
-        output_image = image.copy()
+        output_Image = image.copy()
 
         if robot_contours is None or len(robot_contours) < 3:
             print("Not enough blue dots found.")
-            return robot_coordinates, output_image
+            return robot_coordinates, output_Image
 
         for cnt in robot_contours:
             M = cv2.moments(cnt)
             if M["m00"] != 0:
                 cX = int(M["m10"] / M["m00"])
                 cY = int(M["m01"] / M["m00"])
-                cv2.circle(output_image, (cX, cY), 5, (0, 255, 0), -1)  # Mark the blue dots on the image
+                cv2.circle(output_Image, (cX, cY), 5, (0, 255, 0), -1)  # Mark the blue dots on the image
                 if bottom_left_corner is not None:
                     cartesian_coords = ImageProcessor.convert_to_cartesian((cX, cY), bottom_left_corner,
                                                                            bottom_right_corner, top_left_corner,
@@ -298,7 +330,7 @@ class ImageProcessor:
                     robot_coordinates.append(cartesian_coords)
                     print(f"Robot Cartesian Coordinates: {cartesian_coords}")
 
-        return robot_coordinates, output_image
+        return robot_coordinates, output_Image
 
     @staticmethod
     def convert_orangeball_to_cartesian(image, orangeball_contours, bottom_left_corner, bottom_right_corner, top_right_corner,
@@ -322,6 +354,19 @@ class ImageProcessor:
             cv2.putText(output_image, "1", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
         return cartesian_coords, output_image
+
+    @staticmethod
+    def process_robot(indput_Image, output_Image, bottom_left_corner, bottom_right_corner, top_right_corner,
+                      top_left_corner):
+        contours = ImageProcessor.find_robot(indput_Image, output_Image)
+        cartesian_coords, output_Image = ImageProcessor.convert_robot_to_cartesian(indput_Image, contours,
+                                                                                   bottom_left_corner,
+                                                                                   bottom_right_corner,
+                                                                                   top_right_corner, top_left_corner)
+        midtpunkt, angle, output_Image = ImageProcessor.calculate_robot_midpoint_and_angle(cartesian_coords,
+                                                                                           output_Image)
+
+        return midtpunkt, angle, output_Image
 
     @staticmethod
     def process_image(image):
@@ -389,6 +434,10 @@ class ImageProcessor:
                                                                                        top_right_corner,
                                                                                        top_left_corner)
 
+
+
+
+
         robot_contours, image_with_robot = ImageProcessor.find_robot(output_image, min_size=0, max_size=100000)
         if robot_contours is not None:
             robot_coordinates, image_with_robot = ImageProcessor.convert_robot_to_cartesian(output_image,
@@ -397,6 +446,10 @@ class ImageProcessor:
                                                                                             bottom_right_corner,
                                                                                             top_left_corner,
                                                                                             top_right_corner)
+
+
+
+
 
         orangeball_contours, image_with_orangeballs = ImageProcessor.find_orangeball_hsv(output_image, min_size=300,
                                                                                           max_size=1000)
@@ -418,6 +471,11 @@ class ImageProcessor:
         cv2.imshow('Final Image with Robot', image_with_robot)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+        """
+        cv2.imshow('Final Image with Robot', image_with_midtpunkt)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        """
 
         cv2.imshow('Final Image with Orange Balls', image_with_orangeballs)
         cv2.waitKey(0)
