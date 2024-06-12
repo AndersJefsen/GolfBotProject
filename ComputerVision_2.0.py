@@ -1,5 +1,4 @@
 import cv2
-from sklearn.cluster import KMeans
 import numpy as np
 
 
@@ -17,9 +16,9 @@ class ImageProcessor:
 
 
     @staticmethod
-    def find_balls_hsv(inputImage,output_image, min_size=300, max_size=1000000000): #Størrelsen af farven hvid der skal findes
+    def find_balls_hsv(image, min_size=300, max_size=1000000000): #Størrelsen af farven hvid der skal findes
         # Coneert the image to HSV color space
-        hsv_image = cv2.cvtColor(inputImage, cv2.COLOR_BGR2HSV)
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
         # Define range for white color in HSV
         white_lower = np.array([0, 0, 200], dtype="uint8")
@@ -51,7 +50,7 @@ class ImageProcessor:
                 circularity = 4 * np.pi * (area / (perimeter * perimeter))
                 if 0.7 <= circularity <= 1.2:
                     ball_contours.append(cnt)
-        
+        output_image = image.copy()
         cv2.drawContours(output_image, ball_contours, -1, (0,255,0),2)
 
         return ball_contours, output_image
@@ -144,12 +143,12 @@ class ImageProcessor:
 
     @staticmethod
     def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
-        x_scale = 166 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
-        y_scale = 121 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
+        x_scale = 180 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
+        y_scale = 120 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
         x_cartesian = (pixel_coords[0] - bottom_left[0]) * x_scale
-        y_cartesian = 121 - (pixel_coords[1] - top_left[1]) * y_scale
-        x_cartesian = max(min(x_cartesian, 166), 0)
-        y_cartesian = max(min(y_cartesian, 121), 0)
+        y_cartesian = 120 - (pixel_coords[1] - top_left[1]) * y_scale
+        x_cartesian = max(min(x_cartesian, 180), 0)
+        y_cartesian = max(min(y_cartesian, 120), 0)
         return x_cartesian, y_cartesian
 
     @staticmethod
@@ -177,8 +176,8 @@ class ImageProcessor:
         top_width = np.linalg.norm(np.array(top_left) - np.array(top_right))
         left_height = np.linalg.norm(np.array(bottom_left) - np.array(top_left))
         right_height = np.linalg.norm(np.array(bottom_right) - np.array(top_right))
-        x_scale = 166 / max(bottom_width, top_width)
-        y_scale = 121 / max(left_height, right_height)
+        x_scale = 180 / max(bottom_width, top_width)
+        y_scale = 120 / max(left_height, right_height)
         return x_scale, y_scale
 
     @staticmethod
