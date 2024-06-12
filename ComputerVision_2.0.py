@@ -1,5 +1,4 @@
 import cv2
-from sklearn.cluster import KMeans
 import numpy as np
 
 
@@ -17,9 +16,9 @@ class ImageProcessor:
 
 
     @staticmethod
-    def find_balls_hsv(inputImage,output_image, min_size=300, max_size=1000000000): #Størrelsen af farven hvid der skal findes
+    def find_balls_hsv(image, min_size=300, max_size=1000000000): #Størrelsen af farven hvid der skal findes
         # Coneert the image to HSV color space
-        hsv_image = cv2.cvtColor(inputImage, cv2.COLOR_BGR2HSV)
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
         # Define range for white color in HSV
         white_lower = np.array([0, 0, 200], dtype="uint8")
@@ -51,7 +50,7 @@ class ImageProcessor:
                 circularity = 4 * np.pi * (area / (perimeter * perimeter))
                 if 0.7 <= circularity <= 1.2:
                     ball_contours.append(cnt)
-        
+        output_image = image.copy()
         cv2.drawContours(output_image, ball_contours, -1, (0,255,0),2)
 
         return ball_contours, output_image
@@ -95,41 +94,6 @@ class ImageProcessor:
         cv2.drawContours(output_image, orangeball_contours, -1, (0, 255, 0), 2)
 
         return orangeball_contours, output_image
-
-
-    @staticmethod
-    def draw_Goals(image, cm_start, cm_end, bottom_left, bottom_right, top_left, top_right):
-        # Convert cm coordinates to pixel coordinates, so it can draw between the Y-axis between corners,
-        start_pixel = ImageProcessor.convert_to_pixel(cm_start, bottom_left, bottom_right, top_left, top_right)
-        end_pixel = ImageProcessor.convert_to_pixel(cm_end, bottom_left, bottom_right, top_left, top_right)
-
-        # Draw at pixel coord.
-        cv2.rectangle(image, start_pixel, end_pixel, (0, 255, 0), 4)
-
-
-
-        return image
-
-    @staticmethod
-    def draw_midpointGoal(image, cm_center, bottom_left, bottom_right, top_left, top_right):
-
-        cm_center = ImageProcessor.convert_to_pixel(cm_center, bottom_left, bottom_right, top_left, top_right)
-
-
-        cv2.circle(image, cm_center,10, (255, 0, 0), -1)
-
-        return image
-
-    @staticmethod
-    def convert_to_pixel(cm_coords, bottom_left, bottom_right, top_left, top_right):
-        # Only usuable for Goal definition (reverting CM's to pixel alignment)!
-        x_scale = max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0]) / 166.7
-        y_scale = max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1]) / 121
-
-        x_pixel = int(cm_coords[0] * x_scale + bottom_left[0])
-        y_pixel = int((121 - cm_coords[1]) * y_scale + top_left[1])
-
-        return x_pixel, y_pixel
 
     @staticmethod
     def find_robot(image, min_size=0, max_size=100000):
@@ -179,12 +143,12 @@ class ImageProcessor:
 
     @staticmethod
     def convert_to_cartesian(pixel_coords, bottom_left, bottom_right, top_left, top_right):
-        x_scale = 166.7 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
-        y_scale = 121 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
+        x_scale = 180 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
+        y_scale = 120 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
         x_cartesian = (pixel_coords[0] - bottom_left[0]) * x_scale
-        y_cartesian = 121 - (pixel_coords[1] - top_left[1]) * y_scale
-        x_cartesian = max(min(x_cartesian, 166), 0)
-        y_cartesian = max(min(y_cartesian, 121), 0)
+        y_cartesian = 120 - (pixel_coords[1] - top_left[1]) * y_scale
+        x_cartesian = max(min(x_cartesian, 180), 0)
+        y_cartesian = max(min(y_cartesian, 120), 0)
         return x_cartesian, y_cartesian
 
     @staticmethod
@@ -212,8 +176,8 @@ class ImageProcessor:
         top_width = np.linalg.norm(np.array(top_left) - np.array(top_right))
         left_height = np.linalg.norm(np.array(bottom_left) - np.array(top_left))
         right_height = np.linalg.norm(np.array(bottom_right) - np.array(top_right))
-        x_scale = 166 / max(bottom_width, top_width)
-        y_scale = 121 / max(left_height, right_height)
+        x_scale = 180 / max(bottom_width, top_width)
+        y_scale = 120 / max(left_height, right_height)
         return x_scale, y_scale
 
     @staticmethod
@@ -400,29 +364,6 @@ class ImageProcessor:
             ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner,
                                                 top_left_corner, top_right_corner)[1], 2))))
 
-        #Goal positions, 1 is small, 2 is big.
-        cm_position_1_start = (0, 57)
-        cm_position_1_midpoint = (0, 61.5)
-        cm_position_1_end = (0, 66)
-        cm_position_2_start = (166, 53)
-        cm_position_2_midpoint = (166, 60.9)
-        cm_position_2_end = (166, 68.8)
-
-        output_image = ImageProcessor.draw_Goals(output_image, cm_position_1_start, cm_position_1_end,
-                                                 bottom_left_corner, bottom_right_corner, top_left_corner,
-                                                 top_right_corner)
-        output_image = ImageProcessor.draw_Goals(output_image, cm_position_2_start, cm_position_2_end,
-                                                 bottom_left_corner, bottom_right_corner, top_left_corner,
-                                                 top_right_corner)
-
-        output_image = ImageProcessor.draw_midpointGoal(output_image, cm_position_1_midpoint,
-                                                        bottom_left_corner, bottom_right_corner, top_left_corner,
-                                                        top_right_corner)
-
-        output_image = ImageProcessor.draw_midpointGoal(output_image, cm_position_2_midpoint,
-                                                        bottom_left_corner, bottom_right_corner, top_left_corner,
-                                                        top_right_corner)
-
         cross_contours, image_with_cross = ImageProcessor.find_cross_contours(filtered_contours, output_image)
         cartesian_coords_list, image_with_cross = ImageProcessor.convert_cross_to_cartesian(cross_contours,
                                                                                             output_image,
@@ -467,10 +408,6 @@ class ImageProcessor:
                                                                                                          top_left_corner)
 
         cv2.imshow('Final Image with cross', image_with_cross)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-        cv2.imshow('Final Image with Rectangles', output_image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
