@@ -375,8 +375,8 @@ def main(mode):
     image_queue = Queue()
 
     # Start the image display thread
-    display_thread = threading.Thread(target=show_image, args=(image_queue,))
-    display_thread.start()
+    #display_thread = threading.Thread(target=show_image, args=(image_queue,))
+    #display_thread.start()
 
     vision_image = Vision('ball.png')
 
