@@ -494,30 +494,6 @@ class ImageProcessor:
                                                                                             top_left_corner,
                                                                                             top_right_corner)
 
-
-        #Goal positions, 1 is small, 2 is big.
-        cm_position_1_start = (0, 57)
-        cm_position_1_midpoint = (0, 61.5)
-        cm_position_1_end = (0, 66)
-        cm_position_2_start = (166, 53)
-        cm_position_2_midpoint = (166, 60.9)
-        cm_position_2_end = (166, 68.8)
-
-        output_image = ImageProcessor.draw_Goals(output_image, cm_position_1_start, cm_position_1_end,
-                                                 bottom_left_corner, bottom_right_corner, top_left_corner,
-                                                 top_right_corner)
-        output_image = ImageProcessor.draw_Goals(output_image, cm_position_2_start, cm_position_2_end,
-                                                 bottom_left_corner, bottom_right_corner, top_left_corner,
-                                                 top_right_corner)
-
-        output_image = ImageProcessor.draw_midpointGoal(output_image, cm_position_1_midpoint,
-                                                        bottom_left_corner, bottom_right_corner, top_left_corner,
-                                                        top_right_corner)
-
-        output_image = ImageProcessor.draw_midpointGoal(output_image, cm_position_2_midpoint,
-                                                        bottom_left_corner, bottom_right_corner, top_left_corner,
-                                                        top_right_corner)
-
         # Mark the corners on the output_image
         if bottom_left_corner is not None:
             cv2.circle(output_image, bottom_left_corner, 10, (0, 0, 255), -1)
@@ -543,6 +519,30 @@ class ImageProcessor:
                                                                                             bottom_right_corner,
                                                                                             top_left_corner,
                                                                                             top_right_corner)
+
+        #Goal positions, 1 is small, 2 is big.
+        cm_position_1_start = (0, 57)
+        cm_position_1_midpoint = (0, 61.5)
+        cm_position_1_end = (0, 66)
+        cm_position_2_start = (166, 53)
+        cm_position_2_midpoint = (166, 60.9)
+        cm_position_2_end = (166, 68.8)
+
+        output_image = ImageProcessor.draw_Goals(output_image, cm_position_1_start, cm_position_1_end,
+                                                 bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                 top_right_corner)
+        output_image = ImageProcessor.draw_Goals(output_image, cm_position_2_start, cm_position_2_end,
+                                                 bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                 top_right_corner)
+
+        output_image = ImageProcessor.draw_midpointGoal(output_image, cm_position_1_midpoint,
+                                                        bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                        top_right_corner)
+
+        output_image = ImageProcessor.draw_midpointGoal(output_image, cm_position_2_midpoint,
+                                                        bottom_left_corner, bottom_right_corner, top_left_corner,
+                                                        top_right_corner)
+
 
         orangeball_contours, image_with_orangeballs = ImageProcessor.find_orangeball_hsv(output_image, min_size=300,
                                                                                           max_size=1000)
