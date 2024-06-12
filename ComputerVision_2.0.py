@@ -498,12 +498,12 @@ class ImageProcessor:
                                                 top_left_corner, top_right_corner)[1], 2))))
 
         cross_contours, image_with_cross = ImageProcessor.find_cross_contours(filtered_contours, output_image)
-        cartesian_coords_list, image_with_cross = ImageProcessor.convert_cross_to_cartesian(cross_contours,
-                                                                                            output_image,
-                                                                                            bottom_left_corner,
-                                                                                            bottom_right_corner,
-                                                                                            top_left_corner,
-                                                                                            top_right_corner)
+        #cartesian_coords_list, image_with_cross = ImageProcessor.convert_cross_to_cartesian(cross_contours,
+                                                                                            #output_image,
+                                                                                            #bottom_left_corner,
+                                                                                            #bottom_right_corner,
+                                                                                            #top_left_corner,
+                                                                                            #top_right_corner)
 
         # Mark the corners on the output_image
         if bottom_left_corner is not None:
