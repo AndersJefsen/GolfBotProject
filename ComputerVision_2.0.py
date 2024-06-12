@@ -324,6 +324,26 @@ class ImageProcessor:
         print(f"Filtered contours: {len(filtered_contours)}")  # Debug statement
         return filtered_contours, output_image
 
+
+    @staticmethod
+    def process_robot(indput_Image, output_Image, bottom_left_corner, bottom_right_corner, top_right_corner,
+                      top_left_corner):
+        midtpunkt = None
+        angle = None
+        contours = ImageProcessor.find_robot(indput_Image, output_Image)
+
+        cartesian_coords, output_Image = ImageProcessor.convert_robot_to_cartesian(output_Image, contours,
+                                                                                   bottom_left_corner,
+                                                                                   bottom_right_corner,
+                                                                                   top_right_corner, top_left_corner)
+
+        if (contours is not None):
+            midtpunkt, angle, output_Image = ImageProcessor.calculate_robot_midpoint_and_angle(contours, output_Image)
+
+
+        return midtpunkt, angle, output_Image
+
+
     @staticmethod
     def draw_Goals(image, cm_start, cm_end, bottom_left, bottom_right, top_left, top_right):
         # Convert cm coordinates to pixel coordinates, so it can draw between the Y-axis between corners,
@@ -362,6 +382,8 @@ class ImageProcessor:
 
         return image
 
+
+
     @staticmethod
     def routeRobotGoalBig(image, DropPositionGoalbig, bottom_left, bottom_right, top_left, top_right):
 
@@ -371,6 +393,7 @@ class ImageProcessor:
         text_position = (DropPositionGoalbig[0] + 15, DropPositionGoalbig[1])
         cv2.putText(image, text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1, cv2.LINE_AA)
         return image
+
 
 
 
@@ -547,6 +570,9 @@ class ImageProcessor:
                                                                                        top_left_corner)
 
         robot_contours, image_with_robot = ImageProcessor.find_robot(output_image, min_size=0, max_size=100000)
+
+
+
         if robot_contours is not None:
             robot_coordinates, image_with_robot = ImageProcessor.convert_robot_to_cartesian(output_image,
                                                                                             robot_contours,

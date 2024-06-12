@@ -1,5 +1,5 @@
 import socket
-from path import find_close_ball
+from path import find_close_ball,calculate_angle,calculate_distance
 
 # Define server address and port
 SERVER_ADDRESS = '172.20.10.3'  #IP address of EV3
@@ -43,3 +43,30 @@ def command_robot(robot_position, balls, robot_orientation,socket):
         res = send_command(command,socket=socket)
         command = f"MOVE {distance_to_ball}"
         res = send_command(command,socket=socket)
+
+
+
+def drive_robot_to_point(point,angle,pos):
+    angle=calculate_angle(pos,point, angle)
+
+    command = f"TURN {angle}"
+    res = send_command(command,socket=socket)
+
+    dis=calculate_distance(pos,point)
+    command = f"MOVE {angle}"
+    res = send_command(command,socket=socket)
+
+def turn_robot(oriention,desired_angle):
+
+    oriention = oriention % 360
+    desired_angle = desired_angle % 360
+    diff = abs(oriention - desired_angle)
+    if diff > 180:
+        diff = 360 - diff
+
+    command = f"TURN {diff}"
+    res = send_command(command,socket=socket)
+def release():
+
+    command = f"RELEASE"
+    res = send_command(command,socket=socket)

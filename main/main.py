@@ -484,6 +484,13 @@ def main(mode):
                     print("Robot orientation:")
                     print(angle)
                     com.command_robot(correctmid, ballcordinats, angle,socket)
+                    #find ud af hvornår vi skal skruge,error detection.
+                    if(angle is not None and midpoint is not None and ballcordinats is None):
+                        helppoint = (0,61.5)
+                        com.driverobottopoint(helppoint,angle,midpoint)
+                        com.turnrobot(180,angle)
+                        com.release()
+
             if(mode == "test"):
                   if(angle is not None and midpoint is not None and ballcordinats):
                         print("Robot orientation:")
