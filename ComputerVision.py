@@ -88,9 +88,9 @@ class ImageProcessor:
             contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             # Display the white mask
-            cv2.imshow('Processed white mask', white_mask)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            # cv2.imshow('Processed white mask', white_mask)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
 
             ball_contours = []
 
@@ -206,9 +206,9 @@ class ImageProcessor:
         ball_contours = remove_duplicate_contours(ball_contours)
 
         # Display the white mask
-        cv2.imshow('Processed Image Balls', white_mask)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.imshow('Processed Image Balls', white_mask)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 
         # Draw contours on the original image
         output_image = image.copy()
