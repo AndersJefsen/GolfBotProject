@@ -422,7 +422,7 @@ def main(mode):
     loop_time = time()
     while(True):
         try:
-            if mode == "camera" or mode == "robot":
+            if mode == "camera" or mode == "robot" or mode == "videotest":
                 ret, screenshot = wincap.read()
             elif mode == "window":
                 screenshot = wincap.get_screenshot()
