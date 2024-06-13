@@ -81,24 +81,31 @@ class ImageProcessor:
                         for sub_cnt in sub_contours:
                             sub_area = cv2.contourArea(sub_cnt)
                             if min_size2 >= sub_area:
-                                perimeter = cv2.arcLength(sub_cnt, True)
-                                if perimeter == 0:
-                                    continue
-                                circularity = 4 * np.pi * (sub_area / (perimeter * perimeter))
-                                if 0.7 <= circularity <= 1.2 and sub_area > 100:
+                                if is_circular_or_half_circular(sub_cnt, sub_area):
                                     sub_cnt = sub_cnt + np.array([[x_pad, y_pad]])
                                     ball_contours.append(sub_cnt)
                     else:
-                        print("entering single ball")
-                        perimeter = cv2.arcLength(cnt, True)
-                        if perimeter == 0:
-                            continue
-                        circularity = 4 * np.pi * (area / (perimeter * perimeter))
-                        if 0.7 <= circularity <= 1.2:
+                        if is_circular_or_half_circular(cnt, area):
                             ball_contours.append(cnt)
             return ball_contours, white_mask
 
+        def is_circular_or_half_circular(cnt, area):
+            perimeter = cv2.arcLength(cnt, True)
+            if perimeter == 0:
+                return False
+            circularity = 4 * np.pi * (area / (perimeter * perimeter))
+            if 0.7 <= circularity <= 1.2:
+                return True
+            elif 0.35 <= circularity <= 0.6:
+                # Check for half-circle
+                bounding_box = cv2.boundingRect(cnt)
+                aspect_ratio = bounding_box[2] / float(bounding_box[3])
+                if 0.45 <= aspect_ratio <= 2.2:
+                    return True
+            return False
+
         def remove_duplicate_contours(contours):
+
             centroids = []
             unique_contours = []
 
@@ -138,7 +145,7 @@ class ImageProcessor:
         # Check if the number of detected balls is less than 12
         if len(ball_contours) < 12:
             # Adjust white mask range
-            white_lower = np.array([0, 0, 240], dtype="uint8")
+            white_lower = np.array([0, 0, 245], dtype="uint8")
             white_upper = np.array([180, 60, 255], dtype="uint8")
             additional_ball_contours, additional_white_mask = detect_balls_original_mask(hsv_image, white_lower, white_upper)
             ball_contours.extend(additional_ball_contours)
