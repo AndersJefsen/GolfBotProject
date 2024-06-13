@@ -45,11 +45,12 @@ class ImageProcessor:
 
         for cnt in contours:
             area = cv2.contourArea(cnt)
+            print("contour area:", {area})
 
-            if min_size <= area < 10000:
+            if min_size < area < 10000:
 
                 if area > white_area_size:
-
+                    print("entering multiple balls")
                     # Create subplots with 1 row and 2 columns
                     # fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 8))
 
@@ -124,13 +125,13 @@ class ImageProcessor:
 
                                 continue
                             circularity = 4 * np.pi * (sub_area / (perimeter * perimeter))
-                            if 0.7 <= circularity <= 1.2 or sub_area > 100:
+                            if 0.7 <= circularity <= 1.2 and sub_area > 100:
                                 # konvertere fokuseret region tilbage til original størrelse så de rigtige kordinate angives
                                 sub_cnt = sub_cnt + np.array([[x_pad, y_pad]])
                                 ball_contours.append(sub_cnt)
 
                 else:
-
+                    print("entering single ball")
                     perimeter = cv2.arcLength(cnt, True)
                     if perimeter == 0:
                         continue
@@ -188,9 +189,10 @@ class ImageProcessor:
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         output_image = image.copy()
 
-        blue_lower = np.array([105, 100, 100], dtype="uint8")
+        blue_lower = np.array([100, 85, 85], dtype="uint8")
         blue_upper = np.array([131, 255, 255], dtype="uint8")
-
+        #blue_lower = np.array([105, 100, 100], dtype="uint8")
+        #blue_upper = np.array([131, 255, 255], dtype="uint8")
         # Threshold the HSV image to get only blue colors
         blue_mask = cv2.inRange(hsv_image, blue_lower, blue_upper)
 
@@ -670,7 +672,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "images/Bane 4 3 ugers/447706714_323209107495625_5657033470690724482_n.jpg"  # Path to your image
+    image_path = "images/Bane med robot 3 ugers/billede6(bold i hjørnet).png"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)
