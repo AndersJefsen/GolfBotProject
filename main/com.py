@@ -58,6 +58,7 @@ def drive_robot_to_point(point, angle, pos):
     res = send_command(command, socket=socket)
 
     return True
+    print(f"Response from MOVE command: {res}")
 
     #Maybe a returned boolean incase robot has arrived at destination?
 
@@ -70,6 +71,8 @@ def calculate_angle(pos, point):
 
 
 def turn_robot(oriention, desired_angle):
+    global socket  # Access the global socket variable
+
     oriention = oriention % 360
     desired_angle = desired_angle % 360
 
@@ -79,8 +82,8 @@ def turn_robot(oriention, desired_angle):
 
     command = f"TURN {diff}"
     res = send_command(command, socket=socket)
-
     return diff == 0
+
 
 
 def release():
@@ -96,7 +99,7 @@ def move_to_position_and_release(point, pos, orientation, socket):
         return False
 
     #Target is 180, its the orientaion of the small goal.
-    correct_angle = turn_robot(orientation, 180, socket)
+    correct_angle = turn_robot(orientation, 180)
     if not correct_angle:
         return False
 

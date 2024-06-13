@@ -511,6 +511,7 @@ def main(mode):
                     )
 
                     target_point = (12, 61.5)
+
                     result = com.move_to_position_and_release(target_point, correctmid, angle, socket)
                     if result:
                         print("Operation BigGOALGOAL successful")
