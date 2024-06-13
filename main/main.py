@@ -417,7 +417,7 @@ def main(mode):
             
 
     loop_time = time()
-    while(True):
+    while True:
         try:
             if mode == "camera" or mode == "robot" or mode == "Goal":
                 ret, screenshot = wincap.read()
@@ -502,7 +502,7 @@ def main(mode):
 
                         print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
 
-            if mode == "Goal":
+            if (mode == "Goal"):
                 if angle is not None and midpoint is not None:
                     print("Robot orientation:")
                     print(angle)
