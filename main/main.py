@@ -4,10 +4,12 @@ from vision import Vision
 from hsvfilter import HsvFilter
 from edgefilter import EdgeFilter
 from path import find_close_ball
+import asyncio
 import com
 import threading
 import numpy as np
 import sys
+import logging
 import os
 from queue import Queue
 from time import time, strftime, gmtime
@@ -349,7 +351,7 @@ def show_image(image_queue):
                 break
     cv.destroyAllWindows()
 
-def main(mode):
+async def main(mode):
     if mode == "camera" or mode == "robot":  
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
@@ -373,7 +375,8 @@ def main(mode):
     mask = None
      
     image_queue = Queue()
-
+    completion_flag = asyncio.Event()
+    completion_flag.set()  # Set the flag initially
     # Start the image display thread
     #display_thread = threading.Thread(target=show_image, args=(image_queue,))
     #display_thread.start()
@@ -467,7 +470,7 @@ def main(mode):
             #display_thread.start()
             cv.imshow("pic",output_image)
 
-            if(mode == "robot"):
+            if(mode == "robot" and completion_flag.is_set()):
                 if(angle is not None and midpoint is not None and ballcordinats):
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
                     '''
@@ -481,9 +484,13 @@ def main(mode):
                     print("ball cords")
                     print(ballcordinats)
                     '''
-                    print("Robot orientation:")
+                    print("Robot orientation sss:")
                     print(angle)
-                    com.command_robot(correctmid, ballcordinats, angle,socket)
+                    completion_flag.clear()
+                    #asyncio.create_task(com.command_robot(correctmid, ballcordinats, angle,socket)
+                    print("command robot")
+                    await asyncio.create_task(com.command_robot_async(correctmid, ballcordinats, angle, socket, completion_flag))
+                    print("command robot done")
             if(mode == "test"):
                   if(angle is not None and midpoint is not None and ballcordinats):
                         print("Robot orientation:")
@@ -557,6 +564,6 @@ def main(mode):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        main(sys.argv[1])
+        asyncio.run(main(sys.argv[1]))
     else:
         print("No mode specified. Usage: python script_name.py <test|window|camera>")
