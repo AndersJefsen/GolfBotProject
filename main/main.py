@@ -30,7 +30,7 @@ def main(mode):
         print("test mode")
         #virtuelDisaplay = visualisation()
     elif mode == "videotest":
-        video_path = "../badvideo.mp4"  # Specify the path to the video file in the parent folder
+        video_path = "../goodvideo.mp4"  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
         if not wincap.isOpened():
             print("Error: Could not open video file.")
@@ -78,7 +78,7 @@ def main(mode):
                 print("Failed to capture screenshot.")
                 continue
             print("finding arena")
-            findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
+            findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner, filtered_contoures = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
             print("her",findArena,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
             if findArena:
                 arenaCorners.append(bottom_left_corner)
