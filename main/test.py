@@ -1,15 +1,9 @@
-from windowcapture import WindowCapture
-from time import time
 import cv2 as cv
-from vision import Vision
-from hsvfilter import HsvFilter
-from edgefilter import EdgeFilter
-from ultralytics import YOLO
 import numpy as np
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from ComputerVision import ComputerVision
+from main.ComputerVision import ComputerVision
 
 
 def createMask(imageToDetectOn,points):

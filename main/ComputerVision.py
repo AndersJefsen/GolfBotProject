@@ -422,9 +422,7 @@ class ImageProcessor:
         output_image = image.copy()
         return cross_contours, output_image
 
-
-    @staticmethod
-    def find_Arena(inputImage,outPutImage):
+    def find_Arena(inputImage, output_Image):
         lab = cv2.cvtColor(inputImage, cv2.COLOR_BGR2LAB)
         red = cv2.threshold(lab[:, :, 1], 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
         edges = cv2.Canny(red, 100, 200)
@@ -439,8 +437,6 @@ class ImageProcessor:
             return False, None, None, None, None, None
 
         max_contour = max(contours, key=cv2.contourArea)
-        #max_contour_area = cv2.contourArea(max_contour) * 0.99
-        #min_contour_area = cv2.contourArea(max_contour) * 0.002
         max_contour_area = 1000000
         min_contour_area = 5000
 
@@ -448,58 +444,34 @@ class ImageProcessor:
         for cnt in filtered_contours:
             font = cv2.FONT_HERSHEY_COMPLEX
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
-            cv2.drawContours(image, [approx], 0, (60, 0, 0), 5)
-        output_image = image.copy()
-        cv2.drawContours(output_image, filtered_contours, -1, (60, 0, 0), 3)
+            cv2.drawContours(output_Image, [approx], 0, (60, 0, 0), 5)
 
-        print(f"Total contours found: {len(contours)}")
-        print(f"Filtered contours: {len(filtered_contours)}")
-        for cnt in filtered_contours:
-            print(f"Contour area: {cv2.contourArea(cnt)}")
+        output_image = output_Image.copy()
+        cv2.drawContours(output_image, filtered_contours, -1, (60, 0, 0), 3)
 
         if len(filtered_contours) < 1:
             print("Not enough filtered contours")
             return False, None, None, None, None, None
 
-        cv2.drawContours(outPutImage, filtered_contours, -1, (0, 255, 0), 2)
-
         try:
             bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = \
-                ImageProcessor.detect_all_corners(filtered_contours, inputImage.shape[1], inputImage.shape[0])
+                ImageProcessor.detect_all_corners(filtered_contours, inputImage.shape[1],
+                                                                 inputImage.shape[0])
         except ValueError as e:
             print(f"Error in detecting corners: {e}")
             return False, None, None, None, None, None
-        x_scale, y_scale = ImageProcessor.calculate_scale_factors(bottom_left_corner, bottom_right_corner,
-                                                                  top_left_corner, top_right_corner)
-
-        print("Bottom Left Corner - Pixel Coordinates:", bottom_left_corner)
-        print("Bottom Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
-
-        print("Bottom Right Corner - Pixel Coordinates:", bottom_right_corner)
-        print("Bottom Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(bottom_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
-
-        print("Top Left Corner - Pixel Coordinates:", top_left_corner)
-        print("Top Left Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_left_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
-
-        print("Top Right Corner - Pixel Coordinates:", top_right_corner)
-        print("Top Right Corner - Cartesian Coordinates:", (round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[0], 2), abs(round(ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)[1], 2))))
-
-        for cnt in filtered_contours:
-            font = cv2.FONT_HERSHEY_COMPLEX
-            approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
-            cv2.drawContours(inputImage, [approx], 0, (60, 0, 0), 5)
 
         if bottom_left_corner is not None:
-            cv2.circle(outPutImage, bottom_left_corner, 10, (0, 0, 255), -1)
+            cv2.circle(output_Image, bottom_left_corner, 10, (0, 0, 255), -1)
         if bottom_right_corner is not None:
-            cv2.circle(outPutImage, bottom_right_corner, 10, (0, 255, 0), -1)
+            cv2.circle(output_Image, bottom_right_corner, 10, (0, 255, 0), -1)
         if top_left_corner is not None:
-            cv2.circle(outPutImage, top_left_corner, 10, (255, 135, 0), -1)
+            cv2.circle(output_Image, top_left_corner, 10, (255, 135, 0), -1)
         if top_right_corner is not None:
-            cv2.circle(outPutImage, top_right_corner, 10, (255, 0, 135), -1)
+            cv2.circle(output_Image, top_right_corner, 10, (255, 0, 135), -1)
 
         if (bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner) is not None:
-            return True,outPutImage,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner, filtered_contours
+            return True, output_Image, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner
         else:
             return False, None, None, None, None, None
 
@@ -665,7 +637,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "images/Bane 4 3 ugers/447741015_744745830924918_635656015372946539_n.jpg"  # Path to your image
+    image_path = "../images/Bane 4 3 ugers/447741015_744745830924918_635656015372946539_n.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)

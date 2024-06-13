@@ -1,6 +1,6 @@
 import socket
 from main.path import find_closest_ball
-from ComputerVision import ImageProcessor
+
 # Define server address and port
 SERVER_ADDRESS = '172.20.10.3'  #IP address of EV3
 SERVER_PORT = 1024  # port server script
