@@ -1,7 +1,7 @@
 import cv2
 
 import numpy as np
-
+import math
 
 
 class ImageProcessor:
@@ -212,7 +212,7 @@ class ImageProcessor:
 
         # Sort the round contours by area and select the three largest
         robot_counters = sorted(robot_counters, key=cv2.contourArea, reverse=True)[:3]
-     
+       
 
         return robot_counters
 
@@ -338,6 +338,34 @@ class ImageProcessor:
         
         return angle_degrees
 
+    def adjust_coordinates(cX, cY, direction_vector, width, height, adjustment_factor=0.15):
+        centerX = width / 2
+        centerY = height / 2
+        
+        # Calculate vector from the point to the center
+        vector_to_center_x = centerX - cX
+        vector_to_center_y = centerY - cY
+        
+        # Calculate the distance from the point to the center
+        distance_to_center = math.sqrt(vector_to_center_x**2 + vector_to_center_y**2)
+        
+        # Normalize the vector to the center
+        if distance_to_center != 0:  # Prevent division by zero
+            normalized_vector = (vector_to_center_x / distance_to_center, vector_to_center_y / distance_to_center)
+        else:
+            normalized_vector = (0, 0)
+        
+        # Scale the normalized vector by the adjustment factor
+        adjustment_x = normalized_vector[0] * adjustment_factor * distance_to_center
+        adjustment_y = normalized_vector[1] * adjustment_factor * distance_to_center
+        
+        # Adjust coordinates
+        new_cX = cX + adjustment_x
+        new_cY = cY + adjustment_y
+        
+        return new_cX, new_cY
+
+
     @staticmethod
     def calculate_robot_midpoint_and_angle(cartesian_coords, output_Image):
         if len(cartesian_coords) != 3:
@@ -345,7 +373,11 @@ class ImageProcessor:
             return None, None, output_Image
         
         midpoint, direction = ImageProcessor.find_direction(cartesian_coords)
-      
+        height, width = output_Image.shape[:2]  # Correct way to get dimensions in OpenCV
+        if midpoint:
+            midpoint = ImageProcessor.adjust_coordinates(midpoint[0], midpoint[1],direction, width, height)
+         
+               
         if midpoint and direction:
             # Draw the direction from the midpoint
             endpoint = (int(midpoint[0] + direction[0]), int(midpoint[1] + direction[1]))
@@ -368,7 +400,7 @@ class ImageProcessor:
         x_cartesian = max(min(x_cartesian, 180), 0)
         y_cartesian = max(min(y_cartesian, 120), 0)
         return x_cartesian, y_cartesian
-
+   
     @staticmethod
     def detect_all_corners(filtered_contours, image_width, image_height):
         corners = []
@@ -535,19 +567,38 @@ class ImageProcessor:
         if robot_contours is None or len(robot_contours) < 3:
             print("Not enough blue dots found.")
             return robot_coordinates, output_image
-
+        height, width = output_image.shape[:2] 
         for cnt in robot_contours:
             M = cv2.moments(cnt)
             if M["m00"] != 0:
                 cX = int(M["m10"] / M["m00"])
                 cY = int(M["m01"] / M["m00"])
+                factor = 10
+                if cX < width / 2:
+                    cX = cX + factor
+                else:
+                    cX = cX - factor
+                if cY < height / 2:
+                    cY = cY + factor
+                else:
+                    cY = cY - factor
+                
+
                 cv2.circle(output_image, (cX, cY), 3, (0, 255, 0), -1)  # Mark the blue dots on the image
                 if bottom_left_corner is not None:
                     cartesian_coords = ImageProcessor.convert_to_cartesian((cX, cY), bottom_left_corner,
                                                                            bottom_right_corner, top_left_corner,
                                                                            top_right_corner)
+
                     robot_coordinates.append(cartesian_coords)
                     #print(f"Robot Cartesian Coordinates: {cartesian_coords}")
+        #calculating the offset
+        #121
+        #166
+             
+
+       
+        
 
 
         return robot_coordinates, output_image
