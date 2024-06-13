@@ -46,7 +46,7 @@ class ImageProcessor:
         for cnt in contours:
             area = cv2.contourArea(cnt)
 
-            if min_size <= area < 10000:
+            if min_size <= area < 5000:
 
                 if area > white_area_size:
 
@@ -124,7 +124,7 @@ class ImageProcessor:
 
                                 continue
                             circularity = 4 * np.pi * (sub_area / (perimeter * perimeter))
-                            if 0.7 <= circularity <= 1.2 or sub_area > 100:
+                            if 0.7 <= circularity <= 1.2 and sub_area > 100:
                                 # konvertere fokuseret region tilbage til original størrelse så de rigtige kordinate angives
                                 sub_cnt = sub_cnt + np.array([[x_pad, y_pad]])
                                 ball_contours.append(sub_cnt)
