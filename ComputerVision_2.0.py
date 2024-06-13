@@ -188,9 +188,10 @@ class ImageProcessor:
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         output_image = image.copy()
 
-        blue_lower = np.array([105, 100, 100], dtype="uint8")
+        blue_lower = np.array([100, 85, 85], dtype="uint8")
         blue_upper = np.array([131, 255, 255], dtype="uint8")
-
+        #blue_lower = np.array([105, 100, 100], dtype="uint8")
+        #blue_upper = np.array([131, 255, 255], dtype="uint8")
         # Threshold the HSV image to get only blue colors
         blue_mask = cv2.inRange(hsv_image, blue_lower, blue_upper)
 

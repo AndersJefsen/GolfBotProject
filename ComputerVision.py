@@ -26,9 +26,9 @@ class ImageProcessor:
         white_upper = np.array([180, 60, 255], dtype="uint8")
 
         # Threshhold the HSV image to get only white colors
-        print("Thresholding image")
+        #print("Thresholding image")
         white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
-        print("after thres")
+        #print("after thres")
         # Use morphological operations to clean up the mask
         kernel = np.ones((5, 5), np.uint8)
         white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
@@ -41,7 +41,7 @@ class ImageProcessor:
         cv2.destroyAllWindows()
         '''
         # Find contours
-        print("Finding contours")
+        #print("Finding contours")
         contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         ball_contours = []
         # Logikken for at finde countours på boldene
@@ -354,6 +354,7 @@ class ImageProcessor:
                      3)  # Blue line indicating direction
 
             angle = ImageProcessor.calculate_angle(direction)
+            cv2.putText(output_Image, f"Angle: {angle:.2f}", (int(midpoint[0]) + 20, int(midpoint[1]) + 20), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 255, 0), 1)
             return midpoint, angle, output_Image
 
         return None, None, output_Image
@@ -518,7 +519,7 @@ class ImageProcessor:
                 cartesian_coords.append(ImageProcessor.convert_to_cartesian((center_x, center_y), bottom_left_corner,
                                                                        bottom_right_corner, top_left_corner,
                                                                        top_right_corner))
-                print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
+                #print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
 
             cv2.rectangle(output_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
             cv2.putText(output_Image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
@@ -546,7 +547,7 @@ class ImageProcessor:
                                                                            bottom_right_corner, top_left_corner,
                                                                            top_right_corner)
                     robot_coordinates.append(cartesian_coords)
-                    print(f"Robot Cartesian Coordinates: {cartesian_coords}")
+                    #print(f"Robot Cartesian Coordinates: {cartesian_coords}")
 
 
         return robot_coordinates, output_image
