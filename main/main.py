@@ -352,7 +352,7 @@ def show_image(image_queue):
 def main(mode):
     if mode == "camera" or mode == "robot" or mode == "Goal":
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
-        print("camera mode")
+        print("camera mode or Goal Mode")
 
     elif mode == "window":
         from windowcapture import WindowCapture
