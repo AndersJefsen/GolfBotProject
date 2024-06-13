@@ -547,7 +547,7 @@ class ImageProcessor:
                                                                            bottom_right_corner, top_left_corner,
                                                                            top_right_corner)
                     robot_coordinates.append(cartesian_coords)
-                    #print(f"Robot Cartesian Coordinates: {cartesian_coords}")
+                    print(f"Robot Cartesian Coordinates: {cartesian_coords}")
 
 
         return robot_coordinates, output_image
@@ -798,7 +798,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "images/Bane 4 3 ugers/3ball.jpg"  # Path to your image
+    image_path = "/Users/andersjefsen/Downloads/foranders.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)
