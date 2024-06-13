@@ -48,7 +48,7 @@ def command_robot(robot_position, balls, robot_orientation, socket):
 
 
 def drive_robot_to_point(point, angle, pos):
-    angle = calculate_angle(pos, point, angle)
+    angle = calculate_angle(pos, point)
 
     command = f"TURN {angle}"
     res = send_command(command, socket=socket)

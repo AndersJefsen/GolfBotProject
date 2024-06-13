@@ -353,12 +353,13 @@ def main(mode):
     if mode == "camera" or mode == "robot":  
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
+
     elif mode == "window":
         from windowcapture import WindowCapture
 
         wincap = WindowCapture(None)
         print("window mode")
-    elif mode == "test":
+    elif mode == "test" or mode == "Goal":
         print("test mode")
     else:
         print("Invalid mode")
@@ -391,8 +392,8 @@ def main(mode):
                 ret, screenshot = wincap.read()
             elif mode == "window":
                 screenshot = wincap.get_screenshot()
-            elif mode == "test":
-                screenshot = cv.imread( testpicturename)
+            elif mode == "test" or mode =="test":
+                screenshot = cv.imread(testpicturename)
             output_image = screenshot.copy()
             
             if screenshot is None:
@@ -422,7 +423,7 @@ def main(mode):
                 ret, screenshot = wincap.read()
             elif mode == "window":
                 screenshot = wincap.get_screenshot()
-            elif mode == "test":
+            elif mode == "test" or mode == "Goal":
                 screenshot = cv.imread(testpicturename)
             if screenshot is None:
                 print("Failed to capture screenshot.")
@@ -485,10 +486,10 @@ def main(mode):
                     print(angle)
                     com.command_robot(correctmid, ballcordinats, angle,socket)
                     #find ud af hvornår vi skal skruge,error detection.
-                    if(angle is not None and midpoint is not None and ballcordinats is None):
-                        helppoint = (0,61.5)
-                        com.driverobottopoint(helppoint,angle,midpoint)
-                        com.turnrobot(180,angle)
+                    if(angle is not None and midpoint is not None):
+                        helppoint = (12,61.5)
+                        com.drive_robot_to_point(helppoint,angle,midpoint)
+                        com.turn_robot(180,angle)
                         com.release()
 
             if(mode == "test"):
@@ -498,7 +499,7 @@ def main(mode):
                         correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
                         closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid, ballcordinats, angle)
                         print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
-    
+
                         print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
 
             if mode == "Goal":
@@ -512,7 +513,7 @@ def main(mode):
                     target_point = (12, 61.5)
                     result = com.move_to_position_and_release(target_point, correctmid, angle, socket)
                     if result:
-                        print("Operation BigGOALGOALGOAL successful")
+                        print("Operation BigGOALGOAL successful")
                     else:
                         print("Operation Goal got fuckd mate")
 
