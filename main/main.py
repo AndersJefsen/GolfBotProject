@@ -10,6 +10,7 @@ import numpy as np
 import sys
 import os
 import detectionTools
+import visualisation
 import imageManipulationTools
 from queue import Queue
 from time import time, strftime, gmtime
@@ -27,6 +28,7 @@ def main(mode):
         print("window mode")
     elif mode == "test":
         print("test mode")
+        #virtuelDisaplay = visualisation()
     elif mode == "videotest":
         video_path = "../badvideo.mp4"  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
@@ -55,6 +57,8 @@ def main(mode):
     vision_image.init_control_gui()
     
     testpicturename = 'testpic2.jpg'
+
+
 
     findArena = False
     
@@ -168,6 +172,6 @@ def main(mode):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        asyncio.run(main(sys.argv[1]))
+       main(sys.argv[1])
     else:
         print("No mode specified. Usage: python script_name.py <test|window|camera>")
