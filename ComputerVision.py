@@ -560,7 +560,8 @@ class ImageProcessor:
                 endpoint = (midpoint[0] + direction[0], midpoint[1] + direction[1])
                 cv2.circle(image, midpoint, 10, (0, 0, 255), -1)  # Red dot at midpoint
                 cv2.line(image, midpoint, endpoint, (255, 0, 0), 3)  # Blue line indicating direction
-                print("Midpoint:", midpoint)
+                midpoint_cm=ImageProcessor.convert_to_cartesian(midpoint)
+                print("Midpoint:", midpoint_cm)
                 print("Direction to third point:", direction)
                 cv2.imshow('Directional Image', image)
                 cv2.waitKey(0)
