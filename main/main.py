@@ -391,7 +391,7 @@ async def main(mode):
     vision_image = Vision('ball.png')
 
     vision_image.init_control_gui()
-    testpicturename = 'testpic2.jpg'
+    testpicturename = 'billede6(bold i hjørnet).png'
 
     findArena = False
     
@@ -470,7 +470,8 @@ async def main(mode):
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
             if ballcontours is not None:
                 ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours)
-            
+
+
             #ballcon, output_image,angle, midpoint = ComputerVision.ImageProcessor.find_robot_withOutput(inputimg,output_image,bottom_left_corner=arenaCorners[0], bottom_right_corner=arenaCorners[1], top_left_corner=arenaCorners[3], top_right_corner=arenaCorners[2])
             
 
