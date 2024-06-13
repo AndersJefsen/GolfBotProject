@@ -360,6 +360,13 @@ def main(mode):
         print("window mode")
     elif mode == "test":
         print("test mode")
+    elif mode == "videotest":
+        video_path = "../badvideo.mp4"  # Specify the path to the video file in the parent folder
+        wincap = cv.VideoCapture(video_path)
+        if not wincap.isOpened():
+            print("Error: Could not open video file.")
+            return
+        print("videotest mode")    
     else:
         print("Invalid mode")
         return
@@ -387,7 +394,7 @@ def main(mode):
     
     while not findArena:
         try:
-            if mode == "camera" or mode == "robot":
+            if mode == "camera" or mode == "robot" or mode == "videotest":
                 ret, screenshot = wincap.read()
             elif mode == "window":
                 screenshot = wincap.get_screenshot()
