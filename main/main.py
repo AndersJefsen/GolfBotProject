@@ -369,6 +369,9 @@ def main(mode):
     if mode == "robot":
         socket = com.connect_to_robot()
 
+    #if mode == "Goal":
+        #socket = com.connect_to_robot()
+
 
     arenaCorners = []
     mask = None
