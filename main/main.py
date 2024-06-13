@@ -467,7 +467,7 @@ async def main(mode):
             #edged, output_image = findWhiteBalls(inputimg,output_image,vision_image)
 
             #edged, output_image,ballcordinats = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 28, 255, 0, 0, 0, 0), minThreshold=0,maxThreshold=200,minArea=50,maxArea=200,name ="ball",rgb_Color=(0, 0, 255),threshold=161,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
-            ballcontours = ComputerVision.ImageProcessor.find_balls_hsv(inputimg)
+            ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
             if ballcontours is not None:
                 ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours)
             
