@@ -81,31 +81,24 @@ class ImageProcessor:
                         for sub_cnt in sub_contours:
                             sub_area = cv2.contourArea(sub_cnt)
                             if min_size2 >= sub_area:
-                                if is_circular_or_half_circular(sub_cnt, sub_area):
+                                perimeter = cv2.arcLength(sub_cnt, True)
+                                if perimeter == 0:
+                                    continue
+                                circularity = 4 * np.pi * (sub_area / (perimeter * perimeter))
+                                if 0.7 <= circularity <= 1.2 and sub_area > 100:
                                     sub_cnt = sub_cnt + np.array([[x_pad, y_pad]])
                                     ball_contours.append(sub_cnt)
                     else:
-                        if is_circular_or_half_circular(cnt, area):
+                        print("entering single ball")
+                        perimeter = cv2.arcLength(cnt, True)
+                        if perimeter == 0:
+                            continue
+                        circularity = 4 * np.pi * (area / (perimeter * perimeter))
+                        if 0.7 <= circularity <= 1.2:
                             ball_contours.append(cnt)
             return ball_contours, white_mask
 
-        def is_circular_or_half_circular(cnt, area):
-            perimeter = cv2.arcLength(cnt, True)
-            if perimeter == 0:
-                return False
-            circularity = 4 * np.pi * (area / (perimeter * perimeter))
-            if 0.7 <= circularity <= 1.2:
-                return True
-            elif 0.35 <= circularity <= 0.6:
-                # Check for half-circle
-                bounding_box = cv2.boundingRect(cnt)
-                aspect_ratio = bounding_box[2] / float(bounding_box[3])
-                if 0.45 <= aspect_ratio <= 2.2:
-                    return True
-            return False
-
         def remove_duplicate_contours(contours):
-
             centroids = []
             unique_contours = []
 
