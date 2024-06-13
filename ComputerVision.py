@@ -338,7 +338,7 @@ class ImageProcessor:
         
         return angle_degrees
 
-    def adjust_coordinates(cX, cY, direction_vector, width, height, adjustment_factor=0.15):
+    def adjust_coordinates(cX, cY, width, height, adjustment_factor=0.15):
         centerX = width / 2
         centerY = height / 2
         
@@ -375,7 +375,7 @@ class ImageProcessor:
         midpoint, direction = ImageProcessor.find_direction(cartesian_coords)
         height, width = output_Image.shape[:2]  # Correct way to get dimensions in OpenCV
         if midpoint:
-            midpoint = ImageProcessor.adjust_coordinates(midpoint[0], midpoint[1],direction, width, height)
+            midpoint = ImageProcessor.adjust_coordinates(midpoint[0], midpoint[1], width, height)
          
                
         if midpoint and direction:
