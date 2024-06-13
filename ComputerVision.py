@@ -214,7 +214,7 @@ class ImageProcessor:
         output_image = image.copy()
         cv2.drawContours(output_image, ball_contours, -1, (0, 255, 0), 2)
 
-        return ball_contours, output_image
+        return ball_contours
     @staticmethod
     def find_robot(indput_Image, min_size=0, max_size=100000):
        
@@ -689,7 +689,7 @@ class ImageProcessor:
                 if bottom_left_corner is not None:
                     cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y))
         
-        ball_contours = ImageProcessor.find_balls_hsv(image, min_size=300, max_size=1000)
+        ball_contours = ImageProcessor.find_balls_hsv1(image, min_size=500)
         paintballs(ball_contours, "ball")
 
         roboball = ImageProcessor.find_robot(image, min_size=50, max_size=100000)
