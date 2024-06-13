@@ -472,8 +472,8 @@ class ImageProcessor:
         angle = math.atan2(robot_body_height, distance_to_base)
 
         # Correct the x and y coordinates
-        corrected_x = x + distance_to_base * math.cos(angle)
-        corrected_y = y + distance_to_base * math.sin(angle)
+        corrected_x = x + distance_to_base * math.sin(angle)
+        corrected_y = y + distance_to_base * math.cos(angle)
 
         corrected_position_robot = [corrected_x, corrected_y]
 
