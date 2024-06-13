@@ -185,6 +185,7 @@ class ImageProcessor:
                      3)  # Blue line indicating direction
 
             angle = ImageProcessor.calculate_angle(direction)
+            cv2.putText(output_Image, f"Angle: {angle:.2f}", (int(midpoint[0]) + 20, int(midpoint[1]) + 20), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 255, 0), 1)
             return midpoint, angle, output_Image
 
         return None, None, output_Image
@@ -402,7 +403,7 @@ class ImageProcessor:
                 if bottom_left_corner is not None:
                     cartesian_coords = ImageProcessor.convert_to_cartesian((cX, cY))
                     robot_coordinates.append(cartesian_coords)
-                    print(f"Robot Cartesian Coordinates: {cartesian_coords}")
+                    #print(f"Robot Cartesian Coordinates: {cartesian_coords}")
 
 
         return robot_coordinates, output_image
