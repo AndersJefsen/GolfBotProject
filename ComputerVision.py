@@ -637,7 +637,7 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    image_path = "../images/Bane 4 3 ugers/447741015_744745830924918_635656015372946539_n.jpg"  # Path to your image
+    image_path = "images/Bane 4 3 ugers/447741015_744745830924918_635656015372946539_n.jpg"  # Path to your image
     image = ImageProcessor.load_image(image_path)
     if image is not None:
         ImageProcessor.process_image(image)

@@ -1,3 +1,5 @@
+import os
+
 import cv2 as cv
 from vision import Vision
 from hsvfilter import HsvFilter
@@ -7,10 +9,9 @@ import asyncio
 import com
 import numpy as np
 import sys
-import os
 from queue import Queue
 from time import time
-
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import ComputerVision
 
 
