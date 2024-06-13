@@ -350,7 +350,7 @@ def show_image(image_queue):
     cv.destroyAllWindows()
 
 def main(mode):
-    if mode == "camera" or mode == "robot":  
+    if mode == "camera" or mode == "robot" or mode == "Goal":
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
 
@@ -359,7 +359,7 @@ def main(mode):
 
         wincap = WindowCapture(None)
         print("window mode")
-    elif mode == "test" or mode == "Goal":
+    elif mode == "test":
         print("test mode")
     else:
         print("Invalid mode")
@@ -388,7 +388,7 @@ def main(mode):
     
     while not findArena:
         try:
-            if mode == "camera" or mode == "robot":
+            if mode == "camera" or mode == "robot" or mode == "Goal":
                 ret, screenshot = wincap.read()
             elif mode == "window":
                 screenshot = wincap.get_screenshot()
@@ -419,11 +419,11 @@ def main(mode):
     loop_time = time()
     while(True):
         try:
-            if mode == "camera" or mode == "robot":
+            if mode == "camera" or mode == "robot" or mode == "Goal":
                 ret, screenshot = wincap.read()
             elif mode == "window":
                 screenshot = wincap.get_screenshot()
-            elif mode == "test" or mode == "Goal":
+            elif mode == "test":
                 screenshot = cv.imread(testpicturename)
             if screenshot is None:
                 print("Failed to capture screenshot.")
