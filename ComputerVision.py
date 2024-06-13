@@ -43,16 +43,9 @@ class ImageProcessor:
                 continue
             circularity = 4 * np.pi * (area / (perimeter * perimeter))
             if 0.7 <= circularity <= 1.2:  # Filter round shapes based on circularity
-                robot_counters.append(cnt)
+                robot_counters.append(cnt)      
 
-        if len(robot_counters) == 0:
-            print("No round contours found.")
-            return None
-
-        # Sort the round contours by area and select the three largest
-        robot_counters = sorted(robot_counters, key=cv2.contourArea, reverse=True)[:3]
-     
-
+            
         return robot_counters 
 
     @staticmethod
@@ -81,11 +74,52 @@ class ImageProcessor:
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size)
 
     @staticmethod
-    def find_robot(image, min_size=0, max_size=1000000):
+    def find_robot(indput_Image, min_size=0, max_size=100000):
+       
+        hsv_image = cv2.cvtColor(indput_Image, cv2.COLOR_BGR2HSV)
+      
         blue_lower = np.array([105, 100, 100], dtype="uint8")
         blue_upper = np.array([131, 255, 255], dtype="uint8")
-        return ImageProcessor.detect_and_filter_objects(image, blue_lower, blue_upper, min_size, max_size)
 
+        # Threshold the HSV image to get only blue colors
+        blue_mask = cv2.inRange(hsv_image, blue_lower, blue_upper)
+
+        # Use morphological operations to clean up the mask
+        kernel = np.ones((5, 5), np.uint8)
+        blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_CLOSE, kernel)
+        blue_mask = cv2.morphologyEx(blue_mask, cv2.MORPH_OPEN, kernel)
+        """ koden for at se masken bliver brugt
+        cv2.imshow('Processed Image Robot', blue_mask)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        """
+        # Find contours
+        contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        if len(contours) == 0:
+            return None
+
+        robot_counters = []
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area < min_size or area > max_size:
+                continue
+            perimeter = cv2.arcLength(cnt, True)
+            if perimeter == 0:
+                continue
+            circularity = 4 * np.pi * (area / (perimeter * perimeter))
+            if 0.7 <= circularity <= 1.2:  # Filter round shapes based on circularity
+                robot_counters.append(cnt)
+
+        if len(robot_counters) <3:
+            print("Not enough contours found.")
+            return None
+
+        # Sort the round contours by area and select the three largest
+        robot_counters = sorted(robot_counters, key=cv2.contourArea, reverse=True)[:3]
+     
+
+        return robot_counters
 
     @staticmethod
     def find_direction(contours):
@@ -336,7 +370,7 @@ class ImageProcessor:
 
         cartesian_coords = []
         output_Image = image.copy()
-
+        print(f"Found {len(ball_contours)} balls.")
         for i, contour in enumerate(ball_contours, 1):
             x, y, w, h = cv2.boundingRect(contour)
             center_x = x + w // 2
@@ -355,6 +389,10 @@ class ImageProcessor:
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ImageProcessor.corners.values()
         robot_coordinates = []
 
+        if robot_contours is None or len(robot_contours) < 3:
+            print("Not enough blue dots found.")
+            return robot_coordinates, output_image  
+        
         for cnt in robot_contours:
             M = cv2.moments(cnt)
             if M["m00"] != 0:
@@ -417,7 +455,7 @@ class ImageProcessor:
         midtpunkt = None
         angle = None
 
-        contours = ImageProcessor.find_robot(indput_Image)
+        contours = ImageProcessor.find_robot(indput_Image, min_size=0, max_size=100000)
        
         cartesian_coords, output_Image = ImageProcessor.convert_robot_to_cartesian(output_Image,contours)
         

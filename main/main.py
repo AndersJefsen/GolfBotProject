@@ -46,7 +46,7 @@ def detect_objects(imageToDetectOn, imageToDrawOn,vision_image, hsv_filter, maxT
                 x, y, w, h = cv.boundingRect(approx)
                 center_x = x + w // 2
                 center_y = y + h // 2
-                x_cart, y_cart = ComputerVision.ImageProcessor.convert_to_cartesian((center_x, center_y), arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+                x_cart, y_cart = ComputerVision.ImageProcessor.convert_to_cartesian((center_x, center_y))
                 x_cart = round(x_cart, 2)
                 y_cart = round(y_cart, 2)
                 cv.putText(imageToDrawOn, f"{name}: {len(approx)}", (x + w + 20, y - 5), cv.FONT_HERSHEY_COMPLEX, 0.7, rgb_Color, 1)
@@ -444,7 +444,7 @@ def main(mode):
             orangecordinats = []
             robotcordinats = []
             crosscordinats = []
-
+            print("1")
             inputimg = useMask(screenshot,mask)
             #timestamp = strftime("%Y%m%d_%H%M%S", gmtime())
             #cv.imwrite("test_"+timestamp+".jpg", screenshot)
@@ -465,13 +465,15 @@ def main(mode):
             #edged, output_image = findWhiteBalls(inputimg,output_image,vision_image)
 
             #edged, output_image,ballcordinats = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 28, 255, 0, 0, 0, 0), minThreshold=0,maxThreshold=200,minArea=50,maxArea=200,name ="ball",rgb_Color=(0, 0, 255),threshold=161,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
-            
+            print("2")
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv(inputimg)
-          
-            ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours)
+            print("2.5")
+            if ballcontours is not None:
+                ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours)
             
             #ballcon, output_image,angle, midpoint = ComputerVision.ImageProcessor.find_robot_withOutput(inputimg,output_image,bottom_left_corner=arenaCorners[0], bottom_right_corner=arenaCorners[1], top_left_corner=arenaCorners[3], top_right_corner=arenaCorners[2])
             
+            print("3")
 
             midpoint, angle, output_image = ComputerVision.ImageProcessor.process_robot(inputimg,output_image)
            
