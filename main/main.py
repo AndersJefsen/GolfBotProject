@@ -500,9 +500,24 @@ def main(mode):
                         print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
     
                         print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
-           
-                    
-                    
+
+            if mode == "Goal":
+                if angle is not None and midpoint is not None:
+                    print("Robot orientation:")
+                    print(angle)
+                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
+                        midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2]
+                    )
+
+                    target_point = (12, 61.5)
+                    result = com.move_to_position_and_release(target_point, correctmid, angle, socket)
+                    if result:
+                        print("Operation BigGOALGOALGOAL successful")
+                    else:
+                        print("Operation Goal got fuckd mate")
+
+
+
             #edged, output_image = findRoundObjects(outputhsv_image,output_image)
             #cross = ComputerVision.find_cross_contours(screenshot)    
             #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
