@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-
+import math
 class ImageProcessor:
     corners = {'bottom_left': None, 'bottom_right': None, 'top_left': None, 'top_right': None}
     scale_factors = {'x_scale': None, 'y_scale': None}
@@ -467,12 +467,12 @@ class ImageProcessor:
     def convert_to_cartesian(pixel_coords):
         bottom_left, bottom_right, top_left, top_right = ImageProcessor.corners.values()
         x_scale, y_scale = ImageProcessor.scale_factors['x_scale'], ImageProcessor.scale_factors['y_scale']
-        x_scale = 180 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
-        y_scale = 120 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
+        x_scale = 166 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
+        y_scale = 121 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
         x_cartesian = (pixel_coords[0] - bottom_left[0]) * x_scale
-        y_cartesian = 120 - (pixel_coords[1] - top_left[1]) * y_scale
-        x_cartesian = max(min(x_cartesian, 180), 0)
-        y_cartesian = max(min(y_cartesian, 120), 0)
+        y_cartesian = 121 - (pixel_coords[1] - top_left[1]) * y_scale
+        x_cartesian = max(min(x_cartesian, 166), 0)
+        y_cartesian = max(min(y_cartesian, 121), 0)
         return x_cartesian, y_cartesian
     
     @staticmethod
@@ -482,8 +482,8 @@ class ImageProcessor:
         top_width = np.linalg.norm(np.array(top_left) - np.array(top_right))
         left_height = np.linalg.norm(np.array(bottom_left) - np.array(top_left))
         right_height = np.linalg.norm(np.array(bottom_right) - np.array(top_right))
-        x_scale = 180 / max(bottom_width, top_width)
-        y_scale = 120 / max(left_height, right_height)
+        x_scale = 166 / max(bottom_width, top_width)
+        y_scale = 121 / max(left_height, right_height)
         return x_scale, y_scale    
     
     @staticmethod
@@ -591,6 +591,37 @@ class ImageProcessor:
 
         return cartesian_coords, output_Image
 
+
+    @staticmethod
+    def get_corrected_position(before_robot_coordinates:tuple):
+        x=before_robot_coordinates[0]
+        y=before_robot_coordinates[1]
+        map_width = 166.5
+        map_height = 121.8
+        robot_body_height = 30
+        camera_x = 77  # centered camera position (x-coordinate)
+        camera_y = 51  # centered camera position (y-coordinate)
+        # distance from camera to robot base (account for camera offset)
+        distance_to_base = math.sqrt((x - camera_x)**2 + (y - camera_y)**2)
+
+        # make sure x and y are within map boundaries 
+        if x < 0 or x > map_width:
+            raise ValueError("X coordinate is outside map boundaries")
+        if y < 0 or y > map_height:
+            raise ValueError("Y coordinate is outside map boundaries")
+
+        # calc angle between camera and top of robot
+        angle = math.atan2(robot_body_height, distance_to_base)
+
+        # Correct the x and y coordinates
+        corrected_x = x + distance_to_base * math.sin(angle)
+        corrected_y = y + distance_to_base * math.cos(angle)
+
+        corrected_position_robot = [corrected_x, corrected_y]
+
+        return corrected_position_robot
+
+
     #GKOPERGPOKEROPKG KOM NU JOHAN VS CODE STINKER
     @staticmethod
     def process_robot(indput_Image,output_Image):
@@ -605,8 +636,9 @@ class ImageProcessor:
         if(contours is not None):
             midtpunkt,angle,output_Image = ImageProcessor.calculate_robot_midpoint_and_angle(contours, output_Image)
         
-
+        
         return midtpunkt, angle, output_Image
+    
     
     @staticmethod
     def process_image(image):
@@ -702,7 +734,8 @@ class ImageProcessor:
                 endpoint = (midpoint[0] + direction[0], midpoint[1] + direction[1])
                 cv2.circle(image, midpoint, 10, (0, 0, 255), -1)  # Red dot at midpoint
                 cv2.line(image, midpoint, endpoint, (255, 0, 0), 3)  # Blue line indicating direction
-                print("Midpoint:", midpoint)
+                midpoint_cm=ImageProcessor.convert_to_cartesian(midpoint)
+                print("Midpoint:", midpoint_cm)
                 print("Direction to third point:", direction)
                 cv2.imshow('Directional Image', image)
                 cv2.waitKey(0)
