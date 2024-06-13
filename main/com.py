@@ -47,18 +47,24 @@ def command_robot(robot_position, balls, robot_orientation, socket):
     res = send_command(command, socket=socket)
 
 
-def drive_robot_to_point(point, angle, pos):
-    angle = calculate_angle(pos, point)
+def drive_robot_to_point(point, pos, socket):
+    angle_to_turn = calculate_angle(pos, point)
 
-    command = f"TURN {angle}"
+    command = f"TURN {angle_to_turn}"
     res = send_command(command, socket=socket)
 
-    dis = calculate_distance(pos, point)
-    command = f"MOVE {angle}"
+    distance_to_move = calculate_distance(pos, point)
+    command = f"MOVE {distance_to_move}"
     res = send_command(command, socket=socket)
 
-    return True
-    print(f"Response from MOVE command: {res}")
+    # Assuming res indicates success or failure of the command
+    # Modify this part according to your actual response handling
+    if res == "success":  # Adjust according to your response logic
+        return True
+    else:
+        return False
+
+
 
     #Maybe a returned boolean incase robot has arrived at destination?
 
