@@ -378,7 +378,7 @@ async def main(mode):
     vision_image = Vision('ball.png')
 
     vision_image.init_control_gui()
-    testpicturename = 'testpic2.jpg'
+    testpicturename = 'peter.png'
 
     findArena = False
 
@@ -444,19 +444,23 @@ async def main(mode):
                                                                  200, 1500, 2000, "cross", (0, 255, 255), 147, 12, 15,
                                                                  arenaCorners)
             # egg
+            """
             edged, output_image, eggcordinats = detect_objects(inputimg, output_image, vision_image,
                                                                HsvFilter(0, 0, 243, 179, 255, 255, 0, 0, 0, 0),
                                                                minThreshold=100, maxThreshold=200, minArea=100,
                                                                maxArea=600, name="egg", rgb_Color=(255, 0, 204),
                                                                threshold=227, minPoints=7, maxPoints=12,
                                                                arenaCorners=arenaCorners)
+                                                               """
             # orange
+            """
             edged, output_image, orangecordinats = detect_objects(inputimg, output_image, vision_image,
                                                                   HsvFilter(0, 54, 0, 179, 255, 255, 0, 0, 0, 0),
                                                                   minThreshold=100, maxThreshold=200, minArea=50,
                                                                   maxArea=200, name="orange", rgb_Color=(183, 102, 52),
                                                                   threshold=178, minPoints=6, maxPoints=10,
                                                                   arenaCorners=arenaCorners)
+                                                                  """
             # robot
             # edged, output_image = detect_objects(inputimg,output_image,vision_image, HsvFilter(91, 107, 0, 154, 255, 207, 0, 0, 0, 0), minThreshold=0,maxThreshold=1000,minArea=30,maxArea=200,name ="robot",rgb_Color=(0, 42, 255),threshold=28,minPoints=8,maxPoints=8)
 
@@ -465,6 +469,7 @@ async def main(mode):
             # edged, output_image,ballcordinats = detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 28, 255, 0, 0, 0, 0), minThreshold=0,maxThreshold=200,minArea=50,maxArea=200,name ="ball",rgb_Color=(0, 0, 255),threshold=161,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
 
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv(input_image=inputimg)
+            print("JEG SUTTER")
 
             ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image,
                                                                                                    ballcontours,
