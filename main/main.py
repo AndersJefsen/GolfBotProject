@@ -48,7 +48,7 @@ def detect_objects(imageToDetectOn, imageToDrawOn,vision_image, hsv_filter, maxT
                 x, y, w, h = cv.boundingRect(approx)
                 center_x = x + w // 2
                 center_y = y + h // 2
-                x_cart, y_cart = ComputerVision.ImageProcessor.convert_to_cartesian((center_x, center_y), arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+                x_cart, y_cart = ComputerVision.ImageProcessor.convert_to_cartesian((center_x, center_y),arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
                 x_cart = round(x_cart, 2)
                 y_cart = round(y_cart, 2)
                 cv.putText(imageToDrawOn, f"{name}: {len(approx)}", (x + w + 20, y - 5), cv.FONT_HERSHEY_COMPLEX, 0.7, rgb_Color, 1)
@@ -340,21 +340,21 @@ def useMask(imageToMask,mask):
     return cv.bitwise_and(imageToMask, imageToMask, mask=mask)
 #model = YOLO('best.pt')
 # initialize the WindowCapture class
-def show_image(image_queue):
-    cv.namedWindow('Computer Vision', cv.WINDOW_NORMAL)
-    while True:
-        if not image_queue.empty():
-            image = image_queue.get()
-            screenoutput = cv.resize(image, (960, 540))            
-            cv.imshow('Computer Vision', screenoutput)
-            if cv.waitKey(1) & 0xFF == ord('q'):
-                break
-    cv.destroyAllWindows()
 
-async def main(mode):
+    
+
+def command_robot_thread(correctmid, ballcordinats, angle, socket, completion_flag):
+    try:
+        # Replace com.command_robot_async with com.command_robot if it's not async
+        com.command_robot_async(correctmid, ballcordinats, angle, socket)
+    finally:
+        completion_flag.set()
+
+
+def main(mode):
     if mode == "camera" or mode == "robot":  
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
-        print("camera mode")
+        print("camera mode or robot mode")
     elif mode == "window":
         from windowcapture import WindowCapture
 
@@ -408,6 +408,7 @@ async def main(mode):
                 
                 arenaCorners.append(top_right_corner)
                 arenaCorners.append(top_left_corner)
+               
                 mask = createMask(screenshot,arenaCorners)
                 print("mask Created")
                 break
@@ -460,7 +461,7 @@ async def main(mode):
             
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv(input_image= inputimg)
           
-            ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours, arenaCorners[0], arenaCorners[1], arenaCorners[2], arenaCorners[3])
+            ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours,arenaCorners[0], arenaCorners[1], arenaCorners[2], arenaCorners[3])
             
             #ballcon, output_image,angle, midpoint = ComputerVision.ImageProcessor.find_robot_withOutput(inputimg,output_image,bottom_left_corner=arenaCorners[0], bottom_right_corner=arenaCorners[1], top_left_corner=arenaCorners[3], top_right_corner=arenaCorners[2])
           
@@ -470,7 +471,8 @@ async def main(mode):
             #display_thread.start()
             cv.imshow("pic",output_image)
 
-            if(mode == "robot" and completion_flag.is_set()):
+            #if(mode == "robot" and completion_flag.is_set()):
+            if(mode == "robot" ):    
                 if(angle is not None and midpoint is not None and ballcordinats):
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
                     '''
@@ -486,22 +488,27 @@ async def main(mode):
                     '''
                     print("Robot orientation sss:")
                     print(angle)
-                    completion_flag.clear()
-                    #asyncio.create_task(com.command_robot(correctmid, ballcordinats, angle,socket)
-                    print("command robot")
-                    await asyncio.create_task(com.command_robot_async(correctmid, ballcordinats, angle, socket, completion_flag))
+                    #completion_flag.clear()
+                    #thread = threading.Thread(target=command_robot_thread, args=(correctmid, ballcordinats, angle, socket, completion_flag))
+                    #thread.start()
+                    com.command_robot(correctmid, ballcordinats, angle, socket)
                     print("command robot done")
             if(mode == "test"):
                   if(angle is not None and midpoint is not None and ballcordinats):
                         print("Robot orientation:")
                         print(angle)
-                        correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+                        correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint,arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
                         closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid, ballcordinats, angle)
                         print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
     
                         print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
-           
-                    
+            if(mode == "camera"):
+                  if(angle is not None and midpoint is not None and ballcordinats):
+                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint,arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+                    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid, ballcordinats, angle)
+                    print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
+    
+                    print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
                     
             #edged, output_image = findRoundObjects(outputhsv_image,output_image)
             #cross = ComputerVision.find_cross_contours(screenshot)    
@@ -564,6 +571,6 @@ async def main(mode):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        asyncio.run(main(sys.argv[1]))
+       main(sys.argv[1])
     else:
         print("No mode specified. Usage: python script_name.py <test|window|camera>")

@@ -48,7 +48,7 @@ async def command_robot_async(robot_position, balls, robot_orientation, socket, 
     
     # Set the completion flag to True when both commands are done
     completion_flag.set()
-async def command_robot(robot_position, balls, robot_orientation,socket):
+def command_robot(robot_position, balls, robot_orientation,socket):
         #ImageProcessor.get_robot_position()
         balls = balls #ImageProcessor.get_robot_position().get_balls()
        #ImageProcessor.get_robot_orientation()
@@ -62,7 +62,9 @@ async def command_robot(robot_position, balls, robot_orientation,socket):
         # Get command input from the user
         command = f"TURN {angle_to_turn}"
         res = send_command(command,socket=socket)
+        
         command = f"MOVE {distance_to_ball}"
+    
         res = send_command(command,socket=socket)   
         return True
 
