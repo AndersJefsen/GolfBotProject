@@ -395,7 +395,7 @@ async def main(mode):
             if screenshot is None:
                 print("Failed to capture screenshot.")
                 continue
-            findArena, output_image, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ComputerVision.ImageProcessor.find_Arena(
+            findArena, output_image, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner, contours = ComputerVision.ImageProcessor.find_Arena(
                 screenshot, output_image)
             if findArena:
                 arenaCorners.append(bottom_left_corner)
