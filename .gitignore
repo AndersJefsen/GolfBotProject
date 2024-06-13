@@ -2,3 +2,4 @@
 # Ignorer Python cache mapper
 __pycache__/
 *.pyc
+*.mp4
