@@ -107,6 +107,9 @@ def main(mode):
                 screenshot = cv.imread(testpicturename)
             if screenshot is None:
                 print("Failed to capture screenshot.")
+                if mode == "videotest":
+                    wincap.set(cv.CAP_PROP_POS_FRAMES, 0)
+                    print("Restarting video.")
                 continue
             
             ballcordinats = []
@@ -120,6 +123,7 @@ def main(mode):
             #inputimg = screenshot
             output_image = inputimg.copy()
             outputhsv_image = vision_image.apply_hsv_filter(inputimg)
+
             #cross
             edged, output_image,crosscordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 255, 255, 0, 0, 0, 0), 100,200,1500,2000,"cross",(0, 255, 255),147,12,15,arenaCorners)
             #egg
