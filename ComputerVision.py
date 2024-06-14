@@ -783,7 +783,7 @@ class ImageProcessor:
         #draw balls
         
         
-        ball_contours = ImageProcessor.find_balls_hsv(image, min_size=1000, max_size=2000)
+        ball_contours = ImageProcessor.find_balls_hsv1(image, min_size=1000, max_size=2000)
 
         ImageProcessor.paintballs(ball_contours, "ball",image)
 
@@ -892,7 +892,7 @@ class ImageProcessor:
 
         arenaCorners = [bottom_left_corner, bottom_right_corner, top_right_corner, top_left_corner]
 
-        balls_contour = ImageProcessor.find_balls_hsv(outputimage, 1000,2000)
+        balls_contour = ImageProcessor.find_balls_hsv1(outputimage, 1000,2000)
         ball_list, outputimage = ImageProcessor.convert_balls_to_cartesian(outputimage,balls_contour)
         outputimage = ImageProcessor.paintballs(balls_contour, "ball", outputimage)
         ImageProcessor.showimage('balls', outputimage)
