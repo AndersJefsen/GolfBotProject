@@ -1,4 +1,6 @@
 from time import time
+
+import cv2
 import cv2 as cv
 from vision import Vision
 from hsvfilter import HsvFilter
@@ -521,13 +523,21 @@ def main(mode):
                         #print("Operation Goal got fuckd mate")
 
             if (mode == "camera"):
+
+                image_center = (screenshot.shape[1] // 2, screenshot.shape[0] // 2)
+                print("Image Center - Pixel Coordinates:", image_center)
+                cv2.circle(screenshot,image_center, radius= 10 , color=(255,0,0),thickness=-1)
+
+                image_center = ComputerVision.ImageProcessor.convert_to_cartesian(image_center,arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+                print("Image Center - Cartisan coord q:", image_center)
                 if angle is not None and midpoint is not None:
 
-                    print(angle)
+                    #pythprint(angle)
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
                         midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2]
                     )
-                    print(correctmid)
+                    #print(correctmid)
+
 
 
 

@@ -678,6 +678,9 @@ class ImageProcessor:
             ImageProcessor.convert_to_cartesian(top_right_corner, bottom_left_corner, bottom_right_corner,
                                                 top_left_corner, top_right_corner)[1], 2))))
 
+        image_center = (image.shape[1] // 2, image.shape[0] // 2)
+        print("Image Center - Pixel Coordinates:", image_center)
+
         for cnt in filtered_contours:
             font = cv2.FONT_HERSHEY_COMPLEX
             approx = cv2.approxPolyDP(cnt, 0.009 * cv2.arcLength(cnt, True), True)
