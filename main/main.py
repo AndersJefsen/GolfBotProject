@@ -133,7 +133,8 @@ def main(mode):
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
             #_,outputimg=ComputerVision.ImageProcessor.process_and_convert_contours(inputimg,ballcontours)
             #ComputerVision.ImageProcessor.showimage("",outputimg)
-            ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
+            
+            #ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
             
             if ballcontours is not None:
                 #print("")
