@@ -67,10 +67,10 @@ class ImageProcessor:
                 continue
             circularity = 4 * np.pi * (area / (perimeter * perimeter))
             if min_circularity <= circularity <= max_circularity:  # Filter round shapes based on circularity
-                robot_counters.append(cnt)
+                robot_counters.append(cnt)      
             
         return robot_counters 
-
+    
     @staticmethod
     def showcontours(image, contours,name=None):
         black_background = np.zeros_like(image)
@@ -82,7 +82,7 @@ class ImageProcessor:
         mask = ImageProcessor.apply_hsv_filter(image, lower_color, upper_color)
         clean_mask = ImageProcessor.clean_mask(mask)
         contours, _ = cv2.findContours(clean_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+        
         #ImageProcessor.show_contours_with_areas(image, contours)
 
 
@@ -450,7 +450,7 @@ class ImageProcessor:
         edges = cv2.Canny(red, 100, 200)
         contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
         cv2.drawContours(outPutImage, contours, -1, (0, 255, 0), 2)
-
+        
         # Display the mask used for edge detection
         # cv2.imshow('Arena Mask', outPutImage)
         # cv2.waitKey(0)
@@ -469,7 +469,7 @@ class ImageProcessor:
 
     # Draw only the largest contour on the output image
     #     cv2.drawContours(outPutImage, [max_contour], -1, (0, 255, 0), 3)  # Draw in green
-
+    
     # # Optionally display the original image and the output image with the largest contour
     #     cv2.imshow('Largest Contour', outPutImage)
     #     cv2.waitKey(0)
@@ -491,7 +491,7 @@ class ImageProcessor:
         print(f"Filtered contours: {len(filtered_contours)}")
         for cnt in filtered_contours:
             print(f"Contour area: {cv2.contourArea(cnt)}")
-
+       
         if len(filtered_contours) < 1:
             print("Not enough filtered contours")
             return False, None, None, None, None, None, None
@@ -501,7 +501,7 @@ class ImageProcessor:
         # Show the image with the first contour
         # cv2.imshow("First Filtered Contour", outPutImage)
         # cv2.waitKey(0)  # Wait for a key press to proceed
-        # cv2.destroyAllWindows()  # Close the image display window
+        # cv2.destroyAllWindows()  # Close the image display window    
 
         try:
             bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ImageProcessor.corners[
@@ -590,7 +590,7 @@ class ImageProcessor:
             center_y = y + h // 2
 
             if bottom_left_corner is not None:
-                cartesian_coords.append(ImageProcessor.convert_to_cartesian((center_x, center_y)))
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y))
                 print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
 
             cv2.rectangle(output_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -781,9 +781,9 @@ class ImageProcessor:
         #     print("Ingen robot fundet.")
 
         #draw balls
-
         
-        ball_contours = ImageProcessor.find_balls_hsv1(image, min_size=1000, max_size=2000)
+        
+        ball_contours = ImageProcessor.find_balls_hsv(image, min_size=1000, max_size=2000)
 
         ImageProcessor.paintballs(ball_contours, "ball",image)
 
@@ -815,7 +815,7 @@ class ImageProcessor:
 
         big_ball_contour = ImageProcessor.find_bigball_hsv(image, min_size=4000, max_size=10000)
         if big_ball_contour is not None:
-            ImageProcessor.paintballs(orange_ballcontours, "egg", image)
+            ImageProcessor.paintballs(orange_ballcontours, "egg", image) 
 
         angle = ImageProcessor.calculate_angle(direction)
         
@@ -868,8 +868,8 @@ class ImageProcessor:
         if (contours is not None):
             midtpunkt, angle, output_Image = ImageProcessor.calculate_robot_midpoint_and_angle(contours, output_Image)
         return midtpunkt, angle, output_Image, contours
-
-
+    
+    
     @staticmethod
     def showimage(name="pic", image=None):
         cv2.imshow(name, image)
@@ -884,7 +884,7 @@ class ImageProcessor:
             print("Could not find the arena.")
             return
         ImageProcessor.showimage('arena', outputimage)
-
+        
         cross_counters, output_image_with_cross = ImageProcessor.find_cross_contours( filtered_contours, outputimage)
         cartesian_cross_list, output_image_with_cross = ImageProcessor.convert_cross_to_cartesian(cross_counters, outputimage)
         # Create the mask using the detected arena corners
@@ -892,16 +892,17 @@ class ImageProcessor:
 
         arenaCorners = [bottom_left_corner, bottom_right_corner, top_right_corner, top_left_corner]
 
-        balls_contour = ImageProcessor.find_balls_hsv1(outputimage, 1000,2000)
-        outputimage=ImageProcessor.paintballs(balls_contour, "ball", outputimage)
+        balls_contour = ImageProcessor.find_balls_hsv(outputimage, 1000,2000)
+        ball_list, outputimage = ImageProcessor.convert_balls_to_cartesian(outputimage,balls_contour)
+        outputimage = ImageProcessor.paintballs(balls_contour, "ball", outputimage)
         ImageProcessor.showimage('balls', outputimage)
-
+   
 
         #midtpunkt, angle, output_image_with_robot, contours = ImageProcessor.process_robotForTesting(output_image_with_balls,
         #                                                                                            output_image_with_balls.copy())
         ImageProcessor.process_robotForTesting(outputimage, outputimage)
         ImageProcessor.showimage('robot', outputimage)
-
+        
         orangeball_contour = ImageProcessor.find_orangeball_hsv(outputimage, 1000,2000)
         if(orangeball_contour):
             outputimage=ImageProcessor.paintballs(orangeball_contour, "orange", outputimage)
