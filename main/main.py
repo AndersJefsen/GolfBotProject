@@ -369,8 +369,9 @@ def main(mode):
     if mode == "robot":
         socket = com.connect_to_robot()
 
-    #if mode == "Goal":
-        #socket = com.connect_to_robot()
+    if mode == "Goal":
+        socket = com.connect_to_robot()
+
 
 
     arenaCorners = []
@@ -489,11 +490,7 @@ def main(mode):
                     print(angle)
                     com.command_robot(correctmid, ballcordinats, angle,socket)
                     #find ud af hvornår vi skal skruge,error detection.
-                    if(angle is not None and midpoint is not None):
-                        helppoint = (12,61.5)
-                        com.drive_robot_to_point(helppoint,angle,midpoint)
-                        com.turn_robot(180,angle)
-                        com.release()
+                    print("robot done")
 
             if(mode == "test"):
                   if(angle is not None and midpoint is not None and ballcordinats):

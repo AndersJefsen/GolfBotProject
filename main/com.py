@@ -3,7 +3,7 @@ from path import find_close_ball, calculate_angle, calculate_distance
 import math
 
 # Define server address and port
-SERVER_ADDRESS = '172.20.10.3'  #IP address of EV3
+SERVER_ADDRESS = '172.20.10.14'  #IP address of EV3
 SERVER_PORT = 1024  # port server script
 
 
