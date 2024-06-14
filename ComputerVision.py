@@ -27,7 +27,7 @@ class ImageProcessor:
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         return mask
-    
+
     @staticmethod
     def show_contours_with_areas(image, contours, window_name="Contours with Areas"):
         # Create a black image of the same dimensions as the input image
@@ -37,7 +37,7 @@ class ImageProcessor:
         for cnt in contours:
             # Calculate the contour area
             area = cv2.contourArea(cnt)
-            
+
             # Draw the contour on the black background
             cv2.drawContours(black_background, [cnt], -1, (0, 255, 0), 3)  # green contour line
 
@@ -106,6 +106,148 @@ class ImageProcessor:
         white_upper = np.array([180, 60, 255], dtype="uint8")
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size, min_curvature, max_curvature)
 
+    @staticmethod
+    def find_balls_hsv1(image, min_size=300, white_area_size=2000, padding=15, min_size2=400):
+        def detect_balls_original_mask(hsv_image, white_lower, white_upper):
+            # Threshhold the HSV image to get only white colors
+            white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
+
+            # Use morphological operations to clean up the mask
+            kernel = np.ones((5, 5), np.uint8)
+            white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
+            white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
+
+            # Find contours
+            contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            # Display the white mask
+            # cv2.imshow('Processed white mask', white_mask)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
+
+            ball_contours = []
+
+            for cnt in contours:
+                area = cv2.contourArea(cnt)
+                print("contour area:", {area})
+
+                if min_size < area < 10000:
+                    if area > white_area_size:
+                        print("entering multiple balls")
+                        # Extract the region of interest
+                        x, y, w, h = cv2.boundingRect(cnt)
+                        x_pad = max(x - padding, 0)
+                        y_pad = max(y - padding, 0)
+                        w_pad = min(w + 2 * padding, image.shape[1] - x_pad)
+                        h_pad = min(h + 2 * padding, image.shape[0] - y_pad)
+                        sub_image = white_mask[y_pad:y_pad + h_pad, x_pad:x_pad + w_pad]
+
+                        # sure background area
+                        sure_bg = cv2.dilate(sub_image, kernel, iterations=3)
+
+                        # Distance transform
+                        dist = cv2.distanceTransform(sub_image, cv2.DIST_L2, 0)
+
+                        # foreground area
+                        ret, sure_fg = cv2.threshold(dist, 0.5 * dist.max(), 255, cv2.THRESH_BINARY)
+                        sure_fg = sure_fg.astype(np.uint8)
+
+                        # unknown area
+                        unknown = cv2.subtract(sure_bg, sure_fg)
+
+                        # Marker labelling
+                        ret, markers = cv2.connectedComponents(sure_fg)
+                        markers += 1
+                        sub_image_color = cv2.cvtColor(sub_image, cv2.COLOR_GRAY2BGR)
+                        markers = cv2.watershed(sub_image_color, markers)
+                        markers[markers == -1] = 0
+                        sub_image_color[markers > 1] = [0, 165, 255]
+
+                        hsv_image = cv2.cvtColor(sub_image_color, cv2.COLOR_BGR2HSV)
+                        orange_lower = np.array([15, 100, 20], dtype="uint8")
+                        orange_upper = np.array([25, 255, 255], dtype="uint8")
+                        orange_mask = cv2.inRange(hsv_image, orange_lower, orange_upper)
+
+                        sub_contours, _ = cv2.findContours(orange_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                        for sub_cnt in sub_contours:
+                            sub_area = cv2.contourArea(sub_cnt)
+                            if min_size2 >= sub_area:
+                                perimeter = cv2.arcLength(sub_cnt, True)
+                                if perimeter == 0:
+                                    continue
+                                circularity = 4 * np.pi * (sub_area / (perimeter * perimeter))
+                                if 0.7 <= circularity <= 1.2 and sub_area > 100:
+                                    sub_cnt = sub_cnt + np.array([[x_pad, y_pad]])
+                                    ball_contours.append(sub_cnt)
+                    else:
+                        print("entering single ball")
+                        perimeter = cv2.arcLength(cnt, True)
+                        if perimeter == 0:
+                            continue
+                        circularity = 4 * np.pi * (area / (perimeter * perimeter))
+                        if 0.7 <= circularity <= 1.2:
+                            ball_contours.append(cnt)
+            return ball_contours, white_mask
+
+        def remove_duplicate_contours(contours):
+            centroids = []
+            unique_contours = []
+
+            for cnt in contours:
+                M = cv2.moments(cnt)
+                if M["m00"] != 0:
+                    cX = int(M["m10"] / M["m00"])
+                    cY = int(M["m01"] / M["m00"])
+                    centroids.append((cX, cY))
+
+            for i, cnt1 in enumerate(contours):
+                unique = True
+                for j, cnt2 in enumerate(unique_contours):
+                    if i != j:
+                        M1 = cv2.moments(cnt1)
+                        M2 = cv2.moments(cnt2)
+                        if M1["m00"] != 0 and M2["m00"] != 0:
+                            cX1 = int(M1["m10"] / M1["m00"])
+                            cY1 = int(M1["m01"] / M1["m00"])
+                            cX2 = int(M2["m10"] / M2["m00"])
+                            cY2 = int(M2["m01"] / M2["m00"])
+                            if np.sqrt((cX1 - cX2) ** 2 + (cY1 - cY2) ** 2) < 10:  # distance threshold
+                                unique = False
+                                break
+                if unique:
+                    unique_contours.append(cnt1)
+            return unique_contours
+
+        # Convert the image to HSV color space
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+        # Initial white mask range
+        white_lower = np.array([0, 0, 200], dtype="uint8")
+        white_upper = np.array([180, 60, 255], dtype="uint8")
+        ball_contours, white_mask = detect_balls_original_mask(hsv_image, white_lower, white_upper)
+
+        # Check if the number of detected balls is less than 12
+        if len(ball_contours) < 12:
+            # Adjust white mask range
+            white_lower = np.array([0, 0, 245], dtype="uint8")
+            white_upper = np.array([180, 60, 255], dtype="uint8")
+            additional_ball_contours, additional_white_mask = detect_balls_original_mask(hsv_image, white_lower,
+                                                                                         white_upper)
+            ball_contours.extend(additional_ball_contours)
+
+        # Remove duplicate contours
+        ball_contours = remove_duplicate_contours(ball_contours)
+
+        # Display the white mask
+        # cv2.imshow('Processed Image Balls', white_mask)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
+        # Draw contours on the original image
+        output_image = image.copy()
+        cv2.drawContours(output_image, ball_contours, -1, (0, 255, 0), 2)
+
+        return ball_contours
     @staticmethod
     def find_robot(indput_Image, min_size=50, max_size=100000):
        
@@ -201,7 +343,7 @@ class ImageProcessor:
         angle_degrees = angle_degrees % 360
         
         return angle_degrees
-    
+
     @staticmethod
     def paintballs(countors, text, Image):
             if countors:
@@ -448,7 +590,7 @@ class ImageProcessor:
             center_y = y + h // 2
 
             if bottom_left_corner is not None:
-                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y))
+                cartesian_coords.append(ImageProcessor.convert_to_cartesian((center_x, center_y)))
                 print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
 
             cv2.rectangle(output_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -641,7 +783,7 @@ class ImageProcessor:
         #draw balls
         
         
-        ball_contours = ImageProcessor.find_balls_hsv(image, min_size=1000, max_size=2000)
+        ball_contours = ImageProcessor.find_balls_hsv1(image, min_size=1000, max_size=2000)
 
         ImageProcessor.paintballs(ball_contours, "ball",image)
 
@@ -754,11 +896,11 @@ class ImageProcessor:
 
         arenaCorners = [bottom_left_corner, bottom_right_corner, top_right_corner, top_left_corner]
 
-        balls_contour = ImageProcessor.find_balls_hsv(outputimage, 1000,2000)
+        balls_contour = ImageProcessor.find_balls_hsv1(outputimage, 1000,2000)
         ball_list, outputimage = ImageProcessor.convert_balls_to_cartesian(outputimage,balls_contour)
         outputimage = ImageProcessor.paintballs(balls_contour, "ball", outputimage)
         ImageProcessor.showimage('balls', outputimage)
-
+   
 
         #midtpunkt, angle, output_image_with_robot, contours = ImageProcessor.process_robotForTesting(output_image_with_balls,
         #                                                                                            output_image_with_balls.copy())

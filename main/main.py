@@ -48,14 +48,14 @@ def main(mode):
     arenaCorners = []
     mask = None
      
-  
-   
+
+
     gui = False
-    
+
     vision_image = Vision('ball.png')
-  
+
     vision_image.init_control_gui()
-    
+
     testpicturename = 'testpic2.jpg'
 
 
@@ -155,10 +155,10 @@ def main(mode):
             if(mode == "robot" ):
                 if(angle is not None and midpoint is not None and ballcordinats):
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint)
-                    
+
                     print("Robot orientation sss:")
                     print(angle)
-                   
+
                     print("command robot")
                     com.command_robot(correctmid, ballcordinats, angle,socket)
                     print("command robot done")
@@ -171,7 +171,7 @@ def main(mode):
                         print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
     
                         print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
-           
+
             if cv.waitKey(1) & 0xFF == ord('q'):
                 break
         except Exception as e:
