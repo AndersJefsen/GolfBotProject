@@ -448,7 +448,7 @@ class ImageProcessor:
             center_y = y + h // 2
 
             if bottom_left_corner is not None:
-                cartesian_coords.append(ImageProcessor.convert_to_cartesian((center_x, center_y)))
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y))
                 print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
 
             cv2.rectangle(output_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -751,9 +751,10 @@ class ImageProcessor:
         arenaCorners = [bottom_left_corner, bottom_right_corner, top_right_corner, top_left_corner]
 
         balls_contour = ImageProcessor.find_balls_hsv(outputimage, 1000,2000)
-        outputimage=ImageProcessor.paintballs(balls_contour, "ball", outputimage)
+        ball_list, outputimage = ImageProcessor.convert_balls_to_cartesian(outputimage,balls_contour)
+        outputimage = ImageProcessor.paintballs(balls_contour, "ball", outputimage)
         ImageProcessor.showimage('balls', outputimage)
-   
+
 
         #midtpunkt, angle, output_image_with_robot, contours = ImageProcessor.process_robotForTesting(output_image_with_balls,
         #                                                                                            output_image_with_balls.copy())
