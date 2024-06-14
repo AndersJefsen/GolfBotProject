@@ -489,6 +489,7 @@ def main(mode):
                     print("Robot orientation:")
                     print(angle)
                     com.command_robot(correctmid, ballcordinats, angle,socket)
+
                     #find ud af hvornår vi skal skruge,error detection.
                     print("robot done")
 
@@ -506,17 +507,27 @@ def main(mode):
                 if angle is not None and midpoint is not None:
                     print("Robot orientation:")
                     print(angle)
+                    print(midpoint)
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
                         midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2]
                     )
 
                     target_point = (12, 61.5)
 
-                    result = com.move_to_position_and_release(target_point, correctmid, angle, socket)
-                    if result:
-                        print("Operation BigGOALGOAL successful")
-                    else:
-                        print("Operation Goal got fuckd mate")
+                    #result = com.move_to_position_and_release(target_point, correctmid, angle, socket)
+                    #if result:
+                        #print("Operation BigGOALGOAL successful")
+                    #else:
+                        #print("Operation Goal got fuckd mate")
+
+            if (mode == "camera"):
+                if angle is not None and midpoint is not None:
+
+                    print(angle)
+                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
+                        midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2]
+                    )
+                    print(correctmid)
 
 
 

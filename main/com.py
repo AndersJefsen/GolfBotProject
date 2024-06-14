@@ -88,6 +88,7 @@ def turn_robot(oriention, desired_angle):
 
     command = f"TURN {diff}"
     res = send_command(command, socket=socket)
+    print(diff)
     return diff == 0
 
 
