@@ -596,33 +596,43 @@ class ImageProcessor:
 
 
     @staticmethod
-    def get_corrected_position(before_robot_coordinates:tuple):
-        x=before_robot_coordinates[0]
-        y=before_robot_coordinates[1]
-        map_width = 166.5
-        map_height = 121.8
-        robot_body_height = 30
-        camera_x = 77  # centered camera position (x-coordinate)
-        camera_y = 51  # centered camera position (y-coordinate)
-        # distance from camera to robot base (account for camera offset)
-        distance_to_base = math.sqrt((x - camera_x)**2 + (y - camera_y)**2)
+    def get_corrected_coordinates_robot(before_coordinates:list):
+        x=before_coordinates[0] 
+        y=before_coordinates[1]
+        camera_height= 170
+        robot_height = 31
+        camera_x=81
+        camera_y=61
 
-        # make sure x and y are within map boundaries 
-        if x < 0 or x > map_width:
-            raise ValueError("X coordinate is outside map boundaries")
-        if y < 0 or y > map_height:
-            raise ValueError("Y coordinate is outside map boundaries")
+        # Calculate distance from camera x,y to robot x,y (what the camera sees)
+        distance = math.sqrt((x - camera_x) ** 2 + (y - camera_y) ** 2)
+        #pythagoras to find the hypotenuse
+        hypotenuse = math.sqrt(distance ** 2 + camera_height ** 2)
 
-        # calc angle between camera and top of robot
-        angle = math.atan2(robot_body_height, distance_to_base)
+        #find smalle triangle
+        h= camera_height-robot_height
+        factor_triangle=h/camera_height
 
-        # Correct the x and y coordinates
-        corrected_x = x + distance_to_base * math.sin(angle)
-        corrected_y = y + distance_to_base * math.cos(angle)
+        l=distance*factor_triangle
 
-        corrected_position_robot = [corrected_x, corrected_y]
+        small_l = distance-l
+        # Correcting the x-coordinate
+        if x > camera_x:
+            corrected_x = x - (small_l)  # Move right
+        else:
+            corrected_x = x + (small_l)  # Move left
 
-        return corrected_position_robot
+        # Correcting the y-coordinate
+        if y > camera_y:
+            corrected_y = y - (small_l)  # Move up
+        else:
+            corrected_y = y + (small_l)  # Move down
+            
+        corrected_coordinates=[corrected_x,corrected_y]
+
+        return corrected_coordinates
+
+
 
     
     '''
