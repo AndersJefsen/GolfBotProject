@@ -144,9 +144,9 @@ def main(mode):
 
              #cross
             cross_counters, output_image_with_cross = ComputerVision.ImageProcessor.find_cross_contours( filtered_contoures, outputimage)
-            cartesian_cross_list, output_image_with_cross = ComputerVision.ImageProcessor.convert_cross_to_cartesian(cross_counters, outputimage)
+            cartesian_cross_list, output_image_with_cross = ComputerVision.ImageProcessor.convert_cross_to_cartesian(cross_counters, output_image_with_cross)
 
-            outputimage=ComputerVision.ImageProcessor.paintballs(ballcontours, "ball", outputimage)
+            outputimage=ComputerVision.ImageProcessor.paintballs(ballcontours, "ball", output_image_with_cross)
             #ComputerVision.ImageProcessor.showimage("balls", outputimage)
 
             outputimage=ComputerVision.ImageProcessor.paintballs(eggcordinats, "egg", outputimage)
