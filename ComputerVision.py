@@ -3,7 +3,6 @@ import numpy as np
 import math
 class ImageProcessor:
     corners = {'bottom_left': None, 'bottom_right': None, 'top_left': None, 'top_right': None}
-    scale_factors = {'x_scale': None, 'y_scale': None}
     def __init__(self):
         pass
 
@@ -44,6 +43,16 @@ class ImageProcessor:
         ImageProcessor.showimage(window_name, black_background)
 
     @staticmethod
+    def showimage(name="pic", image=None):
+        try:
+            cv2.imshow(name, image)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+        except Exception as e:
+            print(f"error {e} with pic {name}")   
+
+    @staticmethod
     def filter_circles(contours, min_size, max_size, min_circularity=0.7, max_circularity=1.2):
         if len(contours) == 0:
             return None
@@ -67,6 +76,32 @@ class ImageProcessor:
         black_background = np.zeros_like(image)
         cv2.drawContours(black_background, contours, -1, (0, 255, 0), 2)  # Green color for visibility
         ImageProcessor.showimage(name, black_background)
+
+    @staticmethod
+    def paint_and_print_contours(image, contours):
+        output_image = image.copy()  # Work on a copy of the image to preserve the original
+
+        for i, cnt in enumerate(contours, 1):
+            # Calculate the contour area to avoid processing empty contours
+            if cv2.contourArea(cnt) == 0:
+                continue
+
+            # Draw each contour on the output image
+            cv2.drawContours(output_image, [cnt], -1, (0, 255, 0), 2)  # Green for visibility
+
+            # Find the bounding rectangle to get the center
+            x, y, w, h = cv2.boundingRect(cnt)
+            center_x = x + w // 2
+            center_y = y + h // 2
+
+            # Convert to Cartesian coordinates if needed
+            cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y))
+
+            # Display the Cartesian coordinates on the image
+            text_location = (x, y + h + 20)  # Display below the contour
+            cv2.putText(output_image, f"Coords: {cartesian_coords}", text_location, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+        return output_image
 
     @staticmethod
     def detect_and_filter_objects(image, lower_color, upper_color, min_size, max_size, min_curvature=0.7, max_curvature=1.2):
@@ -427,11 +462,7 @@ class ImageProcessor:
         # cv2.imshow('Arena Mask', outPutImage)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
-        """
-        cv2.imshow('Arena Mask', red)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        """
+    
 
         if not contours:
             print("No contours found")
@@ -504,11 +535,11 @@ class ImageProcessor:
             return True, outPutImage, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner, contours
         else:
             return False, None, None, None, None, None
+        
     #convert to cartesian    
     @staticmethod
     def convert_to_cartesian(pixel_coords):
         bottom_left, bottom_right, top_left, top_right = ImageProcessor.corners.values()
-        x_scale, y_scale = ImageProcessor.scale_factors['x_scale'], ImageProcessor.scale_factors['y_scale']
         x_scale = 166 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
         y_scale = 121 / max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1])
         x_cartesian = (pixel_coords[0] - bottom_left[0]) * x_scale
@@ -517,19 +548,10 @@ class ImageProcessor:
         y_cartesian = max(min(y_cartesian, 121), 0)
         return x_cartesian, y_cartesian
     
-    @staticmethod
-    def calculate_scale_factors():
-        bottom_left, bottom_right, top_left, top_right = ImageProcessor.corners.values()
-        bottom_width = np.linalg.norm(np.array(bottom_left) - np.array(bottom_right))
-        top_width = np.linalg.norm(np.array(top_left) - np.array(top_right))
-        left_height = np.linalg.norm(np.array(bottom_left) - np.array(top_left))
-        right_height = np.linalg.norm(np.array(bottom_right) - np.array(top_right))
-        x_scale = 166 / max(bottom_width, top_width)
-        y_scale = 121 / max(left_height, right_height)
-        return x_scale, y_scale    
+    
     
     @staticmethod
-    def process_and_convert_contours(image, contours, label):
+    def process_and_convert_contours(image, contours, label="pic"):
         output_image = image.copy()
         cartesian_coords_list = []
         
@@ -544,53 +566,12 @@ class ImageProcessor:
             cartesian_coords_list.append(cartesian_coords)
 
             # Marking the image
-            cv2.rectangle(output_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(output_image, f"{label} {i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            cv2.putText(output_image, f"{label} {cartesian_coords}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             #print(f"{label} {i} Cartesian Coordinates: {cartesian_coords}")
 
         return cartesian_coords_list, output_image
-    @staticmethod
-    def convert_balls_to_cartesian(image, ball_contours):
-        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ImageProcessor.corners.values()
-
-        cartesian_coords = []
-        output_Image = image.copy()
-        print(f"Found {len(ball_contours)} balls.")
-        for i, contour in enumerate(ball_contours, 1):
-            x, y, w, h = cv2.boundingRect(contour)
-            center_x = x + w // 2
-            center_y = y + h // 2
-
-            if bottom_left_corner is not None:
-                cartesian_coords.append(ImageProcessor.convert_to_cartesian((center_x, center_y)))
-                print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
-
-            cv2.rectangle(output_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(output_Image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        return cartesian_coords, output_Image
-
-    @staticmethod
-    def convert_robot_to_cartesian(output_image, robot_contours):
-        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ImageProcessor.corners.values()
-        robot_coordinates = []
-
-        if robot_contours is None or len(robot_contours) < 3:
-            print("Not enough blue dots found.")
-            return robot_coordinates, output_image  
         
-        for cnt in robot_contours:
-            M = cv2.moments(cnt)
-            if M["m00"] != 0:
-                cX = int(M["m10"] / M["m00"])
-                cY = int(M["m01"] / M["m00"])
-                cv2.circle(output_image, (cX, cY), 3, (0, 255, 0), -1)  # Mark the blue dots on the image
-                if bottom_left_corner is not None:
-                    cartesian_coords = ImageProcessor.convert_to_cartesian((cX, cY))
-                    robot_coordinates.append(cartesian_coords)
-                    #print(f"Robot Cartesian Coordinates: {cartesian_coords}")
 
-
-        return robot_coordinates, output_image
 
     @staticmethod
     def convert_cross_to_cartesian(cross_contours, image):
@@ -611,27 +592,7 @@ class ImageProcessor:
                     print(f"    {coord}")
         return cartesian_coords_list, output_Image
 
-    @staticmethod
-    def convert_orangeball_to_cartesian(image, orangeball_contours):
-        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ImageProcessor.corners.values()
-
-        output_Image = image.copy()
-        cartesian_coords = None
-
-        if orangeball_contours:
-            contour = orangeball_contours[0]
-            x, y, w, h = cv2.boundingRect(contour)
-            center_x = x + w // 2
-            center_y = y + h // 2
-
-            if bottom_left_corner is not None:
-                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y))
-                print(f"Orange Ball Cartesian Coordinates: {cartesian_coords}")
-            # Tegner
-            cv2.rectangle(output_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(output_Image, "1", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-
-        return cartesian_coords, output_Image
+   
 
 
     @staticmethod
@@ -663,40 +624,11 @@ class ImageProcessor:
 
         return corrected_position_robot
 
-
-    #GKOPERGPOKEROPKG KOM NU JOHAN VS CODE STINKER
-    @staticmethod
-    def process_robot(indput_Image,output_Image):
-        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ImageProcessor.corners.values()
-        midtpunkt = None
-        angle = None
-
-        contours = ImageProcessor.find_robot(indput_Image, min_size=0, max_size=100000)
-       
-        cartesian_coords, output_Image = ImageProcessor.convert_robot_to_cartesian(output_Image,contours)
-        
-        if(contours is not None):
-            midtpunkt,angle,output_Image = ImageProcessor.calculate_robot_midpoint_and_angle(contours, output_Image)
-        
-        
-        return midtpunkt, angle, output_Image
-    
     
     '''
     process image block
     '''
-    @staticmethod
-    def createMask(imageToDetectOn, points):
-        points = np.array(points, dtype=np.int32).reshape((-1, 1, 2))
-        mask = np.zeros(imageToDetectOn.shape[:2], dtype=np.uint8)
-        cv2.fillPoly(mask, [points], 255)
-        return mask
-
-    @staticmethod
-    def useMask(imageToMask, mask):
-        if mask.shape[:2] != imageToMask.shape[:2]:
-            raise ValueError("The mask and the image must have the same dimensions")
-        return cv2.bitwise_and(imageToMask, imageToMask, mask=mask)
+    
 
 
 if __name__ == "__main__":

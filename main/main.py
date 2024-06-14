@@ -133,17 +133,21 @@ def main(mode):
             orangecordinats = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg)
             #robot
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
+            #_,outputimg=ComputerVision.ImageProcessor.process_and_convert_contours(inputimg,ballcontours)
+            #ComputerVision.ImageProcessor.showimage("",outputimg)
             #ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
             
             #if ballcontours is not None:
                 #print("")
                 #ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours)
-            
-            midpoint, angle, outputimage = ComputerVision.ImageProcessor.process_robot(inputimg,output_image)
+            robotcordinats=ComputerVision.ImageProcessor.find_robot(inputimg, min_size=0, max_size=100000)
+            if robotcordinats is not None:
+                if (len(robotcordinats)==3):
+                    midpoint, angle, output_image=ComputerVision.ImageProcessor.calculate_robot_midpoint_and_angle(robotcordinats,output_image)
             #ComputerVision.ImageProcessor.showimage("", outputimage)
 
              #cross
-            cross_counters, output_image_with_cross = ComputerVision.ImageProcessor.find_cross_contours( filtered_contoures, outputimage)
+            cross_counters, output_image_with_cross = ComputerVision.ImageProcessor.find_cross_contours( filtered_contoures, output_image)
             cartesian_cross_list, output_image_with_cross = ComputerVision.ImageProcessor.convert_cross_to_cartesian(cross_counters, output_image_with_cross)
 
             outputimage=ComputerVision.ImageProcessor.paintballs(ballcontours, "ball", output_image_with_cross)

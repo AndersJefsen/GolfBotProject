@@ -148,13 +148,114 @@
         
         """
 
+'''
+convert to cartisian 
+
+ @staticmethod
+    def convert_orangeball_to_cartesian(image, orangeball_contours):
+        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ImageProcessor.corners.values()
+
+        output_Image = image.copy()
+        cartesian_coords = None
+
+        if orangeball_contours:
+            contour = orangeball_contours[0]
+            x, y, w, h = cv2.boundingRect(contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+
+            if bottom_left_corner is not None:
+                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y))
+                print(f"Orange Ball Cartesian Coordinates: {cartesian_coords}")
+            # Tegner
+            cv2.rectangle(output_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(output_Image, "1", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+        return cartesian_coords, output_Image
 
 
+         @staticmethod
+    def convert_balls_to_cartesian(image, ball_contours):
+        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ImageProcessor.corners.values()
 
+        cartesian_coords = []
+        output_Image = image.copy()
+        print(f"Found {len(ball_contours)} balls.")
+        for i, contour in enumerate(ball_contours, 1):
+            x, y, w, h = cv2.boundingRect(contour)
+            center_x = x + w // 2
+            center_y = y + h // 2
+
+            if bottom_left_corner is not None:
+                cartesian_coords.append(ImageProcessor.convert_to_cartesian((center_x, center_y)))
+                print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
+
+            cv2.rectangle(output_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(output_Image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        return cartesian_coords, output_Image
+
+
+        @staticmethod
+    def convert_robot_to_cartesian(output_image, robot_contours):
+        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ImageProcessor.corners.values()
+        robot_coordinates = []
+
+        if robot_contours is None or len(robot_contours) < 3:
+            print("Not enough blue dots found.")
+            return robot_coordinates, output_image  
+        
+        for cnt in robot_contours:
+            M = cv2.moments(cnt)
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+                cv2.circle(output_image, (cX, cY), 3, (0, 255, 0), -1)  # Mark the blue dots on the image
+                if bottom_left_corner is not None:
+                    cartesian_coords = ImageProcessor.convert_to_cartesian((cX, cY))
+                    robot_coordinates.append(cartesian_coords)
+                    #print(f"Robot Cartesian Coordinates: {cartesian_coords}")
+
+
+        return robot_coordinates, output_image
+'''
 
 
 '''
+scale factor 
+@staticmethod
+    def calculate_scale_factors():
+        bottom_left, bottom_right, top_left, top_right = ImageProcessor.corners.values()
+        bottom_width = np.linalg.norm(np.array(bottom_left) - np.array(bottom_right))
+        top_width = np.linalg.norm(np.array(top_left) - np.array(top_right))
+        left_height = np.linalg.norm(np.array(bottom_left) - np.array(top_left))
+        right_height = np.linalg.norm(np.array(bottom_right) - np.array(top_right))
+        x_scale = 166 / max(bottom_width, top_width)
+        y_scale = 121 / max(left_height, right_height)
+        return x_scale, y_scale    
+'''
+
+'''
 process image block
+
+
+   #GKOPERGPOKEROPKG KOM NU JOHAN VS CODE STINKER
+    @staticmethod
+    def process_robot(indput_Image,output_Image):
+        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ImageProcessor.corners.values()
+        midtpunkt = None
+        angle = None
+
+        contours = ImageProcessor.find_robot(indput_Image, min_size=0, max_size=100000)
+       
+        cartesian_coords, output_Image = ImageProcessor.convert_robot_to_cartesian(output_Image,contours)
+        
+        if(contours is not None):
+            midtpunkt,angle,output_Image = ImageProcessor.calculate_robot_midpoint_and_angle(contours, output_Image)
+        
+        
+        return midtpunkt, angle, output_Image
+    
+        
 @staticmethod
     def process_image(image):
 
@@ -315,16 +416,7 @@ process image block
         return midtpunkt, angle, output_Image, contours
     
     
-    @staticmethod
-    def showimage(name="pic", image=None):
-        try:
-            cv2.imshow(name, image)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-
-        except Exception as e:
-            print(f"error {e} with pic {name}")   
-
+   
     ### TEST FUNKTION FOR AT SE OM DET VIRKER
     def process_image(image):
         success,outputimage, bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner, filtered_contours = ImageProcessor.find_Arena(
@@ -363,5 +455,19 @@ process image block
             outputimage=ImageProcessor.paintballs(egg_contour, "egg", outputimage)
             ImageProcessor.showimage('final', outputimage)
 
+            
+
+            @staticmethod
+    def createMask(imageToDetectOn, points):
+        points = np.array(points, dtype=np.int32).reshape((-1, 1, 2))
+        mask = np.zeros(imageToDetectOn.shape[:2], dtype=np.uint8)
+        cv2.fillPoly(mask, [points], 255)
+        return mask
+
+    @staticmethod
+    def useMask(imageToMask, mask):
+        if mask.shape[:2] != imageToMask.shape[:2]:
+            raise ValueError("The mask and the image must have the same dimensions")
+        return cv2.bitwise_and(imageToMask, imageToMask, mask=mask)
 
 '''
