@@ -56,7 +56,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'testpic2.jpg'
+    testpicturename = 'peter.png'
 
 
 
@@ -132,24 +132,25 @@ def main(mode):
             #orange
             orangecordinats = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg)
             #robot
-            ballcontours = ComputerVision.ImageProcessor.find_balls_hsv(inputimg)
-            ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
+            ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
+            #ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
             
             #if ballcontours is not None:
                 #print("")
                 #ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours)
             
             midpoint, angle, outputimage = ComputerVision.ImageProcessor.process_robot(inputimg,output_image)
-            ComputerVision.ImageProcessor.showimage("", outputimage)
+            #ComputerVision.ImageProcessor.showimage("", outputimage)
 
             outputimage=ComputerVision.ImageProcessor.paintballs(ballcontours, "ball", outputimage)
-            ComputerVision.ImageProcessor.showimage("", outputimage)
+            #ComputerVision.ImageProcessor.showimage("balls", outputimage)
 
             outputimage=ComputerVision.ImageProcessor.paintballs(eggcordinats, "egg", outputimage)
-            
-            outputimage=ComputerVision.ImageProcessor.paintballs(orangecordinats, "orange", outputimage)
+            #ComputerVision.ImageProcessor.showimage("egg", outputimage)
 
-            if(outputimage):
+            outputimage=ComputerVision.ImageProcessor.paintballs(orangecordinats, "orange", outputimage)
+            #ComputerVision.ImageProcessor.showimage("final", outputimage)
+            if(outputimage is not None):
                 cv.imshow("pic",outputimage)
 
             if(mode == "robot" ):

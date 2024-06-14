@@ -101,13 +101,13 @@ class ImageProcessor:
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size)
     
     @staticmethod
-    def find_bigball_hsv(image, min_size=400, max_size=2000, min_curvature=0.7, max_curvature=1.2):
+    def find_bigball_hsv(image, min_size=1000, max_size=8000, min_curvature=0.7, max_curvature=1.2):
         white_lower = np.array([0, 0, 200], dtype="uint8")
         white_upper = np.array([180, 60, 255], dtype="uint8")
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size, min_curvature, max_curvature)
 
     @staticmethod
-    def find_balls_hsv1(image, min_size=300, white_area_size=2000, padding=15, min_size2=400):
+    def find_balls_hsv1(image, min_size=300, white_area_size=1000, padding=15, min_size2=400):
         def detect_balls_original_mask(hsv_image, white_lower, white_upper):
             # Threshhold the HSV image to get only white colors
             white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
@@ -129,11 +129,11 @@ class ImageProcessor:
 
             for cnt in contours:
                 area = cv2.contourArea(cnt)
-                print("contour area:", {area})
+               # print("contour area:", {area})
 
                 if min_size < area < 10000:
                     if area > white_area_size:
-                        print("entering multiple balls")
+                       # print("entering multiple balls")
                         # Extract the region of interest
                         x, y, w, h = cv2.boundingRect(cnt)
                         x_pad = max(x - padding, 0)
@@ -180,7 +180,7 @@ class ImageProcessor:
                                     sub_cnt = sub_cnt + np.array([[x_pad, y_pad]])
                                     ball_contours.append(sub_cnt)
                     else:
-                        print("entering single ball")
+                        #print("entering single ball")
                         perimeter = cv2.arcLength(cnt, True)
                         if perimeter == 0:
                             continue
@@ -356,6 +356,8 @@ class ImageProcessor:
                     cv2.putText(Image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                     if ImageProcessor.corners['bottom_left'] is not None:
                         cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y))
+                return Image
+            else:
                 return Image
 
     @staticmethod
