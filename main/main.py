@@ -131,7 +131,7 @@ def main(mode):
             #orange
             edged, output_image,orangecordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 54, 0, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=50,maxArea=200,name ="orange",rgb_Color=(183, 102, 52),threshold=178,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
             #robot
-            ballcontours = ComputerVision.ImageProcessor.find_balls_hsv(inputimg)
+            ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
             if ballcontours is not None:
                 ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours)
 

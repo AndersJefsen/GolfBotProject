@@ -107,7 +107,7 @@ class ImageProcessor:
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size, min_curvature, max_curvature)
 
     @staticmethod
-    def find_balls_hsv1(image, min_size=50, white_area_size=2000, padding=15, min_size2=400):
+    def find_balls_hsv1(image, min_size=300, white_area_size=2000, padding=15, min_size2=400):
         def detect_balls_original_mask(hsv_image, white_lower, white_upper):
             # Threshhold the HSV image to get only white colors
             white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
@@ -783,7 +783,7 @@ class ImageProcessor:
         #draw balls
 
         
-        ball_contours = ImageProcessor.find_balls_hsv(image, min_size=1000, max_size=2000)
+        ball_contours = ImageProcessor.find_balls_hsv1(image, min_size=1000, max_size=2000)
 
         ImageProcessor.paintballs(ball_contours, "ball",image)
 
@@ -892,7 +892,7 @@ class ImageProcessor:
 
         arenaCorners = [bottom_left_corner, bottom_right_corner, top_right_corner, top_left_corner]
 
-        balls_contour = ImageProcessor.find_balls_hsv(outputimage, 1000,2000)
+        balls_contour = ImageProcessor.find_balls_hsv1(outputimage, 1000,2000)
         outputimage=ImageProcessor.paintballs(balls_contour, "ball", outputimage)
         ImageProcessor.showimage('balls', outputimage)
 
