@@ -124,8 +124,8 @@ def main(mode):
             output_image = inputimg.copy()
             outputhsv_image = vision_image.apply_hsv_filter(inputimg)
 
-            #cross
-            edged, output_image,crosscordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 255, 255, 0, 0, 0, 0), 100,200,1500,2000,"cross",(0, 255, 255),147,12,15,arenaCorners)
+           
+
             #egg
             #edged, output_image,eggcordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 243, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=100,maxArea=600,name ="egg",rgb_Color=(255, 0, 204),threshold=227,minPoints=7,maxPoints=12,arenaCorners=arenaCorners)
             eggcordinats = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg)
@@ -141,6 +141,10 @@ def main(mode):
             
             midpoint, angle, outputimage = ComputerVision.ImageProcessor.process_robot(inputimg,output_image)
             #ComputerVision.ImageProcessor.showimage("", outputimage)
+
+             #cross
+            cross_counters, output_image_with_cross = ComputerVision.ImageProcessor.find_cross_contours( filtered_contoures, outputimage)
+            cartesian_cross_list, output_image_with_cross = ComputerVision.ImageProcessor.convert_cross_to_cartesian(cross_counters, outputimage)
 
             outputimage=ComputerVision.ImageProcessor.paintballs(ballcontours, "ball", outputimage)
             #ComputerVision.ImageProcessor.showimage("balls", outputimage)

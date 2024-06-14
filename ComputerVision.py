@@ -416,8 +416,8 @@ class ImageProcessor:
         found_cross = False
         cross_contours = []
         for cnt in filtered_contours:
-            approx = cv2.approxPolyDP(cnt, 0.015 * cv2.arcLength(cnt, True), True)  # justere efter billede
-            print(f"Contour length: {len(approx)}")  # Debug statement
+            approx = cv2.approxPolyDP(cnt, 0.05 * cv2.arcLength(cnt, True), True)  # justere efter billede
+            #print(f"Contour length: {len(approx)}")  # Debug statement
             if len(approx) == 12:  # Our cross has 12 corners.
                 bounding_rect = cv2.boundingRect(cnt)
                 aspect_ratio = bounding_rect[2] / float(bounding_rect[3])
