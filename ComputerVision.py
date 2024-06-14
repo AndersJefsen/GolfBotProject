@@ -590,7 +590,7 @@ class ImageProcessor:
             center_y = y + h // 2
 
             if bottom_left_corner is not None:
-                cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y))
+                cartesian_coords.append(ImageProcessor.convert_to_cartesian((center_x, center_y)))
                 print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
 
             cv2.rectangle(output_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
