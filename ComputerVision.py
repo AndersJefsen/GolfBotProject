@@ -730,9 +730,13 @@ class ImageProcessor:
     
     @staticmethod
     def showimage(name="pic", image=None):
-        cv2.imshow(name, image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        try:
+            cv2.imshow(name, image)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+        except Exception as e:
+            print(f"error {e} with pic {name}")   
 
     ### TEST FUNKTION FOR AT SE OM DET VIRKER
     def process_image(image):

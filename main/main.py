@@ -127,17 +127,30 @@ def main(mode):
             #cross
             edged, output_image,crosscordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 0, 179, 255, 255, 0, 0, 0, 0), 100,200,1500,2000,"cross",(0, 255, 255),147,12,15,arenaCorners)
             #egg
-            edged, output_image,eggcordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 243, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=100,maxArea=600,name ="egg",rgb_Color=(255, 0, 204),threshold=227,minPoints=7,maxPoints=12,arenaCorners=arenaCorners)
+            #edged, output_image,eggcordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 243, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=100,maxArea=600,name ="egg",rgb_Color=(255, 0, 204),threshold=227,minPoints=7,maxPoints=12,arenaCorners=arenaCorners)
+            eggcordinats = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg)
             #orange
-            edged, output_image,orangecordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 54, 0, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=50,maxArea=200,name ="orange",rgb_Color=(183, 102, 52),threshold=178,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
+            orangecordinats = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg)
             #robot
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv(inputimg)
-            if ballcontours is not None:
-                ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours)
+            ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
             
-            midpoint, angle, output_image = ComputerVision.ImageProcessor.process_robot(inputimg,output_image)
+            #if ballcontours is not None:
+                #print("")
+                #ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours)
+            
+            midpoint, angle, outputimage = ComputerVision.ImageProcessor.process_robot(inputimg,output_image)
+            ComputerVision.ImageProcessor.showimage("", outputimage)
 
-            cv.imshow("pic",output_image)
+            outputimage=ComputerVision.ImageProcessor.paintballs(ballcontours, "ball", outputimage)
+            ComputerVision.ImageProcessor.showimage("", outputimage)
+
+            outputimage=ComputerVision.ImageProcessor.paintballs(eggcordinats, "egg", outputimage)
+            
+            outputimage=ComputerVision.ImageProcessor.paintballs(orangecordinats, "orange", outputimage)
+
+            if(outputimage):
+                cv.imshow("pic",outputimage)
 
             if(mode == "robot" ):
                 if(angle is not None and midpoint is not None and ballcordinats):
