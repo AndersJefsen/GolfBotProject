@@ -127,7 +127,7 @@ class ImageProcessor:
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size)
     
     @staticmethod
-    def find_bigball_hsv(image, min_size=1000, max_size=8000, min_curvature=0.7, max_curvature=1.2):
+    def find_bigball_hsv(image, min_size=2000, max_size=8000, min_curvature=0.7, max_curvature=1.2):
         white_lower = np.array([0, 0, 200], dtype="uint8")
         white_upper = np.array([180, 60, 255], dtype="uint8")
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size, min_curvature, max_curvature)
@@ -566,7 +566,7 @@ class ImageProcessor:
             cartesian_coords_list.append(cartesian_coords)
 
             # Marking the image
-            cv2.putText(output_image, f"{label} {cartesian_coords}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            #cv2.putText(output_image, f"{label} {cartesian_coords}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             #print(f"{label} {i} Cartesian Coordinates: {cartesian_coords}")
 
         return cartesian_coords_list, output_image
