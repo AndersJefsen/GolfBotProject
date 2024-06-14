@@ -391,7 +391,7 @@ async def main(mode):
     vision_image = Vision('ball.png')
 
     vision_image.init_control_gui()
-    testpicturename = 'billede6(bold i hjørnet).png'
+    testpicturename = 'testpic2.jpg'
 
     findArena = False
     

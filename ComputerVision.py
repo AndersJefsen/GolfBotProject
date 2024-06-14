@@ -74,7 +74,7 @@ class ImageProcessor:
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size)
 
     @staticmethod
-    def find_balls_hsv1(image, min_size=500, white_area_size=2000, padding=15, min_size2=400):
+    def find_balls_hsv1(image, min_size=50, white_area_size=2000, padding=15, min_size2=400):
         def detect_balls_original_mask(hsv_image, white_lower, white_upper):
             # Threshhold the HSV image to get only white colors
             white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
