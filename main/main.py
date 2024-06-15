@@ -31,12 +31,12 @@ def main(mode):
         print("test mode")
         #virtuelDisaplay = visualisation()
     elif mode == "videotest":
-        video_path = "../goodvideo.mp4"  # Specify the path to the video file in the parent folder
+        video_path = "../badvideo.mp4"  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
         if not wincap.isOpened():
             print("Error: Could not open video file.")
             return
-        print("videotest mode")
+        print("videotest mode")    
     else:
         print("Invalid mode")
         return
@@ -52,8 +52,7 @@ def main(mode):
 
     arenaCorners = []
     mask = None
-
-
+     
 
 
     gui = False
@@ -64,20 +63,33 @@ def main(mode):
 
     testpicturename = 'peter.png'
 
+    def getPicture():
+        if mode == "camera" or mode == "robot" or mode == "videotest":
 
 
     findArena = False
-    
+
     while not findArena:
         try:
             if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
                 ret, screenshot = wincap.read()
-            elif mode == "window":
+        elif mode == "window":
                 screenshot = wincap.get_screenshot()
-            elif mode == "test":
-
+        elif mode == "test":
                 screenshot = cv.imread(testpicturename)
+        if screenshot is not None:
+                    screenshot = cv.resize(screenshot, (2048,1024), interpolation=cv.INTER_AREA)
 
+
+        return screenshot
+
+
+    findArena = False
+
+    while not findArena:
+        try:
+
+            screenshot=getPicture()
             output_image = screenshot.copy()
             
             if screenshot is None:
@@ -105,7 +117,7 @@ def main(mode):
     loop_time = time()
     while(True):
         try:
-            if mode == "camera" or mode == "robot" or mode =="videotest":
+            if mode == "camera" or mode == "robot" or mode == "Goal" or  mode == "videotest":
                 ret, screenshot = wincap.read()
             elif mode == "window":
                 screenshot = wincap.get_screenshot()
@@ -118,11 +130,7 @@ def main(mode):
                     print("Restarting video.")
                 continue
             
-            ballcordinats = []
-            eggcordinats = []
-            orangecordinats = []
-            robotcordinats = []
-            crosscordinats = []
+
             inputimg = imageManipulationTools.useMask(screenshot,mask)
             #timestamp = strftime("%Y%m%d_%H%M%S", gmtime())
             #cv.imwrite("test_"+timestamp+".jpg", screenshot)
@@ -134,22 +142,34 @@ def main(mode):
 
             #egg
             #edged, output_image,eggcordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 243, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=100,maxArea=600,name ="egg",rgb_Color=(255, 0, 204),threshold=227,minPoints=7,maxPoints=12,arenaCorners=arenaCorners)
-            eggcordinats = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg)
+            eggcordinats = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg, 2000, 8000)
             #orange
-            orangecordinats = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg)
+            orangecordinats = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
             #robot
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
-            #_,outputimg=ComputerVision.ImageProcessor.process_and_convert_contours(inputimg,ballcontours)
+            #_,output_image=ComputerVision.ImageProcessor.process_and_convert_contours(inputimg,ballcontours)
             #ComputerVision.ImageProcessor.showimage("",outputimg)
-            #ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
 
-            #if ballcontours is not None:
+            #ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
+            
+            if ballcontours is not None:
                 #print("")
-                #ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours)
+                ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
             robotcordinats=ComputerVision.ImageProcessor.find_robot(inputimg, min_size=0, max_size=100000)
             if robotcordinats is not None:
                 if (len(robotcordinats)==3):
-                    midpoint, angle, output_image=ComputerVision.ImageProcessor.calculate_robot_midpoint_and_angle(robotcordinats,output_image)
+                    midpoint, angle, output_image, direction=ComputerVision.ImageProcessor.getrobot(robotcordinats,output_image)
+                    output_image=ComputerVision.ImageProcessor.paintrobot(midpoint, angle, output_image, direction)
+                    output_image=ComputerVision.ImageProcessor.paintballs(robotcordinats, "robo ball", output_image)
+                    #print(midpoint)
+
+                    midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(midpoint[0],midpoint[1])
+                    #print(midpoint)
+
+                    output_image=ComputerVision.ImageProcessor.paintrobot(midpoint, angle, output_image, direction)
+
+
+
             #ComputerVision.ImageProcessor.showimage("", outputimage)
 
              #cross
@@ -167,7 +187,7 @@ def main(mode):
             if(outputimage is not None):
                 cv.imshow("pic",outputimage)
 
-            if(mode == "robot"):
+            if(mode == "robot" ):
                 if(angle is not None and midpoint is not None and ballcordinats):
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint)
 
@@ -216,12 +236,12 @@ def main(mode):
 
 
             #edged, output_image = findRoundObjects(outputhsv_image,output_image)
-            #cross = ComputerVision.find_cross_contours(screenshot)    
+            #cross = ComputerVision.find_cross_contours(screenshot)
             #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
 
             #outputedge_image = vision_image.apply_edge_filter(outputhsv_image)
             #rectangles = vision_image.find(outputhsv_image,0.5,10)
-            
+
             #ret, thresh = cv.threshold(outputedge_image, 127, 255, 0)
             #contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
             #output_image = cv.drawContours(screenshot, contours, -1, (0,255,0), 3)
@@ -237,7 +257,7 @@ def main(mode):
             #edged, output_image = findCross(inputimg,screenshot)
             #edged, output_image = findObstacles(outputhsv_image,screenshot)
             #edged, output_image = findRoundObjects(outputhsv_image,screenshot)
-            
+
             #rzhsv = cv.resize(outputhsv_image, (960, 540))
             #cv.imshow('hsv', rzhsv)
             '''
@@ -246,18 +266,18 @@ def main(mode):
             rze = cv.resize(edged, (960, 540))
             cv.imshow('edges', rze)
             '''
-        
-            
+
+
 
             #screengray = cv.resize(imgray, (960, 540))
-            
+
             #screenhsvimg = cv.resize(outputhsv_image, (960, 540))
             #screenedgeimg = cv.resize(outputedge_image, (960, 540))
             #cv.imshow('gray', screengray)
             #cv.imshow('hsv', screenhsvimg)
             #cv.imshow('edge', screenedgeimg)
 
-        
+
 
             if cv.waitKey(1) & 0xFF == ord('q'):
                 break

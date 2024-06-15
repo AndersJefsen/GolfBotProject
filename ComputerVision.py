@@ -127,7 +127,7 @@ class ImageProcessor:
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size)
     
     @staticmethod
-    def find_bigball_hsv(image, min_size=1000, max_size=8000, min_curvature=0.7, max_curvature=1.2):
+    def find_bigball_hsv(image, min_size=2000, max_size=8000, min_curvature=0.7, max_curvature=1.2):
         white_lower = np.array([0, 0, 200], dtype="uint8")
         white_upper = np.array([180, 60, 255], dtype="uint8")
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size, min_curvature, max_curvature)
@@ -260,7 +260,8 @@ class ImageProcessor:
             ball_contours.extend(additional_ball_contours)
 
         # Remove duplicate contours
-        ball_contours = remove_duplicate_contours(ball_contours)
+        if ball_contours is not None:
+            ball_contours = remove_duplicate_contours(ball_contours)
 
         # Display the white mask
         # cv2.imshow('Processed Image Balls', white_mask)
@@ -291,7 +292,8 @@ class ImageProcessor:
         contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         robot_counters=ImageProcessor.filter_circles(contours, min_size,max_size)
-
+        if robot_counters is None:
+            return None
         if len(robot_counters) <3:
             print("Not enough contours found.")
             return None
@@ -366,27 +368,27 @@ class ImageProcessor:
                 return Image
 
     @staticmethod
-    def calculate_robot_midpoint_and_angle(cartesian_coords, output_Image):
-        if len(cartesian_coords) != 3:
-            print("Error: Expected exactly three coordinates for the robot.")
-            return None, None, output_Image
+    def getrobot(coords, output_Image):
+
+        midpoint, direction = ImageProcessor.find_direction(coords)
+
         
-        midpoint, direction = ImageProcessor.find_direction(cartesian_coords)
-      
         if midpoint and direction:
-            # Draw the direction from the midpoint
-            endpoint = (int(midpoint[0] + direction[0]), int(midpoint[1] + direction[1]))
-            cv2.circle(output_Image, (int(midpoint[0]), int(midpoint[1])), 10, (0, 0, 255), -1)  # Red dot at midpoint
-            cv2.line(output_Image, (int(midpoint[0]), int(midpoint[1])), endpoint, (255, 0, 0),
-                     3)  # Blue line indicating direction
 
             angle = ImageProcessor.calculate_angle(direction)
-            cv2.putText(output_Image, f"Angle: {angle:.2f}", (int(midpoint[0]) + 20, int(midpoint[1]) + 20), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 255, 0), 1)
-            return midpoint, angle, output_Image
+            return midpoint, angle, output_Image, direction
 
-        return None, None, output_Image
+        return None, None, output_Image, None
 
-  
+    @staticmethod
+    def paintrobot(midpoint,angle,output_image,direction):
+        cv2.putText(output_image, f"Angle: {angle:.2f}", (int(midpoint[0]) + 20, int(midpoint[1]) + 20), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 255, 0), 1)
+        cv2.circle(output_image, (int(midpoint[0]), int(midpoint[1])), 10, (0, 0, 255), -1)  # Red dot at midpoint
+        endpoint = (int(midpoint[0] + direction[0]), int(midpoint[1] + direction[1]))
+
+        cv2.line(output_image, (int(midpoint[0]), int(midpoint[1])), endpoint, (255, 0, 0),3)
+        return output_image
+
 
     @staticmethod
     def detect_all_corners(filtered_contours, image_width, image_height):
@@ -566,7 +568,7 @@ class ImageProcessor:
             cartesian_coords_list.append(cartesian_coords)
 
             # Marking the image
-            cv2.putText(output_image, f"{label} {cartesian_coords}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            #cv2.putText(output_image, f"{label} {cartesian_coords}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             #print(f"{label} {i} Cartesian Coordinates: {cartesian_coords}")
 
         return cartesian_coords_list, output_image
@@ -595,14 +597,39 @@ class ImageProcessor:
    
 
 
+   
+    
     @staticmethod
-    def get_corrected_coordinates_robot(before_coordinates:list):
-        x=before_coordinates[0] 
-        y=before_coordinates[1]
+    def convert_to_pixel(cm_coords):
+        bottom_left, bottom_right, top_left, top_right=ImageProcessor.corners.values()
+        # Only usuable for Goal definition (reverting CM's to pixel alignment for UI)!
+        x_scale = max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0]) / 166.7
+        y_scale = max(bottom_left[1] - top_left[1], bottom_right[1] - top_right[1]) / 121
+
+        x_pixel = int(cm_coords[0] * x_scale + bottom_left[0])
+        y_pixel = int((121 - cm_coords[1]) * y_scale + top_left[1])
+
+        return x_pixel, y_pixel
+    
+    @staticmethod
+    def compare_angles(angleRobot, angleGoalDesired):
+        angleRobot = angleRobot % 360
+        angleGoalDesired = angleGoalDesired % 360
+        diff = abs(angleRobot - angleGoalDesired)
+        if diff > 180:
+            diff = 360 - diff
+        return diff
+    
+    
+    '''
+    @staticmethod
+    def get_corrected_coordinates_robot(x,y):
+        
         camera_height= 170
         robot_height = 31
-        camera_x=81
-        camera_y=61
+        cam_x=81
+        cam_y=61
+        camera_x,camera_y=ImageProcessor.convert_to_pixel((cam_x, cam_y))
 
         # Calculate distance from camera x,y to robot x,y (what the camera sees)
         distance = math.sqrt((x - camera_x) ** 2 + (y - camera_y) ** 2)
@@ -616,6 +643,8 @@ class ImageProcessor:
         l=distance*factor_triangle
 
         small_l = distance-l
+        #print(x,y)
+        
         # Correcting the x-coordinate
         if x > camera_x:
             corrected_x = x - (small_l)  # Move right
@@ -631,9 +660,36 @@ class ImageProcessor:
         corrected_coordinates=[corrected_x,corrected_y]
 
         return corrected_coordinates
+   
+    @staticmethod
+    def get_corrected_coordinates_robot(x,y,roboth=31,camerah=170):
+        
+        
+       
 
+        # Calculate distance from camera x,y to robot x,y (what the camera sees)
+        scale_factor = roboth / camerah
+        print(scale_factor)
+        x_2d = x + (scale_factor * x)
+        y_2d = y + (scale_factor * y)
 
+        return (x_2d, y_2d)
+    '''
+    @staticmethod
+    def get_corrected_coordinates_robot(robot_x, robot_y, robot_z=31, cam_x=81, cam_y=61, cam_z=170):
+        cam_x,cam_y=ImageProcessor.convert_to_pixel((cam_x, cam_y))
+        
+    # Calculate the vector from the camera to the robot on the plane
+        vector_x = robot_x - cam_x
+        vector_y = robot_y - cam_y
+        #print(vector_x)
+        # Apply the scale factor for perspective based on height
+        scale_factor = robot_z / cam_z
+        x_2d = cam_x + vector_x * (1 - scale_factor)
+        y_2d = cam_y + vector_y * (1 - scale_factor)
 
+        return (x_2d, y_2d)
+   
     
     '''
     process image block
