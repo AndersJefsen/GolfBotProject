@@ -20,6 +20,20 @@ from time import time, strftime, gmtime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision 
 
+def getPicture(mode,wincap,testpicturename):
+        if mode == "camera" or mode == "robot" or mode == "videotest":
+                ret, screenshot = wincap.read()
+        elif mode == "window":
+                screenshot = wincap.get_screenshot()
+        elif mode == "test":
+                screenshot = cv.imread(testpicturename)
+        if screenshot is not None:
+                    screenshot = cv.resize(screenshot, (2048,1024), interpolation=cv.INTER_AREA)
+                    
+                    
+        return screenshot
+                
+
 def main(mode):
     data = Data()
 
@@ -55,26 +69,13 @@ def main(mode):
 
     testpicturename = 'peter.png'
 
-    def getPicture():
-        if mode == "camera" or mode == "robot" or mode == "videotest":
-                ret, screenshot = wincap.read()
-        elif mode == "window":
-                screenshot = wincap.get_screenshot()
-        elif mode == "test":
-                screenshot = cv.imread(testpicturename)
-        if screenshot is not None:
-                    screenshot = cv.resize(screenshot, (2048,1024), interpolation=cv.INTER_AREA)
-                    
-                    
-        return screenshot
-                
 
     findArena = False
     
     while not findArena:
         try:
             
-            screenshot=getPicture()
+            screenshot=getPicture(mode,wincap,testpicturename)
             output_image = screenshot.copy()
 
             if screenshot is None:
@@ -272,6 +273,6 @@ def main(mode):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        main(sys.argv[1])
+       main(sys.argv[1])
     else:
         print("No mode specified. Usage: python script_name.py <test|window|camera>")
