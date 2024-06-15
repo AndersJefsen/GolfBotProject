@@ -8,9 +8,12 @@ import asyncio
 import com
 import numpy as np
 import sys
+import threading
+import time
 import os
+from data import Data as Data
 import detectionTools
-import visualisation
+from visualisation import Visualisation as Vis
 import imageManipulationTools
 from queue import Queue
 from time import time, strftime, gmtime
@@ -18,6 +21,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision 
 
 def main(mode):
+    data = Data()
+
     if mode == "camera" or mode == "robot":  
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
@@ -40,18 +45,10 @@ def main(mode):
         print("Invalid mode")
         return
     
-    socket = None
+    data.socket = None
     if mode == "robot":
-        socket = com.connect_to_robot()
+        data.socket = com.connect_to_robot()
 
-
-    arenaCorners = []
-    mask = None
-     
-  
-   
-    gui = False
-    
     vision_image = Vision('ball.png')
   
     vision_image.init_control_gui()
@@ -81,12 +78,15 @@ def main(mode):
             findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
             print("her",findArena,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
             if findArena:
+                
+                arenaCorners = []
                 arenaCorners.append(bottom_left_corner)
                 arenaCorners.append(bottom_right_corner)
                 
                 arenaCorners.append(top_right_corner)
                 arenaCorners.append(top_left_corner)
-                mask = imageManipulationTools.createMask(screenshot,arenaCorners)
+                data.addArenaCorners(arenaCorners)
+                data.arenaMask = imageManipulationTools.createMask(screenshot,arenaCorners)
                 print("mask Created")
                 break
 
@@ -105,6 +105,7 @@ def main(mode):
                 screenshot = wincap.get_screenshot()
             elif mode == "test":
                 screenshot = cv.imread(testpicturename)
+                print("testing: "+ testpicturename)
             if screenshot is None:
                 print("Failed to capture screenshot.")
                 continue
@@ -114,7 +115,9 @@ def main(mode):
             orangecordinats = []
             robotcordinats = []
             crosscordinats = []
-            inputimg = imageManipulationTools.useMask(screenshot,mask)
+           
+            inputimg = imageManipulationTools.useMask(screenshot,data.arenaMask)
+            
             #timestamp = strftime("%Y%m%d_%H%M%S", gmtime())
             #cv.imwrite("test_"+timestamp+".jpg", screenshot)
             #inputimg = screenshot
@@ -128,9 +131,16 @@ def main(mode):
             edged, output_image,orangecordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 54, 0, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=50,maxArea=200,name ="orange",rgb_Color=(183, 102, 52),threshold=178,minPoints=6,maxPoints=10,arenaCorners=arenaCorners)
             #robot
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv(inputimg)
+           
             if ballcontours is not None:
-                ballcordinats, output_image = ComputerVision.ImageProcessor.convert_balls_to_cartesian(output_image, ballcontours)
             
+                ballcordinats = ComputerVision.ImageProcessor.convert_balls_to_cartesian(ballcontours)
+             
+                data.addBalls(ballcontours,ballcordinats)
+               
+                imageManipulationTools.drawContours(output_image,ballcontours)
+
+       
             midpoint, angle, output_image = ComputerVision.ImageProcessor.process_robot(inputimg,output_image)
 
             cv.imshow("pic",output_image)
@@ -139,21 +149,23 @@ def main(mode):
                 if(angle is not None and midpoint is not None and ballcordinats):
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint)
                     
-                    print("Robot orientation sss:")
-                    print(angle)
+                    if data.socket is not None:
+                        print("socket not found")
+                    
                    
-                    print("command robot")
-                    com.command_robot(correctmid, ballcordinats, angle,socket)
-                    print("command robot done")
+                   # print("command robot")
+                    com.command_robot(correctmid, ballcordinats, angle,data.socket)
+               
             if(mode == "test"):
                   if(angle is not None and midpoint is not None and ballcordinats):
-                        print("Robot orientation:")
-                        print(angle)
+                       # print("Robot orientation:")
+                       # print(angle)
                         correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint)
                         closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid, ballcordinats, angle)
-                        print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
+                       # print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
     
-                        print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
+                      #  print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
+                        data.printBalldetections()
            
             if cv.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -164,14 +176,14 @@ def main(mode):
     cv.destroyAllWindows()
     if mode == "window":
         wincap.release()
-    if(socket != None):
-        com.close_connection(socket)
+    if(data.socket != None):
+        com.close_connection(data.socket)
     print('Done.')
 
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-       main(sys.argv[1])
+        main(sys.argv[1])
     else:
         print("No mode specified. Usage: python script_name.py <test|window|camera>")

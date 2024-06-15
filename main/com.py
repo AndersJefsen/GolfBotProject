@@ -5,7 +5,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 # Define server address and port
-SERVER_ADDRESS = '172.20.10.3'  #IP address of EV3
+SERVER_ADDRESS = '172.20.10.5'  #IP address of EV3
 SERVER_PORT = 1024  # port server script
 
 
@@ -48,7 +48,7 @@ async def command_robot_async(robot_position, balls, robot_orientation, socket, 
     
     # Set the completion flag to True when both commands are done
     completion_flag.set()
-async def command_robot(robot_position, balls, robot_orientation,socket):
+def command_robot(robot_position, balls, robot_orientation,socket):
         #ImageProcessor.get_robot_position()
         balls = balls #ImageProcessor.get_robot_position().get_balls()
        #ImageProcessor.get_robot_orientation()

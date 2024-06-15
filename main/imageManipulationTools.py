@@ -14,3 +14,6 @@ def useMask(imageToMask,mask):
         raise ValueError("The mask and the image must have the same dimensions")
     
     return cv.bitwise_and(imageToMask, imageToMask, mask=mask)
+def drawContours(output_image,contours):
+    cv.drawContours(output_image, contours, -1, (0, 255, 0), 2)
+    return output_image

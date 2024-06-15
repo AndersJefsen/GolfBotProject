@@ -73,6 +73,7 @@ class ImageProcessor:
         white_upper = np.array([180, 60, 255], dtype="uint8")
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size)
 
+
     @staticmethod
     def find_robot(indput_Image, min_size=0, max_size=100000):
        
@@ -178,6 +179,7 @@ class ImageProcessor:
         midpoint, direction = ImageProcessor.find_direction(cartesian_coords)
       
         if midpoint and direction:
+            midpoint = ImageProcessor.adjust_coordinates(midpoint[0], midpoint[1], output_Image.shape[1], output_Image.shape[0])
             # Draw the direction from the midpoint
             endpoint = (int(midpoint[0] + direction[0]), int(midpoint[1] + direction[1]))
             cv2.circle(output_Image, (int(midpoint[0]), int(midpoint[1])), 10, (0, 0, 255), -1)  # Red dot at midpoint
@@ -185,6 +187,7 @@ class ImageProcessor:
                      3)  # Blue line indicating direction
 
             angle = ImageProcessor.calculate_angle(direction)
+           
             cv2.putText(output_Image, f"Angle: {angle:.2f}", (int(midpoint[0]) + 20, int(midpoint[1]) + 20), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 255, 0), 1)
             return midpoint, angle, output_Image
 
@@ -366,11 +369,11 @@ class ImageProcessor:
 
         return cartesian_coords_list, output_image
     @staticmethod
-    def convert_balls_to_cartesian(image, ball_contours):
+    def convert_balls_to_cartesian(ball_contours):
+     
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = ImageProcessor.corners.values()
-
+  
         cartesian_coords = []
-        output_Image = image.copy()
         print(f"Found {len(ball_contours)} balls.")
         for i, contour in enumerate(ball_contours, 1):
             x, y, w, h = cv2.boundingRect(contour)
@@ -381,9 +384,7 @@ class ImageProcessor:
                 cartesian_coords.append(ImageProcessor.convert_to_cartesian((center_x, center_y)))
                 print(f"Ball {i} Cartesian Coordinates: {cartesian_coords}")
 
-            cv2.rectangle(output_Image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(output_Image, f"{i}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        return cartesian_coords, output_Image
+        return cartesian_coords
 
     @staticmethod
     def convert_robot_to_cartesian(output_image, robot_contours):
@@ -493,11 +494,36 @@ class ImageProcessor:
         
         if(contours is not None):
             midtpunkt,angle,output_Image = ImageProcessor.calculate_robot_midpoint_and_angle(contours, output_Image)
-        
+            
         
         return midtpunkt, angle, output_Image
     
-    
+    def adjust_coordinates(cX, cY, width, height, adjustment_factor=0.15):
+        centerX = width / 2
+        centerY = height / 2
+        
+        # Calculate vector from the point to the center
+        vector_to_center_x = centerX - cX
+        vector_to_center_y = centerY - cY
+        
+        # Calculate the distance from the point to the center
+        distance_to_center = math.sqrt(vector_to_center_x**2 + vector_to_center_y**2)
+        
+        # Normalize the vector to the center
+        if distance_to_center != 0:  # Prevent division by zero
+            normalized_vector = (vector_to_center_x / distance_to_center, vector_to_center_y / distance_to_center)
+        else:
+            normalized_vector = (0, 0)
+        
+        # Scale the normalized vector by the adjustment factor
+        adjustment_x = normalized_vector[0] * adjustment_factor * distance_to_center
+        adjustment_y = normalized_vector[1] * adjustment_factor * distance_to_center
+        
+        # Adjust coordinates
+        new_cX = cX + adjustment_x
+        new_cY = cY + adjustment_y
+        
+        return new_cX, new_cY
     @staticmethod
     def process_image(image):
 
