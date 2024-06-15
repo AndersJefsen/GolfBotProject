@@ -8,7 +8,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 # Define server address and port
-SERVER_ADDRESS = '172.20.10.3'  #IP address of EV3
+SERVER_ADDRESS = '192.168.242.243'  #IP address of EV3
 SERVER_PORT = 1024  # port server script
 
 
