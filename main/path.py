@@ -31,7 +31,7 @@ def find_close_ball(robot_position, balls,robot_orientation):
     closest_ball = None
     min_distance = float('inf')
     angle_to_turn = 0
-   
+    distance = None
     for ball in balls:
         distance = calculate_distance(robot_position, ball)
         if distance < min_distance:

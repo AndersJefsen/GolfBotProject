@@ -11,12 +11,35 @@ import sys
 import os
 import detectionTools
 import visualisation
+from data import Data as Data
 import imageManipulationTools
 from queue import Queue
 from time import time, strftime, gmtime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
+def paint_output(data, output_image):
+      print("paint ball")
+      output_image=ComputerVision.ImageProcessor.paintballs(data.getAllBallContours(), "ball", output_image)
+                    #ComputerVision.ImageProcessor.showimage("balls", outputimage)
+      print("paint egg")
+      output_image=ComputerVision.ImageProcessor.paintballs(data.egg.con, "egg", output_image)
+                    #ComputerVision.ImageProcessor.showimage("egg", outputimage)
+      print("paint orange")
+      output_image=ComputerVision.ImageProcessor.paintballs(data.orangeBall.con, "orange", output_image)
+                    #ComputerVision.ImageProcessor.showimage("final", outputimage)
+     
+      if data.robot.detected:
+        print("paint robot")
+        output_image=ComputerVision.ImageProcessor.paintballs(data.robot.con, "robo ball", output_image)
+        print("midt point: ", data.robot.midpoint)
+        print ("angle: ", data.robot.angle)
+        print("direction: ", data.robot.direction)
+        output_image=ComputerVision.ImageProcessor.paintrobot(data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction)
+        print("paint robot3")
+        output_image=ComputerVision.ImageProcessor.paintrobot(data.robot.midpoint, data.robot.angle, output_image, data.robot.direction)
 
+      return output_image
+    
 def resize_with_aspect_ratio(image, target_width, target_height):
     original_height, original_width = image.shape[:2]
     
@@ -39,6 +62,7 @@ def resize_with_aspect_ratio(image, target_width, target_height):
     
     return resized_image
 def main(mode):
+    data = Data() 
     if mode == "camera" or mode == "robot" or mode == "Goal":
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
@@ -61,19 +85,13 @@ def main(mode):
         print("Invalid mode")
         return
 
-    socket = None
+  
     if mode == "robot":
-        socket = com.connect_to_robot()
+        data.socket = com.connect_to_robot()
 
     if mode == "Goal":
-        socket = com.connect_to_robot()
-
-
-    arenaCorners = []
-    mask = None
-
-
-
+        data.socket = com.connect_to_robot()
+    
     gui = False
 
     vision_image = Vision('ball.png')
@@ -113,24 +131,27 @@ def main(mode):
 
     while not findArena:
         try:
+            screenshot = None
+            while(screenshot is None):
+                screenshot=getPicture()
+                output_image = screenshot.copy()
 
-            screenshot=getPicture()
-            output_image = screenshot.copy()
-
-            if screenshot is None:
-                print("Failed to capture screenshot.")
-                continue
+                if screenshot is None:
+                    print("Failed to capture screenshot.")
+                    continue
 
             print("finding arena")
             findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner, filtered_contoures = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
             print("her",findArena,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
             if findArena:
+                arenaCorners = []
                 arenaCorners.append(bottom_left_corner)
                 arenaCorners.append(bottom_right_corner)
 
                 arenaCorners.append(top_right_corner)
                 arenaCorners.append(top_left_corner)
-                mask = imageManipulationTools.createMask(screenshot,arenaCorners)
+                data.arenaCorners = arenaCorners
+                data.mask = imageManipulationTools.createMask(screenshot,arenaCorners)
                 print("mask Created")
                 break
 
@@ -141,108 +162,120 @@ def main(mode):
 
 
     loop_time = time()
+    
     while(True):
         try:
-            screenshot=getPicture()
-            if screenshot is None:
-                print("Failed to capture screenshot.")
-                if mode == "videotest":
-                    wincap.set(cv.CAP_PROP_POS_FRAMES, 0)
-                    print("Restarting video.")
-                continue
+            for i in range(10):
+                    print("iteration: ", i)
+                    
+                    screenshot = None
+                    while(screenshot is None):
+                        screenshot=getPicture()
+                        if screenshot is None:
+                            print("Failed to capture screenshot.")
+                            if mode == "videotest":
+                                wincap.set(cv.CAP_PROP_POS_FRAMES, 0)
+                                print("Restarting video.")
+                            continue
 
 
-            inputimg = imageManipulationTools.useMask(screenshot,mask)
-            #timestamp = strftime("%Y%m%d_%H%M%S", gmtime())
-            #cv.imwrite("test_"+timestamp+".jpg", screenshot)
-            #inputimg = screenshot
-            output_image = inputimg.copy()
-            outputhsv_image = vision_image.apply_hsv_filter(inputimg)
-
-
-
-            #egg
-            #edged, output_image,eggcordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 243, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=100,maxArea=600,name ="egg",rgb_Color=(255, 0, 204),threshold=227,minPoints=7,maxPoints=12,arenaCorners=arenaCorners)
-            eggcordinats = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg, 2000, 8000)
-            #orange
-            orangecordinats = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
-            #balls
-            ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
-          
-
-            if ballcontours is not None:
-                #print("")
-                ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
-
-
-            robotcontours=ComputerVision.ImageProcessor.find_robot(inputimg, min_size=0, max_size=100000)
-            angle = None
-            if robotcontours is not None:
-                if (len(robotcontours)==3):
-                    midpoint, angle, output_image, direction=ComputerVision.ImageProcessor.getrobot(robotcontours,output_image)
-                    output_image=ComputerVision.ImageProcessor.paintrobot(midpoint, angle, output_image, direction)
-                    output_image=ComputerVision.ImageProcessor.paintballs(robotcontours, "robo ball", output_image)
-                    #print(midpoint)
-                    midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(midpoint[0],midpoint[1])
-                    #print(midpoint)
-
-                    output_image=ComputerVision.ImageProcessor.paintrobot(midpoint, angle, output_image, direction)
+                    inputimg = imageManipulationTools.useMask(screenshot,data.mask)
+                    #timestamp = strftime("%Y%m%d_%H%M%S", gmtime())
+                    #cv.imwrite("test_"+timestamp+".jpg", screenshot)
+                    #inputimg = screenshot
+                    output_image = inputimg.copy()
+                    outputhsv_image = vision_image.apply_hsv_filter(inputimg)
 
 
 
-            #ComputerVision.ImageProcessor.showimage("", outputimage)
+                    #egg
+                    #edged, output_image,eggcordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 243, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=100,maxArea=600,name ="egg",rgb_Color=(255, 0, 204),threshold=227,minPoints=7,maxPoints=12,arenaCorners=arenaCorners)
+                    data.egg.con = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg, 2000, 8000)
+                    #orange
+                    data.orangeBall.con = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
+                    #balls
+                    ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
+                
 
-            #cross
-            cross_counters, output_image_with_cross = ComputerVision.ImageProcessor.find_cross_contours( filtered_contoures, output_image)
-            cartesian_cross_list, output_image_with_cross = ComputerVision.ImageProcessor.convert_cross_to_cartesian(cross_counters, output_image_with_cross)
+                    if ballcontours is not None:
+                        #print("")
+                        ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
+                    data.addBalls(ballcontours, ballcordinats)
 
-            output_image=ComputerVision.ImageProcessor.paintballs(ballcontours, "ball", output_image_with_cross)
-            #ComputerVision.ImageProcessor.showimage("balls", outputimage)
+                    data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=0, max_size=100000)
+                    angle = None
+                    if data.robot.con is not None:
+                        if (len(data.robot.con)==3):
+                            data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,output_image)
+                            
+                            #print("old midpoint: ", midpoint)
+                            #midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(midpoint[0],midpoint[1])
+                            #print("shape 0 :",inputimg.shape[0])
+                            #print("shape 1 :",inputimg.shape[1])    
+                            data.robot.midpoint = ComputerVision.ImageProcessor.adjust_coordinates(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1],inputimg.shape[1],inputimg.shape[0])
+                            #print("new midpoint: ", midpoint)  
+                            #print(midpoint)
+                            data.robot.detected = True
+                        else:
+                            data.robot.detected = False
+                            
 
-            output_image=ComputerVision.ImageProcessor.paintballs(eggcordinats, "egg", output_image)
-            #ComputerVision.ImageProcessor.showimage("egg", outputimage)
 
-            output_image=ComputerVision.ImageProcessor.paintballs(orangecordinats, "orange", output_image)
-            #ComputerVision.ImageProcessor.showimage("final", outputimage)
+
+                    #ComputerVision.ImageProcessor.showimage("", outputimage)
+
+                    #cross
+                    #needs to be fixed
+                    #data.cross.con, output_image_with_cross = ComputerVision.ImageProcessor.find_cross_contours( filtered_contoures, output_image)
+                    #data.cross.cord, output_image_with_cross = ComputerVision.ImageProcessor.convert_cross_to_cartesian(data.cross.con, output_image_with_cross)
+
+                  
+            print("painting time :)")
+            # painting time
+            output_image = paint_output(data, output_image)
+            print("painting time Done :)")
+
             if(output_image is not None):
                 # Resize the image
                 desired_size = (1200, 800)
                 resized_image = cv.resize(output_image, desired_size, interpolation=cv.INTER_LINEAR)
                 cv.imshow("Resized Image", resized_image)
-              
+               
+            
 
             if(mode == "robot" ):
-                if(angle is not None and midpoint is not None and ballcordinats):
-                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint)
+                if(data.robot.angle is not None and data.robot.midpoint is not None and data.getAllBallCordinates()):
+                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(data.robot.midpoint)
 
                     print("Robot orientation sss:")
                     print(angle)
 
                     print("command robot")
-                    com.command_robot(correctmid, ballcordinats, angle,socket)
+                    com.command_robot(correctmid, ballcordinats, angle,data.socket)
                     print("command robot done")
             if(mode == "test"):
-                if(angle is not None and midpoint is not None and ballcordinats):
+                print("executing test mode")
+                if(angle is not None and data.robot.midpoint is not None and data.getAllBallCordinates()):
                     print("Robot orientation:")
                     print(angle)
-                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint)
-                    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid, ballcordinats, angle)
+                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(data.robot.midpoint)
+                    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid,data.getAllBallCordinates, angle)
                     print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
 
                     print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
 
             if (mode == "Goal"):
-                if angle is not None and midpoint is not None:
+                if angle is not None and data.robot.midpoint is not None:
                     print("Robot orientation:")
                     print(angle)
-                    print(midpoint)
+                    print(data.robot.midpoint)
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
-                        midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2]
+                        data.robot.midpoint, data.arenaCorners[0], data.arenaCorners[1], data.arenaCorners[3], data.arenaCorners[2]
                     )
 
                     target_point = (12, 61.5)
 
-                    result = com.move_to_position_and_release(target_point, correctmid, angle, socket)
+                    result = com.move_to_position_and_release(target_point, correctmid, data.robot.angle, data.socket)
                     if result:
                         print("Operation BigGOALGOAL successful")
                     else:
@@ -251,23 +284,26 @@ def main(mode):
             if (mode == "camera"):
 
                 image_center = (screenshot.shape[1] // 2, screenshot.shape[0] // 2)
-                print("Image Center - Pixel Coordinates:", image_center)
+                #print("Image Center - Pixel Coordinates:", image_center)
                 cv.circle(screenshot,image_center, radius= 10 , color=(255,0,0),thickness=-1)
 
                 image_center = ComputerVision.ImageProcessor.convert_to_cartesian(image_center)
-                print("Image Center - Cartisan coord q:", image_center)
-                if angle is not None and midpoint is not None:
+                #print("Image Center - Cartisan coord q:", image_center)
+                if data.robot.angle is not None and data.robot.midpoint is not None:
 
-                    print(angle)
+                    print(data.robot.angle)
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
-                        midpoint
+                        data.robot.midpoint
                     )
                     print(correctmid)
                     #Ik ud med riven Viktor, det her for hjælp til Anders Offset beregning via fysisk pixel midterpunkt ud fra kameraet's position.
+                    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid, data.getAllBallCordinates, data.robot.angle)
+                    print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
 
+                    print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
 
-            if cv.waitKey(1) & 0xFF == ord('q'):
-                break
+                    if cv.waitKey(1) & 0xFF == ord('q'):
+                        break
         except Exception as e:
             print(f"An error occurred while trying to detect objects: {e}")
             break
@@ -275,8 +311,8 @@ def main(mode):
     cv.destroyAllWindows()
     if mode == "window":
         wincap.release()
-    if(socket != None):
-        com.close_connection(socket)
+    if(data.socket != None):
+        com.close_connection(data.socket)
     print('Done.')
 
 

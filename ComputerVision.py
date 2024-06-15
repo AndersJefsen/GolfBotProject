@@ -302,6 +302,34 @@ class ImageProcessor:
         robot_counters = sorted(robot_counters, key=cv2.contourArea, reverse=True)[:3]
 
         return robot_counters
+    @staticmethod
+    def adjust_coordinates(cX, cY, width, height, adjustment_factor=0.13):
+        # Calculate the center of the area
+        centerX = width / 2
+        centerY = height / 2
+        
+        # Calculate vector from the point to the center
+        vector_to_center_x = centerX - cX
+        vector_to_center_y = centerY - cY
+        
+        # Calculate the distance from the point to the center
+        distance_to_center = math.sqrt(vector_to_center_x**2 + vector_to_center_y**2)
+        
+        # Normalize the vector to the center
+        if distance_to_center != 0:  # Prevent division by zero
+            normalized_vector = (vector_to_center_x / distance_to_center, vector_to_center_y / distance_to_center)
+        else:
+            normalized_vector = (0, 0)
+        
+        # Scale the normalized vector by the adjustment factor
+        adjustment_x = normalized_vector[0] * adjustment_factor * distance_to_center
+        adjustment_y = normalized_vector[1] * adjustment_factor * distance_to_center
+        
+        # Adjust coordinates
+        new_cX = cX + adjustment_x
+        new_cY = cY + adjustment_y
+        
+        return new_cX, new_cY
 
     @staticmethod
     def find_direction(contours):
