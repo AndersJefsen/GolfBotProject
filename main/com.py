@@ -1,5 +1,5 @@
 import socket
-from path import find_close_ball, calculate_angle, calculate_distance
+from path import find_close_ball
 import math
 
 from path import find_close_ball
