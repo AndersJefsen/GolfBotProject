@@ -80,7 +80,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'johantest.jpg'
+    testpicturename = 'v.jpg'
 
     def getPicture():
         if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
@@ -183,7 +183,6 @@ def main(mode):
                     output_image=ComputerVision.ImageProcessor.paintrobot(midpoint, angle, output_image, direction)
                     output_image=ComputerVision.ImageProcessor.paintballs(robotcontours, "robo ball", output_image)
                     #print(midpoint)
-
                     midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(midpoint[0],midpoint[1])
                     #print(midpoint)
 
