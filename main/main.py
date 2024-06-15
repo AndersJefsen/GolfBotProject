@@ -164,7 +164,7 @@ def main(mode):
                 data.resetRobot()
             #this is how many iterations you want to run detection on before sending the robot commands with the collected data
             #if set to 1 its working like it did before
-            for i in range(10):
+            for i in range(30):
                     #print("iteration: ", i)
                     
                     screenshot = None
@@ -200,7 +200,7 @@ def main(mode):
                         #print("")
                         ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
                         #print("ballcordinats before: ",ballcordinats)
-                        print("ballcordinats after: ",ballcordinats)
+                        #print("ballcordinats after: ",ballcordinats)
                         data.addBalls(ballcontours, ballcordinats)
                     #data.printBalls()
 
@@ -211,10 +211,10 @@ def main(mode):
                             data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,output_image)
                             
                             #print("old midpoint: ", midpoint)
-                            #midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(midpoint[0],midpoint[1])
+                            data.robot.midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1])
                             #print("shape 0 :",inputimg.shape[0])
                             #print("shape 1 :",inputimg.shape[1])    
-                            data.robot.midpoint = ComputerVision.ImageProcessor.adjust_coordinates(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1],inputimg.shape[1],inputimg.shape[0])
+                            #data.robot.midpoint = ComputerVision.ImageProcessor.adjust_coordinates(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1],inputimg.shape[0],inputimg.shape[1])
                             #print("new midpoint: ", midpoint)  
                             #print(midpoint)
                            
@@ -251,15 +251,22 @@ def main(mode):
 
             if(mode == "robot" ):
                 if(data.robot.detected and data.getAllBallCordinates()):
-                    currMidpoint,currAngle = data.robot.get_best_robot_position()
-                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
+                    data.robot.set_min_detections(10)
+                    bestpos =  data.robot.get_best_robot_position()
+                    if(bestpos is not None):
+                   
+                        currMidpoint,currAngle = bestpos
+                    
+                        correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
 
-                    print("Robot orientation sss:")
-                    print(currAngle)
+                        print("Robot orientation sss:")
+                        print(currAngle)
 
-                    print("command robot")
-                    com.command_robot(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
-                    print("command robot done")
+                        print("command robot")
+                        com.command_robot(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
+                        print("command robot done")
+                    else:
+                        print("No best position found")
             if(mode == "test"):
            
                 if(data.robot.detected and data.getAllBallCordinates()):

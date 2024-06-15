@@ -303,7 +303,7 @@ class ImageProcessor:
 
         return robot_counters
     @staticmethod
-    def adjust_coordinates(cX, cY, width, height, adjustment_factor=0.13):
+    def adjust_coordinates(cX, cY, width, height, adjustment_factor=0.2):
         # Calculate the center of the area
         centerX = width / 2
         centerY = height / 2
