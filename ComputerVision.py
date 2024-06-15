@@ -274,10 +274,10 @@ class ImageProcessor:
 
         return ball_contours
     @staticmethod
-    def find_robot(indput_Image, min_size=50, max_size=100000):
+    def find_robot(indput_Image, min_size=100, max_size=400):
        
       
-        blue_lower = np.array([105, 100, 100], dtype="uint8")
+        blue_lower = np.array([80, 50, 100], dtype="uint8")
         blue_upper = np.array([131, 255, 255], dtype="uint8")
         blue_mask=ImageProcessor.apply_hsv_filter(indput_Image, blue_lower,blue_upper)
 
