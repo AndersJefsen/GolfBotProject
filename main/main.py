@@ -30,7 +30,7 @@ def main(mode):
         print("test mode")
         #virtuelDisaplay = visualisation()
     elif mode == "videotest":
-        video_path = "../goodvideo.mp4"  # Specify the path to the video file in the parent folder
+        video_path = "../badvideo.mp4"  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
         if not wincap.isOpened():
             print("Error: Could not open video file.")
@@ -131,18 +131,29 @@ def main(mode):
             orangecordinats = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
             #robot
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
-            #_,outputimg=ComputerVision.ImageProcessor.process_and_convert_contours(inputimg,ballcontours)
+            #_,output_image=ComputerVision.ImageProcessor.process_and_convert_contours(inputimg,ballcontours)
             #ComputerVision.ImageProcessor.showimage("",outputimg)
             
             #ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
             
-            if ballcontours is not None:
+            #if ballcontours is not None:
                 #print("")
-                ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
+                #ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
             robotcordinats=ComputerVision.ImageProcessor.find_robot(inputimg, min_size=0, max_size=100000)
             if robotcordinats is not None:
                 if (len(robotcordinats)==3):
-                    midpoint, angle, output_image=ComputerVision.ImageProcessor.calculate_robot_midpoint_and_angle(robotcordinats,output_image)
+                    midpoint, angle, output_image, direction=ComputerVision.ImageProcessor.getrobot(robotcordinats,output_image)
+                    output_image=ComputerVision.ImageProcessor.paintrobot(midpoint, angle, output_image, direction)
+                    output_image=ComputerVision.ImageProcessor.paintballs(robotcordinats, "robo ball", output_image)
+                    #print(midpoint)
+
+                    #midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(midpoint[0],midpoint[1])
+                    #print(midpoint)
+
+                    #output_image=ComputerVision.ImageProcessor.paintrobot(midpoint, angle, output_image, direction)
+
+
+
             #ComputerVision.ImageProcessor.showimage("", outputimage)
 
              #cross

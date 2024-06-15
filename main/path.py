@@ -16,7 +16,7 @@ def find_close_ball(robot_position, balls,robot_orientation):
             dx = ball_position[0] - robot_position[0]
             angle_to_target_radians = math.atan2(dy, dx)
             angle_to_target_degrees = math.degrees(angle_to_target_radians)
-            print("angle to target",angle_to_target_degrees)
+            #print("angle to target",angle_to_target_degrees)
             # Adjust from East (atan2 default) to North
             angle=robot_orientation+angle_to_target_degrees
             if abs(angle) > 180:
