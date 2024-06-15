@@ -568,7 +568,7 @@ class ImageProcessor:
             cartesian_coords_list.append(cartesian_coords)
 
             # Marking the image
-            cv2.putText(output_image, f"{label} {cartesian_coords}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            #cv2.putText(output_image, f"{label} {cartesian_coords}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             #print(f"{label} {i} Cartesian Coordinates: {cartesian_coords}")
 
         return cartesian_coords_list, output_image
@@ -621,7 +621,7 @@ class ImageProcessor:
         return diff
     
     
-
+    '''
     @staticmethod
     def get_corrected_coordinates_robot(x,y):
         
@@ -660,7 +660,7 @@ class ImageProcessor:
         corrected_coordinates=[corrected_x,corrected_y]
 
         return corrected_coordinates
-    '''
+   
     @staticmethod
     def get_corrected_coordinates_robot(x,y,roboth=31,camerah=170):
         
@@ -674,7 +674,7 @@ class ImageProcessor:
         y_2d = y + (scale_factor * y)
 
         return (x_2d, y_2d)
-   
+    '''
     @staticmethod
     def get_corrected_coordinates_robot(robot_x, robot_y, robot_z=31, cam_x=81, cam_y=61, cam_z=170):
         cam_x,cam_y=ImageProcessor.convert_to_pixel((cam_x, cam_y))
@@ -682,14 +682,14 @@ class ImageProcessor:
     # Calculate the vector from the camera to the robot on the plane
         vector_x = robot_x - cam_x
         vector_y = robot_y - cam_y
-        print(vector_x)
+        #print(vector_x)
         # Apply the scale factor for perspective based on height
         scale_factor = robot_z / cam_z
         x_2d = cam_x + vector_x * (1 - scale_factor)
         y_2d = cam_y + vector_y * (1 - scale_factor)
 
         return (x_2d, y_2d)
-   '''
+   
     
     '''
     process image block

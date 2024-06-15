@@ -136,9 +136,9 @@ def main(mode):
             
             #ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
             
-            #if ballcontours is not None:
+            if ballcontours is not None:
                 #print("")
-                #ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
+                ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
             robotcordinats=ComputerVision.ImageProcessor.find_robot(inputimg, min_size=0, max_size=100000)
             if robotcordinats is not None:
                 if (len(robotcordinats)==3):
@@ -147,10 +147,10 @@ def main(mode):
                     output_image=ComputerVision.ImageProcessor.paintballs(robotcordinats, "robo ball", output_image)
                     #print(midpoint)
 
-                    #midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(midpoint[0],midpoint[1])
+                    midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(midpoint[0],midpoint[1])
                     #print(midpoint)
 
-                    #output_image=ComputerVision.ImageProcessor.paintrobot(midpoint, angle, output_image, direction)
+                    output_image=ComputerVision.ImageProcessor.paintrobot(midpoint, angle, output_image, direction)
 
 
 
