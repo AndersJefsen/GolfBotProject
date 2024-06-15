@@ -1,8 +1,8 @@
 import socket
 
 # Define server address and port
-SERVER_ADDRESS = '172.20.10.3'  #IP address of EV3
-SERVER_PORT = 1024  # port server script
+SERVER_ADDRESS = '172.20.10.5'  # IP address of EV3
+SERVER_PORT = 1024  # Port server script
 
 def send_command(command):
     try:

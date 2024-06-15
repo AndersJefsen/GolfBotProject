@@ -9,9 +9,9 @@ def create_ssh_client(server, port, user, password):
     return client
 
 #  EV3's IP address, username and password
-ssh = create_ssh_client('172.20.10.3', 22, 'robot', 'maker')
+ssh = create_ssh_client('172.20.10.5', 22, 'robot', 'maker')
 
 with SCPClient(ssh.get_transport()) as scp:
     #scp.put('degrees.py', '/home/robot/golfbot_project')
-    scp.put('/Users/andersjefsen/robotcode/main.py', '/home/robot/golfbot_project')
+    scp.put('/Users/peterhannibalhildorf/PycharmProjects/robotcode/main.py', '/home/robot/golfbot_project')
     #scp.put('/Users/brickrun -r -- pybricks-micropython /home/robot/golfbot_project/degrees-gyro.py andersjefsen/robotcode/main.py', '/home/robot')
