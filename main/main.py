@@ -17,6 +17,27 @@ from time import time, strftime, gmtime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
 
+def resize_with_aspect_ratio(image, target_width, target_height):
+    original_height, original_width = image.shape[:2]
+    
+    # Calculate the aspect ratio
+    aspect_ratio = original_width / original_height
+    
+    # Calculate the scaling factors
+    width_factor = target_width / original_width
+    height_factor = target_height / original_height
+    
+    # Use the smaller scaling factor to keep aspect ratio
+    scaling_factor = min(width_factor, height_factor)
+    
+    # Calculate the new dimensions
+    new_width = int(original_width * scaling_factor)
+    new_height = int(original_height * scaling_factor)
+    
+    # Resize the image
+    resized_image = cv.resize(image, (new_width, new_height), interpolation=cv.INTER_AREA)
+    
+    return resized_image
 def main(mode):
     if mode == "camera" or mode == "robot" or mode == "Goal":
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
@@ -28,7 +49,7 @@ def main(mode):
         print("window mode")
     elif mode == "test":
         print("test mode")
-        #virtuelDisaplay = visualisation()
+   
     elif mode == "videotest":
         video_path = "../badvideo.mp4"  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
@@ -59,7 +80,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'peter.png'
+    testpicturename = 'johantest.jpg'
 
     def getPicture():
         if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
@@ -68,9 +89,22 @@ def main(mode):
             screenshot = wincap.get_screenshot()
         elif mode == "test":
             screenshot = cv.imread(testpicturename)
+            '''
         if screenshot is not None:
-            screenshot = cv.resize(screenshot, (2048,1024), interpolation=cv.INTER_AREA)
-
+            # Get the resolution of the image
+            while True:
+                height, width, channels = screenshot.shape
+                print(f"Resolution: {width}x{height}")
+                '''
+        if screenshot is not None:
+            #whight, wlength = vision_image.get_hight_and_length
+           
+            if  mode == "camera" or mode == "robot" or mode == "Goal":
+                screenshot = resize_with_aspect_ratio(screenshot, 2048, 1024)
+              
+               
+            else:
+                screenshot = cv.resize(screenshot, (2048,1024), interpolation=cv.INTER_AREA)
 
         return screenshot
 
@@ -132,17 +166,17 @@ def main(mode):
             eggcordinats = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg, 2000, 8000)
             #orange
             orangecordinats = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
-            #robot
+            #balls
             ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
-            #_,output_image=ComputerVision.ImageProcessor.process_and_convert_contours(inputimg,ballcontours)
-            #ComputerVision.ImageProcessor.showimage("",outputimg)
-
-            #ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
+          
 
             if ballcontours is not None:
                 #print("")
                 ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
+
+
             robotcordinats=ComputerVision.ImageProcessor.find_robot(inputimg, min_size=0, max_size=100000)
+            angle = None
             if robotcordinats is not None:
                 if (len(robotcordinats)==3):
                     midpoint, angle, output_image, direction=ComputerVision.ImageProcessor.getrobot(robotcordinats,output_image)
@@ -163,16 +197,20 @@ def main(mode):
             cross_counters, output_image_with_cross = ComputerVision.ImageProcessor.find_cross_contours( filtered_contoures, output_image)
             cartesian_cross_list, output_image_with_cross = ComputerVision.ImageProcessor.convert_cross_to_cartesian(cross_counters, output_image_with_cross)
 
-            outputimage=ComputerVision.ImageProcessor.paintballs(ballcontours, "ball", output_image_with_cross)
+            output_image=ComputerVision.ImageProcessor.paintballs(ballcontours, "ball", output_image_with_cross)
             #ComputerVision.ImageProcessor.showimage("balls", outputimage)
 
-            outputimage=ComputerVision.ImageProcessor.paintballs(eggcordinats, "egg", outputimage)
+            output_image=ComputerVision.ImageProcessor.paintballs(eggcordinats, "egg", output_image)
             #ComputerVision.ImageProcessor.showimage("egg", outputimage)
 
-            outputimage=ComputerVision.ImageProcessor.paintballs(orangecordinats, "orange", outputimage)
+            output_image=ComputerVision.ImageProcessor.paintballs(orangecordinats, "orange", output_image)
             #ComputerVision.ImageProcessor.showimage("final", outputimage)
-            if(outputimage is not None):
-                cv.imshow("pic",outputimage)
+            if(output_image is not None):
+                # Resize the image
+                desired_size = (1200, 800)
+                resized_image = cv.resize(output_image, desired_size, interpolation=cv.INTER_LINEAR)
+                cv.imshow("Resized Image", resized_image)
+              
 
             if(mode == "robot" ):
                 if(angle is not None and midpoint is not None and ballcordinats):
@@ -217,13 +255,13 @@ def main(mode):
                 print("Image Center - Pixel Coordinates:", image_center)
                 cv.circle(screenshot,image_center, radius= 10 , color=(255,0,0),thickness=-1)
 
-                image_center = ComputerVision.ImageProcessor.convert_to_cartesian(image_center,arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+                image_center = ComputerVision.ImageProcessor.convert_to_cartesian(image_center)
                 print("Image Center - Cartisan coord q:", image_center)
                 if angle is not None and midpoint is not None:
 
                     print(angle)
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
-                        midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2]
+                        midpoint
                     )
                     print(correctmid)
                     #Ik ud med riven Viktor, det her for hjælp til Anders Offset beregning via fysisk pixel midterpunkt ud fra kameraet's position.

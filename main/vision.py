@@ -145,6 +145,11 @@ class Vision:
         cv.setTrackbarPos('minPoints', self.TRACKBAR_WINDOW, 1)
         cv.createTrackbar('maxPoints', self.TRACKBAR_WINDOW, 1, 100, nothing)
         cv.setTrackbarPos('maxPoints', self.TRACKBAR_WINDOW, 100)
+
+        cv.createTrackbar('whight', self.TRACKBAR_WINDOW, 0,4000, nothing)
+        cv.setTrackbarPos('whight', self.TRACKBAR_WINDOW, 2048)
+        cv.createTrackbar('wlength', self.TRACKBAR_WINDOW, 0,4000, nothing)
+        cv.setTrackbarPos('wlength', self.TRACKBAR_WINDOW, 1024)
     def get_hsv_filter_from_controls(self):
         # Get current positions of all trackbars
         hsv_filter = HsvFilter()
@@ -159,7 +164,10 @@ class Vision:
         hsv_filter.vAdd = cv.getTrackbarPos('VAdd', self.TRACKBAR_WINDOW)
         hsv_filter.vSub = cv.getTrackbarPos('VSub', self.TRACKBAR_WINDOW)
         return hsv_filter
-    
+    def get_hight_and_length(self):
+          whight = cv.getTrackbarPos('wheight', 'Trackbars')
+          wlength = cv.getTrackbarPos('wlength', 'Trackbars')
+          return whight, wlength
     def get_edge_filter_from_controls(self):
         # Get current positions of all trackbars
         edge_filter = EdgeFilter()
