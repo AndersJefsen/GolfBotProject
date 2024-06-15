@@ -15,13 +15,12 @@ import imageManipulationTools
 from queue import Queue
 from time import time, strftime, gmtime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import ComputerVision 
+import ComputerVision
 
 def main(mode):
     if mode == "camera" or mode == "robot" or mode == "Goal":
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
-        print("camera mode or Goal Mode")
-
+        print("camera mode")
     elif mode == "window":
         from windowcapture import WindowCapture
 
@@ -36,11 +35,11 @@ def main(mode):
         if not wincap.isOpened():
             print("Error: Could not open video file.")
             return
-        print("videotest mode")    
+        print("videotest mode")
     else:
         print("Invalid mode")
         return
-    
+
     socket = None
     if mode == "robot":
         socket = com.connect_to_robot()
@@ -49,10 +48,9 @@ def main(mode):
         socket = com.connect_to_robot()
 
 
-
     arenaCorners = []
     mask = None
-     
+
 
 
     gui = False
@@ -64,21 +62,14 @@ def main(mode):
     testpicturename = 'peter.png'
 
     def getPicture():
-        if mode == "camera" or mode == "robot" or mode == "videotest":
-
-
-    findArena = False
-
-    while not findArena:
-        try:
-            if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
-                ret, screenshot = wincap.read()
+        if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
+            ret, screenshot = wincap.read()
         elif mode == "window":
-                screenshot = wincap.get_screenshot()
+            screenshot = wincap.get_screenshot()
         elif mode == "test":
-                screenshot = cv.imread(testpicturename)
+            screenshot = cv.imread(testpicturename)
         if screenshot is not None:
-                    screenshot = cv.resize(screenshot, (2048,1024), interpolation=cv.INTER_AREA)
+            screenshot = cv.resize(screenshot, (2048,1024), interpolation=cv.INTER_AREA)
 
 
         return screenshot
@@ -91,17 +82,18 @@ def main(mode):
 
             screenshot=getPicture()
             output_image = screenshot.copy()
-            
+
             if screenshot is None:
                 print("Failed to capture screenshot.")
                 continue
+
             print("finding arena")
             findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner, filtered_contoures = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
             print("her",findArena,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
             if findArena:
                 arenaCorners.append(bottom_left_corner)
                 arenaCorners.append(bottom_right_corner)
-                
+
                 arenaCorners.append(top_right_corner)
                 arenaCorners.append(top_left_corner)
                 mask = imageManipulationTools.createMask(screenshot,arenaCorners)
@@ -111,25 +103,20 @@ def main(mode):
         except Exception as e:
             print(f"An error occurred while trying to detect arena: {e}")
             break
-    
-            
+
+
 
     loop_time = time()
     while(True):
         try:
-            if mode == "camera" or mode == "robot" or mode == "Goal" or  mode == "videotest":
-                ret, screenshot = wincap.read()
-            elif mode == "window":
-                screenshot = wincap.get_screenshot()
-            elif mode == "test":
-                screenshot = cv.imread(testpicturename)
+            screenshot=getPicture()
             if screenshot is None:
                 print("Failed to capture screenshot.")
                 if mode == "videotest":
                     wincap.set(cv.CAP_PROP_POS_FRAMES, 0)
                     print("Restarting video.")
                 continue
-            
+
 
             inputimg = imageManipulationTools.useMask(screenshot,mask)
             #timestamp = strftime("%Y%m%d_%H%M%S", gmtime())
@@ -151,7 +138,7 @@ def main(mode):
             #ComputerVision.ImageProcessor.showimage("",outputimg)
 
             #ComputerVision.ImageProcessor. show_contours_with_areas( inputimg, ballcontours)
-            
+
             if ballcontours is not None:
                 #print("")
                 ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
@@ -172,7 +159,7 @@ def main(mode):
 
             #ComputerVision.ImageProcessor.showimage("", outputimage)
 
-             #cross
+            #cross
             cross_counters, output_image_with_cross = ComputerVision.ImageProcessor.find_cross_contours( filtered_contoures, output_image)
             cartesian_cross_list, output_image_with_cross = ComputerVision.ImageProcessor.convert_cross_to_cartesian(cross_counters, output_image_with_cross)
 
@@ -198,14 +185,14 @@ def main(mode):
                     com.command_robot(correctmid, ballcordinats, angle,socket)
                     print("command robot done")
             if(mode == "test"):
-                  if(angle is not None and midpoint is not None and ballcordinats):
-                        print("Robot orientation:")
-                        print(angle)
-                        correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint)
-                        closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid, ballcordinats, angle)
-                        print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
-    
-                        print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
+                if(angle is not None and midpoint is not None and ballcordinats):
+                    print("Robot orientation:")
+                    print(angle)
+                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(midpoint)
+                    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid, ballcordinats, angle)
+                    print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
+
+                    print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
 
             if (mode == "Goal"):
                 if angle is not None and midpoint is not None:
@@ -218,13 +205,20 @@ def main(mode):
 
                     target_point = (12, 61.5)
 
-                    #result = com.move_to_position_and_release(target_point, correctmid, angle, socket)
-                    #if result:
-                        #print("Operation BigGOALGOAL successful")
-                    #else:
-                        #print("Operation Goal got fuckd mate")
+                    result = com.move_to_position_and_release(target_point, correctmid, angle, socket)
+                    if result:
+                        print("Operation BigGOALGOAL successful")
+                    else:
+                        print("Operation Goal got fuckd mate")
 
             if (mode == "camera"):
+
+                image_center = (screenshot.shape[1] // 2, screenshot.shape[0] // 2)
+                print("Image Center - Pixel Coordinates:", image_center)
+                cv.circle(screenshot,image_center, radius= 10 , color=(255,0,0),thickness=-1)
+
+                image_center = ComputerVision.ImageProcessor.convert_to_cartesian(image_center,arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2])
+                print("Image Center - Cartisan coord q:", image_center)
                 if angle is not None and midpoint is not None:
 
                     print(angle)
@@ -232,51 +226,7 @@ def main(mode):
                         midpoint, arenaCorners[0], arenaCorners[1], arenaCorners[3], arenaCorners[2]
                     )
                     print(correctmid)
-
-
-
-            #edged, output_image = findRoundObjects(outputhsv_image,output_image)
-            #cross = ComputerVision.find_cross_contours(screenshot)
-            #outputhsv_image = vision_image.apply_hsv_filter(screenshot)
-
-            #outputedge_image = vision_image.apply_edge_filter(outputhsv_image)
-            #rectangles = vision_image.find(outputhsv_image,0.5,10)
-
-            #ret, thresh = cv.threshold(outputedge_image, 127, 255, 0)
-            #contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-            #output_image = cv.drawContours(screenshot, contours, -1, (0,255,0), 3)
-            #points are only used for crosshair
-            #points = vision_image.get_points(rectangles)
-            #output_image = vision_image.draw_rectangles(screenshot, rectangles)
-            #output_image = vision_image.draw_crosshairs(output_image, points)
-            #inputimg = screenshot
-            #edged, output_image = findArena(inputimg,screenshot)
-            #outputhsv_image = vision_image.apply_hsv_filter(output_image)
-            #edged, output_image = findRobot(inputimg,screenshot)
-            #edged, output_image = findOrangeBall(inputimg,screenshot)
-            #edged, output_image = findCross(inputimg,screenshot)
-            #edged, output_image = findObstacles(outputhsv_image,screenshot)
-            #edged, output_image = findRoundObjects(outputhsv_image,screenshot)
-
-            #rzhsv = cv.resize(outputhsv_image, (960, 540))
-            #cv.imshow('hsv', rzhsv)
-            '''
-            screenoutput = cv.resize(output_image, (960, 540))
-            cv.imshow('Computer Vision', screenoutput)
-            rze = cv.resize(edged, (960, 540))
-            cv.imshow('edges', rze)
-            '''
-
-
-
-            #screengray = cv.resize(imgray, (960, 540))
-
-            #screenhsvimg = cv.resize(outputhsv_image, (960, 540))
-            #screenedgeimg = cv.resize(outputedge_image, (960, 540))
-            #cv.imshow('gray', screengray)
-            #cv.imshow('hsv', screenhsvimg)
-            #cv.imshow('edge', screenedgeimg)
-
+                    #Ik ud med riven Viktor, det her for hjælp til Anders Offset beregning via fysisk pixel midterpunkt ud fra kameraet's position.
 
 
             if cv.waitKey(1) & 0xFF == ord('q'):
@@ -296,6 +246,6 @@ def main(mode):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-       main(sys.argv[1])
+        main(sys.argv[1])
     else:
         print("No mode specified. Usage: python script_name.py <test|window|camera>")
