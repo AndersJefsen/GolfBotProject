@@ -175,13 +175,13 @@ def main(mode):
                 ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
 
 
-            robotcordinats=ComputerVision.ImageProcessor.find_robot(inputimg, min_size=0, max_size=100000)
+            robotcontours=ComputerVision.ImageProcessor.find_robot(inputimg, min_size=0, max_size=100000)
             angle = None
-            if robotcordinats is not None:
-                if (len(robotcordinats)==3):
-                    midpoint, angle, output_image, direction=ComputerVision.ImageProcessor.getrobot(robotcordinats,output_image)
+            if robotcontours is not None:
+                if (len(robotcontours)==3):
+                    midpoint, angle, output_image, direction=ComputerVision.ImageProcessor.getrobot(robotcontours,output_image)
                     output_image=ComputerVision.ImageProcessor.paintrobot(midpoint, angle, output_image, direction)
-                    output_image=ComputerVision.ImageProcessor.paintballs(robotcordinats, "robo ball", output_image)
+                    output_image=ComputerVision.ImageProcessor.paintballs(robotcontours, "robo ball", output_image)
                     #print(midpoint)
 
                     midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(midpoint[0],midpoint[1])
