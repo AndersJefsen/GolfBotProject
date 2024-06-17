@@ -458,35 +458,80 @@ class ImageProcessor:
 
         return bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner
 
+    @staticmethod
+    def find_cross_contours(input_image):
+        # Convert the image to LAB color space
+        lab = cv2.cvtColor(input_image, cv2.COLOR_BGR2LAB)
 
-   
+        # Apply threshold to the 'A' channel to find the red areas
+        red = cv2.threshold(lab[:, :, 1], 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+        # Perform edge detection
+        edges = cv2.Canny(red, 100, 200)
+
+        # Find contours in the edge-detected image
+        contours, _ = cv2.findContours(edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Display the mask used for edge detection
+        """
+        cv2.imshow('Cross', red)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        """
+
+        cross_contours = []
+       # print(f"Total contours found: {len(contours)}")  # Debug statement
+        found_cross = False
+        for cnt in contours:
+            bounding_rect = cv2.boundingRect(cnt)
+            aspect_ratio = bounding_rect[2] / float(bounding_rect[3])
+            area = cv2.contourArea(cnt)
+            #print(f"Contour aspect ratio: {aspect_ratio}")  # Debug statement
+            if 0.8 <= aspect_ratio <= 1.2 and area > 1000:  # Aspect ratio bounds for a cross-like shape
+                cross_contours.append(cnt)
+                found_cross = True
+                print("Cross contour found")
+                break  # Stop searching after a cross is found
+
+        if not found_cross:
+            print("Cross not found.")  # Debug statement'
+            return None
+
+        return cross_contours
+    @staticmethod
+    def find_cross_corners(contour):
+        for cnt in contour:
+            epsilon = 0.014 * cv2.arcLength(cnt, True)
+            approx = cv2.approxPolyDP(cnt, epsilon, True)
+            iterations = 0
+            max_iterations = 20
+
+            while len(approx) != 12 and iterations < max_iterations:
+                # Update epsilon value to find 12 corners
+                if len(approx) > 12:
+                    epsilon += 0.0005 * cv2.arcLength(cnt, True)
+                else:
+                    epsilon -= 0.0005 * cv2.arcLength(cnt, True)
+                approx = cv2.approxPolyDP(cnt, epsilon, True)
+                iterations += 1
+
+            if len(approx) == 12:
+                print(f"Cross corners found {len(approx)} after {iterations} iterations.")
+                return approx
+            else:
+                print(f"Found {len(approx)} corners after {iterations} iterations, could not find exactly 12 corners.")
+
+        return None  # Return None if no contour with exactly 12 corners is found
 
     @staticmethod
-    def find_cross_contours(filtered_contours, image):
-        found_cross = False
-        cross_contours = []
-        for cnt in filtered_contours:
-            approx = cv2.approxPolyDP(cnt, 0.05 * cv2.arcLength(cnt, True), True)  # justere efter billede
-            #print(f"Contour length: {len(approx)}")  # Debug statement
-            if len(approx) == 12:  # Our cross has 12 corners.
-                bounding_rect = cv2.boundingRect(cnt)
-                aspect_ratio = bounding_rect[2] / float(bounding_rect[3])
-                print(f"Aspect ratio: {aspect_ratio}")  # Debug statement
-                if 0.8 <= aspect_ratio <= 1.2:  # Bounds
-                    if not found_cross:  # Locate it.
-                        cross_contours.append(approx)
-                        found_cross = True  # The cross got found!
-                        for i, point in enumerate(approx):
-                            x, y = point.ravel()
-                            cv2.putText(image, str(i + 1), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                    else:
-                        break  # Stop searching after a cross once found.
-        if not found_cross:
-            print("Cross not found.")  # Debug statement
-        output_image = image.copy()
-        return cross_contours, output_image
-    
-    
+    def draw_cross_corners(image,corners):
+    # Draw circles at each corner with the specified color
+        for point in corners:
+            x, y = point.ravel()
+            cv2.circle(image, (x, y), 5, (128, 0, 128), -1)  # Purple color circles
+        return image
+
+
     @staticmethod
     def print_corner_info():
         for key, corner in ImageProcessor.corners.items():

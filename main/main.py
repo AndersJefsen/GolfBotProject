@@ -26,7 +26,10 @@ def paint_output(data, output_image):
       #paint orang              #ComputerVision.ImageProcessor.showimage("egg", outputimage
       output_image=ComputerVision.ImageProcessor.paintballs(data.orangeBall.con, "orange", output_image)
                     #ComputerVision.ImageProcessor.showimage("final", outputimage)
-     
+
+        #Skal laves om
+      #output_image = ComputerVision.ImageProcessor.draw_cross_corners(data.cross.con, output_image)
+
       if data.robot.detected:
         
         output_image=ComputerVision.ImageProcessor.paintballs(data.robot.con, "robo ball", output_image)
@@ -194,7 +197,12 @@ def main(mode):
                     data.orangeBall.con = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
                     #balls
                     ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
-                
+                    # find cross contour
+                    cross_contour = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
+                    if cross_contour is not None:
+                        cross_contour_corner = ComputerVision.ImageProcessor.find_cross_corners(cross_contour)
+                    if cross_contour_corner is not None:
+                        output_image = ComputerVision.ImageProcessor.draw_cross_corners(inputimg, cross_contour_corner)
 
                     if ballcontours is not None:
                         #print("")
