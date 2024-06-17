@@ -1,16 +1,16 @@
 #Victor Justesen
 import math
 
-def find_close_ball(robot_position, balls,robot_orientation):
-   
-    def calculate_distance(p1, p2):
+
+def calculate_distance(p1, p2):
         '''
         print("calculate distance")
         print(f"p1: {p1}, type: {type(p1)}")
         print(f"p2: {p2}, type: {type(p2)}")
         '''
         return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
-    def calculate_angle(robot_position, ball_position, robot_orientation):
+
+def calculate_angle(robot_position, ball_position, robot_orientation):
           
             dy = ball_position[1] - robot_position[1]
             dx = ball_position[0] - robot_position[0]
@@ -26,6 +26,10 @@ def find_close_ball(robot_position, balls,robot_orientation):
         
             
             return -angle
+
+def find_close_ball(robot_position, balls,robot_orientation):
+   
+   
 
     
     closest_ball = None
