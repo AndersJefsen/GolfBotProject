@@ -5,7 +5,15 @@ class ImageProcessor:
     corners = {'bottom_left': None, 'bottom_right': None, 'top_left': None, 'top_right': None}
     def __init__(self):
         pass
-
+    @staticmethod
+    def find_contour_center(contour):
+        M = cv2.moments(contour)
+        if M["m00"] != 0:
+            cX = int(M["m10"] / M["m00"])  # Calculate the X coordinate of the centroid
+            cY = int(M["m01"] / M["m00"])  # Calculate the Y coordinate of the centroid
+            return (cX, cY)
+        return None
+    
     @staticmethod
     def load_image(image_path):
         image = cv2.imread(image_path)
@@ -218,11 +226,7 @@ class ImageProcessor:
             unique_contours = []
 
             for cnt in contours:
-                M = cv2.moments(cnt)
-                if M["m00"] != 0:
-                    cX = int(M["m10"] / M["m00"])
-                    cY = int(M["m01"] / M["m00"])
-                    centroids.append((cX, cY))
+                centroids.append(ImageProcessor.find_contour_center(cnt))
 
             for i, cnt1 in enumerate(contours):
                 unique = True
@@ -277,7 +281,8 @@ class ImageProcessor:
     def find_robot(indput_Image, min_size=100, max_size=400):
        
       
-        blue_lower = np.array([80, 66, 100], dtype="uint8")
+        # blue_lower = np.array([80, 66, 100], dtype="uint8")
+        blue_lower = np.array([85, 100, 100], dtype="uint8")
         blue_upper = np.array([131, 255, 255], dtype="uint8")
         blue_mask=ImageProcessor.apply_hsv_filter(indput_Image, blue_lower,blue_upper)
 
