@@ -70,7 +70,7 @@ def main(mode):
         print("test mode")
    
     elif mode == "videotest":
-        video_path = "../badvideo.mp4"  # Specify the path to the video file in the parent folder
+        video_path = "robotudeforbanevideo.mp4"  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
         if not wincap.isOpened():
             print("Error: Could not open video file.")
@@ -93,7 +93,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'v.jpg'
+    testpicturename = 'billede4.png'
 
     def getPicture():
         if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
@@ -222,7 +222,14 @@ def main(mode):
                           
                             data.robot.detected = True
                         else:
-                            data.robot.detected = False
+                            img = screenshot
+                            ComputerVision.ImageProcessor.find_robot(img, min_size=0, max_size=100000)
+                            if len(data.robot.con) == 3:
+                                data.robot.detected = True
+
+                            else:
+                                #data.robot.detected = True
+                                data.robot.detected = False
                             
 
 
