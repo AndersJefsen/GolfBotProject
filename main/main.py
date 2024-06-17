@@ -26,7 +26,10 @@ def paint_output(data, output_image):
       #paint orang              #ComputerVision.ImageProcessor.showimage("egg", outputimage
       output_image=ComputerVision.ImageProcessor.paintballs(data.orangeBall.con, "orange", output_image)
                     #ComputerVision.ImageProcessor.showimage("final", outputimage)
-     
+
+        #Skal laves om
+      #output_image = ComputerVision.ImageProcessor.draw_cross_corners(data.cross.con, output_image)
+
       if data.robot.detected:
         
         output_image=ComputerVision.ImageProcessor.paintballs(data.robot.con, "robo ball", output_image)
@@ -70,7 +73,7 @@ def main(mode):
         print("test mode")
    
     elif mode == "videotest":
-        video_path = 'GrønneCirkler Video.mp4'  # Specify the path to the video file in the parent folder
+        video_path = 'Kryds Video.mp4'  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
         if not wincap.isOpened():
             print("Error: Could not open video file.")
@@ -93,7 +96,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'GrønneCirklerRobot 3.jpg'
+    testpicturename = 'Kryds 3.jpg'
 
     def getPicture():
         if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
@@ -194,7 +197,12 @@ def main(mode):
                     data.orangeBall.con = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
                     #balls
                     ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
-                
+                    # find cross contour
+                    cross_contour = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
+                    if cross_contour is not None:
+                        cross_contour_corner = ComputerVision.ImageProcessor.find_cross_corners(cross_contour)
+                    if cross_contour_corner is not None:
+                        output_image = ComputerVision.ImageProcessor.draw_cross_corners(inputimg, cross_contour_corner)
 
                     if ballcontours is not None:
                         #print("")
