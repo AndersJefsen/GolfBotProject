@@ -84,8 +84,8 @@ def main(mode):
     if mode == "robot":
         data.socket = com.connect_to_robot()
 
-    if mode == "Goal":
-        data.socket = com.connect_to_robot()
+    #if mode == "Goal":
+        #data.socket = com.connect_to_robot()
     
     gui = False
 
