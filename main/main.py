@@ -93,7 +93,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'billede4.png'
+    testpicturename = 'GrønneCirklerRobot 3.jpg'
 
     def getPicture():
         if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
@@ -206,6 +206,8 @@ def main(mode):
 
                     data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=0, max_size=100000)
                     angle = None
+                    img = screenshot
+
                     if data.robot.con is not None:
                         if (len(data.robot.con)==3):
                             data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,output_image)
@@ -221,15 +223,30 @@ def main(mode):
                             data.robot.add_detection(data.robot.midpoint, data.robot.angle)
                           
                             data.robot.detected = True
-                        else:
-                            img = screenshot
-                            ComputerVision.ImageProcessor.find_robot(img, min_size=0, max_size=100000)
-                            if len(data.robot.con) == 3:
-                                data.robot.detected = True
 
-                            else:
-                                #data.robot.detected = True
-                                data.robot.detected = False
+
+                    else:
+
+                        print("Robot not detected in masked image, trying full image.")
+
+                        data.robot.con = ComputerVision.ImageProcessor.find_robot(screenshot, min_size=0,
+                                                                                  max_size=100000)
+
+                        if data.robot.con is not None and len(data.robot.con) == 3:
+
+                            data.robot.detected = True
+
+                            data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction = ComputerVision.ImageProcessor.getrobot(
+                                data.robot.con, output_image)
+
+                            data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(
+                                data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1])
+
+                            data.robot.add_detection(data.robot.midpoint, data.robot.angle)
+
+                        else:
+
+                            data.robot.detected = False
                             
 
 
