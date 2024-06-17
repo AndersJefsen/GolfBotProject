@@ -7,10 +7,12 @@ from path import calculate_distance, calculate_angle, find_close_ball
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SERVER_ADDRESS = '192.168.242.243'  # IP address of EV3
+SERVER_ADDRESS = '172.20.10.3'  # IP address of EV3
 SERVER_PORT = 1024  # Port server script
 
-def connect_to_robot(server_address, server_port):
+
+
+def connect_to_robot(server_address =SERVER_ADDRESS, server_port = SERVER_PORT):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((server_address, server_port))
     return s

@@ -84,8 +84,8 @@ def main(mode):
     if mode == "robot":
         data.socket = com.connect_to_robot()
 
-    #if mode == "Goal":
-        #data.socket = com.connect_to_robot()
+    if mode == "Goal":
+        data.socket = com.connect_to_robot()
     
     gui = False
 
@@ -310,7 +310,7 @@ def main(mode):
                     print(angle)
                     print(data.robot.midpoint)
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
-                        currMidpoint, data.arenaCorners[0], data.arenaCorners[1], data.arenaCorners[3], data.arenaCorners[2]
+                        currMidpoint
                     )
 
                     target_point = (12, 61.5)
