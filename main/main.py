@@ -93,7 +93,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'v.jpg'
+    testpicturename = 'GrønneCirklerRobot 3.jpg'
 
     def getPicture():
         if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":

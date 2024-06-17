@@ -280,27 +280,37 @@ class ImageProcessor:
     @staticmethod
     def find_robot(indput_Image, min_size=100, max_size=400):
        
-      
-        # blue_lower = np.array([80, 66, 100], dtype="uint8")
-        blue_lower = np.array([85, 100, 100], dtype="uint8")
-        blue_upper = np.array([131, 255, 255], dtype="uint8")
-        blue_mask=ImageProcessor.apply_hsv_filter(indput_Image, blue_lower,blue_upper)
 
-    
-        blue_mask = ImageProcessor.clean_mask(blue_mask)
-        """ koden for at se masken bliver brugt
-        cv2.imshow('Processed Image Robot', blue_mask)
+        # blue_lower = np.array([80, 66, 100], dtype="uint8")
+        #blue_lower = np.array([85, 100, 100], dtype="uint8")
+        #blue_upper = np.array([131, 255, 255], dtype="uint8")
+        #blue_mask=ImageProcessor.apply_hsv_filter(indput_Image, blue_lower,blue_upper)
+        # Når robotten har grønne cirkler
+        green_lower = np.array([36, 25, 25], dtype="uint8")
+        green_upper = np.array([70, 255, 255], dtype="uint8")
+
+        green_mask = ImageProcessor.apply_hsv_filter(indput_Image, green_lower, green_upper)
+
+        green_mask = ImageProcessor.clean_mask(green_mask)
+
+        #blue_mask = ImageProcessor.clean_mask(blue_mask)
+        #koden for at se masken bliver brugt
+        """
+        cv2.imshow('Processed Image Robot', green_mask)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
         """
         # Find contours
-        contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        #contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         robot_counters=ImageProcessor.filter_circles(contours, min_size,max_size)
         if robot_counters is None:
+            print("robot not found")
             return None
         if len(robot_counters) <3:
-            print("Not enough contours found.")
+            print("Robot not found, Not enough contours found.")
             return None
 
         # Sort the round contours by area and select the three largest
