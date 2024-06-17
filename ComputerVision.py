@@ -287,7 +287,7 @@ class ImageProcessor:
         #blue_mask=ImageProcessor.apply_hsv_filter(indput_Image, blue_lower,blue_upper)
         # Når robotten har grønne cirkler
         green_lower = np.array([36, 25, 25], dtype="uint8")
-        green_upper = np.array([70, 255, 255], dtype="uint8")
+        green_upper = np.array([86, 255, 255], dtype="uint8")
 
         green_mask = ImageProcessor.apply_hsv_filter(indput_Image, green_lower, green_upper)
 
