@@ -25,3 +25,16 @@ def drawHelpPoints(output_Image, points):
         else:
             print(f"Unexpected point format: {point}")
     return output_Image
+
+def drawLine(output_image, point1, point2, color=(0, 255, 0)):
+    if isinstance(point1, (list, tuple)) and isinstance(point2, (list, tuple)):
+        cv.line(output_image, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), color, 2)
+    else:
+        print(f"Unexpected point format: {point1} or {point2}")
+    return output_image
+def drawArea(output_image, points, color=(0, 255, 0)):
+    if len(points) > 1:
+        for i in range(len(points) - 1):
+            output_image = drawLine(output_image, points[i], points[i + 1],color)
+        output_image = drawLine(output_image, points[-1], points[0],color)
+    return output_image

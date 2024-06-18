@@ -33,10 +33,18 @@ def paint_output(data: Data, output_image):
             output_image = ComputerVision.ImageProcessor.draw_cross_corners(output_image, data.cross.corner_con)
 
       imageManipulationTools.drawHelpPoints(output_image, data.helpPoints)
-      print("center :", data.cross.center)
-      imageManipulationTools.drawHelpPoints(output_image, [data.cross.center])
+      
+      for area in data.outerArea.areas:
+          if area.type == "BL_corner" or area.type == "BR_corner" or area.type == "TR_corner" or area.type == "TL_corner":
+              color = (0, 255, 0)
+          else:
+              color = (0, 0, 255)
+
+          output_image = imageManipulationTools.drawArea(output_image, area.points,color)
+      
         #Skal laves om
       #output_image = ComputerVision.ImageProcessor.draw_cross_corners(data.cross.con, output_image)
+     
 
       if data.robot.detected:
         
@@ -105,7 +113,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'punkter.jpg'
+    testpicturename = 'outerball.jpg'
 
     def getPicture():
         if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
@@ -280,11 +288,14 @@ def main(mode):
            
             # painting time
             data.helpPoints = []
-            if data.cross.corner_con is not None:
-                data.find_Cross_HP()
+           # if data.cross.corner_con is not None:
+                #data.find_Cross_HP()
 
-            data.find_Corner_HP()
+            #data.find_Corner_HP()
+            data.find_outer_ball_HP()
             output_image = paint_output(data, output_image)
+
+            
            
 
             if(output_image is not None):
