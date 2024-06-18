@@ -79,7 +79,7 @@ def main(mode):
         print("test mode")
    
     elif mode == "videotest":
-        video_path = "robotudeforbanevideo.mp4"  # Specify the path to the video file in the parent folder
+        video_path = "../goodvideo.mp4"  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
         if not wincap.isOpened():
             print("Error: Could not open video file.")
