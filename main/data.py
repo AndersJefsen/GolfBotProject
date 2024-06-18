@@ -142,7 +142,7 @@ class Data:
             # Calculate the help point position
     
             help_point = center + direction_norm*225
-            print("help_point: ", help_point)
+            #print("help_point: ", help_point)
             self.helpPoints.append(help_point.tolist())
             for i in range(4):
                 for j in range(i+1, 4):
@@ -162,7 +162,7 @@ class Data:
                         #print("mid_help_point: ", mid_help_point)
                         self.helpPoints.append(mid_help_point.tolist())
 
-        print("done with cross hp")
+        #print("done with cross hp")
       
       
 

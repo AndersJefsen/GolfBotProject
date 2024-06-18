@@ -79,7 +79,7 @@ def main(mode):
         print("test mode")
    
     elif mode == "videotest":
-        video_path = 'Robot Video.mp4'  # Specify the path to the video file in the parent folder
+        video_path = "robotudeforbanevideo.mp4"  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
         if not wincap.isOpened():
             print("Error: Could not open video file.")
@@ -102,11 +102,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-<<<<<<< HEAD
     testpicturename = 'punkter.jpg'
-=======
-    testpicturename = 'Kryds 1.jpg'
->>>>>>> 089a50585576ebcf9a7163110c1e9c21a58942e0
 
     def getPicture():
         if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
@@ -208,29 +204,12 @@ def main(mode):
                     #balls
                     ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
                     # find cross contour
-<<<<<<< HEAD
                    
                     data.cross.con = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
                     if  data.cross.con is not None:
                         data.cross.corner_con = ComputerVision.ImageProcessor.find_cross_corners(data.cross.con)
            
                  
-=======
-
-                    cross_contour = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
-                    """
-                    if cross_contour is not None:
-                        cross_contour_corner = ComputerVision.ImageProcessor.find_cross_corners(cross_contour)
-                    if cross_contour_corner is not None:
-                        output_image = ComputerVision.ImageProcessor.draw_cross_corners(inputimg, cross_contour_corner)
-                        
-                    """
-
-                    # remove cross
-                    #output_image = ComputerVision.ImageProcessor.remove_cross(cross_contour,inputimg, 1.5)
-                    # remove corners
-                    # output_image = ComputerVision.ImageProcessor.mask_out_arena_corners(arenaCorners,inputimg, 200)
->>>>>>> 089a50585576ebcf9a7163110c1e9c21a58942e0
 
                     if ballcontours is not None:
                         #print("")
@@ -240,7 +219,7 @@ def main(mode):
                         data.addBalls(ballcontours, ballcordinats)
                     #data.printBalls()
 
-                    data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=60, max_size=100000)
+                    data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=0, max_size=100000)
                     angle = None
                     img = screenshot
 
@@ -265,7 +244,7 @@ def main(mode):
 
                         print("Robot not detected in masked image, trying full image.")
 
-                        data.robot.con = ComputerVision.ImageProcessor.find_robot(screenshot, min_size=60,
+                        data.robot.con = ComputerVision.ImageProcessor.find_robot(screenshot, min_size=0,
                                                                                   max_size=100000)
 
                         if data.robot.con is not None and len(data.robot.con) == 3:
