@@ -353,13 +353,13 @@ def main(mode):
                     balls=ballcontours
                     for ball in balls:
                         bcontours.append(ComputerVision.ImageProcessor.find_contour_center(ball))
-                    print(bcontours)
+                    #print(bcontours)
                     
-                    print(balls)
-                    print(currMidpoint)
+                    #print(balls)
+                    #print(currMidpoint)
                     help_points_tuples = [tuple(point) for point in hpoints]
-                    print(help_points_tuples) 
-                    route = path.route_to_closest_ball(currMidpoint, bcontours, help_points_tuples, contours) #data.helppoints.coords"""
+                    #print(help_points_tuples) 
+                    route = path.route_to_closest_ball(currMidpoint, bcontours, help_points_tuples, contours, image) #data.helppoints.coords"""
                                
                     
                     for point in hpoints:
