@@ -65,7 +65,7 @@ def resize_with_aspect_ratio(image, target_width, target_height):
     resized_image = cv.resize(image, (new_width, new_height), interpolation=cv.INTER_AREA)
     
     return resized_image
-def main(mode, time):
+def main(mode):
     global last_ball_detection_time
     data = Data()
     if mode == "camera" or mode == "robot" or mode == "Goal":
@@ -305,26 +305,24 @@ def main(mode, time):
                         print("command robot")
                         com.command_robot(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
                         print("command robot done")
+
                     else:
                         print("No best position found")
-                        start_time = time.time()
+                        #start_time = time.time()
 
-                        last_ball_detection_time = time.time()
-                        loop_time = time.time()
-                    while data.whiteballs is None:
-                        print("Operation Messi Commenced - wait " + last_ball_detection_time)
-                        current_time = time.time()
-                        if current_time - last_ball_detection_time > 5:
+                        #last_ball_detection_time = time.time()
+                        #loop_time = time.time()
+                if(len(data.whiteballs) == 0):
+                    print("Operation Messi Commenced - wait ")
                             # Load the small goal
-                            target_point = (12, 61.5)
-                            result = com.move_to_position_and_release(target_point, correctmid, currAngle, data.socket)
-                            if result:
-                                print("Operation BigGOALGOAL successful")
-                            else:
-                                print("Operation Goal got fuckd mate")
-                            break
-                        if current_time - start_time > 4:
-                            break
+                    target_point = (12, 61.5)
+                    result = com.move_to_position_and_release(target_point, data.robot.midpoint, data.robot.angle, data.socket)
+                    if result:
+                        print("Operation BigGOALGOAL successful")
+                    else:
+                        print("Operation Goal got fuckd mate")
+                    break
+
             if(mode == "test"):
            
                 if(data.robot.detected and data.getAllBallCordinates()):
@@ -394,6 +392,6 @@ def main(mode, time):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        main(sys.argv[1],time())
+        main(sys.argv[1])
     else:
         print("No mode specified. Usage: python script_name.py <test|window|camera>")

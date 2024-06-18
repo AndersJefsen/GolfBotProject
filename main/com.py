@@ -64,7 +64,7 @@ def drive_robot_to_point(point, pos, orientation, sock):
 
     # Print the calculated distance and angle
     print(f"Calculated angle to turn: {angle_to_turn} degrees")
-    print(f"Calculated distance to move: {distance_to_move} units")
+    print(f"Calculated distance to move: {distance_to_move} CM")
 
     command = f"TURN {angle_to_turn}"
     res = send_command(command, sock)

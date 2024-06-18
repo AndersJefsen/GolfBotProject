@@ -490,7 +490,7 @@ class ImageProcessor:
             if 0.8 <= aspect_ratio <= 1.2 and area > 1000:  # Aspect ratio bounds for a cross-like shape
                 cross_contours.append(cnt)
                 found_cross = True
-                print("Cross contour found")
+                #print("Cross contour found")
                 break  # Stop searching after a cross is found
 
         if not found_cross:
@@ -516,10 +516,10 @@ class ImageProcessor:
                 iterations += 1
 
             if len(approx) == 12:
-                print(f"Cross corners found {len(approx)} after {iterations} iterations.")
+                #print(f"Cross corners found {len(approx)} after {iterations} iterations.")
                 return approx
-            else:
-                print(f"Found {len(approx)} corners after {iterations} iterations, could not find exactly 12 corners.")
+            #else:
+                #print(f"Found {len(approx)} corners after {iterations} iterations, could not find exactly 12 corners.")
 
         return None  # Return None if no contour with exactly 12 corners is found
 
