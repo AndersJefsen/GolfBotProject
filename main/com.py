@@ -46,17 +46,9 @@ async def command_robot_async(robot_position, balls, robot_orientation, socket, 
     print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
 
     command_turn = f"TURN {angle_to_turn}"
-    res_turn = await send_command_async(command_turn, socket)
-
-    # after turning, check if orientation is correct
-    new_orientation = (robot_orientation + angle_to_turn) % 360
-    correct_angle = calculate_angle(robot_position, closest_ball, new_orientation)
-    if abs(correct_angle) > 3:  #  a tolerance of degrees
-        # Adjust 
-        command_adjust = f"TURN {correct_angle}"
-        res_adjust = await send_command_async(command_adjust, socket)
-
     command_move = f"MOVE {distance_to_ball}"
+
+    res_turn = await send_command_async(command_turn, socket)
     res_move = await send_command_async(command_move, socket)
 
     # Set the completion flag to True when both commands are done
@@ -102,6 +94,9 @@ def drive_robot_to_point(point, pos, socket):
 
     command = f"TURN {angle_to_turn}"
     res = send_command(command, socket=socket)
+    command_adjust_ = f"TURN {angle_to_turn}"
+    res = send_command(command_adjust_, socket=socket)
+
 
     distance_to_move = calculate_distance(pos, point)
     command = f"MOVE {distance_to_move}"
