@@ -34,7 +34,42 @@ class ImageProcessor:
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         return mask
+    
+    @staticmethod
+    def draw_route_on_image(image, points, line_color=(255, 0, 0), line_thickness=2, show_image=True):
 
+        """
+        Draw a route as a series of lines connecting a list of points on an existing image.
+
+        Args:
+        image (numpy.ndarray): The image on which to draw the route.
+        points (list of tuple): List of points (x, y) where each point is a tuple.
+        line_color (tuple): The color of the line (B, G, R).
+        line_thickness (int): Thickness of the lines.
+        show_image (bool): If True, display the image after drawing the route.
+
+        Returns:
+        numpy.ndarray: The image with the route drawn on it.
+        """
+        # Check if there are at least two points to connect
+     
+        if len(points) < 2:
+            print("need two points")
+            return image
+        points = [(int(round(x)), int(round(y))) for x, y in points]
+
+        # Draw lines between each consecutive pair of points
+        for i in range(len(points) - 1):
+            cv2.line(image, points[i], points[i + 1], line_color, line_thickness)
+            
+
+        # Optionally display the image
+        if show_image:
+            cv2.imshow('Route', image)
+            cv2.waitKey(0)  # Wait for a key press to close
+            cv2.destroyAllWindows()
+
+        return image
     @staticmethod
     def show_contours_with_areas(image, contours, window_name="Contours with Areas"):
         black_background = np.zeros_like(image)

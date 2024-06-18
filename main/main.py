@@ -3,7 +3,7 @@ import cv2 as cv
 from vision import Vision
 from hsvfilter import HsvFilter
 from edgefilter import EdgeFilter
-from path import find_close_ball
+import path
 import asyncio
 import com
 import numpy as np
@@ -96,7 +96,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'GrønneCirklerRobot 3.jpg'
+    testpicturename = 'master.jpg'
 
     def getPicture():
         if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
@@ -198,6 +198,7 @@ def main(mode):
                     #balls
                     ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
                     # find cross contour
+                    cross_contour_corner= None
                     cross_contour = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
                     if cross_contour is not None:
                         cross_contour_corner = ComputerVision.ImageProcessor.find_cross_corners(cross_contour)
@@ -283,6 +284,7 @@ def main(mode):
 
             if(mode == "robot" ):
                 if(data.robot.detected and data.getAllBallCordinates()):
+                    #todo skal score hvis der ikke er nogle bolde og husk orange 
                     data.robot.set_min_detections(10)
                     bestpos =  data.robot.get_best_robot_position()
                     if(bestpos is not None):
@@ -303,10 +305,63 @@ def main(mode):
            
                 if(data.robot.detected and data.getAllBallCordinates()):
                     currMidpoint,currAngle = data.robot.get_best_robot_position()
+                    
+                    
+                    egg_contour = data.egg.con
+                    #cross_contour = data.cross.con
+                    orange_ball_contour = data.orangeBall.con
+
+                    image = screenshot.copy()  # Create a copy of the screenshot if needed
+
+
+                    color_egg = (255, 255, 0)  # Cyan for egg
+                    color_cross = (0, 255, 0)  # Green for cross
+                    color_orange_ball = (0, 165, 255)  # Orange for orange ball
+                    '''
+                    helppoints=data.helppoint.cords
+                    '''
+
+                    # Check and draw each contour if it exists
+
+                    contours=[]
+                    if egg_contour is not None:
+                        contours.extend(egg_contour)
+                        cv.drawContours(image, egg_contour, -1, color_egg, 2)
+                    if cross_contour is not None:
+                        contours.extend(cross_contour)
+                        cv.drawContours(image, cross_contour, -1, color_cross, 2)
+                        
+                    if orange_ball_contour is not None:
+                        contours.extend(orange_ball_contour)
+
+                        cv.drawContours(image, orange_ball_contour, -1, color_orange_ball, 2)
+                    # Call the function
+                   
+                    # Display the result
+                    cv.imshow("1", image)
+                    cv.waitKey(0)
+                    cv.destroyAllWindows()
+
+                    route = path.route_to_closest_ball(currMidpoint, data.getAllBallCordinates(), [(100,100), (800,0), (0,800), (800,800)], contours) #data.helppoints.coords"""
+                    print("here")
+                    points=[]
+                    points.extend([(100,100), (800,0), (0,800), (800,800)])
+                    points.extend(data.getAllBallCordinates())
+                    for point in points:
+                        cv.circle(image, (int(point[0]), int(point[1])), 5, (0, 255, 0), -1)  # Green points
+                    if route is None:
+                        route=[]
+                    image = ComputerVision.ImageProcessor.draw_route_on_image(image,route)
+
+                    cv.imshow("Detected Objects", image)
+                    cv.waitKey(0)
+                    cv.destroyAllWindows()
+                    
+
                    # print("Robot orientation:")
                    # print(angle)
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
-                    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid,data.getAllBallCordinates(), currAngle)
+                    closest_ball, distance_to_ball, angle_to_turn = path.find_close_ball(correctmid,data.getAllBallCordinates(), currAngle)
                    # print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
 
                     #print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
@@ -346,7 +401,7 @@ def main(mode):
                     )
                     print(correctmid)
                     #Ik ud med riven Viktor, det her for hjælp til Anders Offset beregning via fysisk pixel midterpunkt ud fra kameraet's position.
-                    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(correctmid, data.getAllBallCordinates(), currAngle)
+                    closest_ball, distance_to_ball, angle_to_turn = path.find_close_ball(correctmid, data.getAllBallCordinates(), currAngle)
                     print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
 
                     print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
@@ -367,6 +422,7 @@ def main(mode):
 
 
 if __name__ == "__main__":
+
     if len(sys.argv) > 1:
         main(sys.argv[1])
     else:
