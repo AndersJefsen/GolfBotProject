@@ -112,7 +112,7 @@ class Data:
             print("Error: contour_points is empty.")
             return False
 
- 
+
         self.cross.calculate_center()
         center = np.array(self.cross.center)
 
@@ -198,6 +198,7 @@ class cross(ArenaObject):
 
         center_x = sum(x_coords) / len(self.corner_con)
         center_y = sum(y_coords) / len(self.corner_con)
+
         #print(f"Center calculated at: ({center_x}, {center_y})")
         center = (center_x, center_y)
         self.center = center

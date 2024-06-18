@@ -275,12 +275,13 @@ def main(mode):
 
                   
            
-            # painting time
+            # painting time\
+
             data.helpPoints = []
-            if data.cross.corner_con is not None:
+            if data.cross.corner_con != []:
                 data.find_Cross_HP()
-                
-            data.find_Corner_HP()
+            if data.arenaCorners is not []:
+                data.find_Corner_HP()
             output_image = paint_output(data, output_image)
            
 
@@ -322,15 +323,12 @@ def main(mode):
                     #cross_contour = data.cross.con
                     orange_ball_contour = data.orangeBall.con
 
-                    image = screenshot.copy()  # Create a copy of the screenshot if needed
+                    image = imageManipulationTools.useMask(screenshot.copy(),data.mask)  # Create a copy of the screenshot if needed
 
 
                     color_egg = (255, 255, 0)  # Cyan for egg
                     color_cross = (0, 255, 0)  # Green for cross
                     color_orange_ball = (0, 165, 255)  # Orange for orange ball
-                    '''
-                    helppoints=data.helppoint.cords
-                    '''
 
                     # Check and draw each contour if it exists
 
@@ -349,21 +347,28 @@ def main(mode):
                     # Call the function
                    
                     # Display the result
-                    cv.imshow("1", image)
-                    cv.waitKey(0)
-                    cv.destroyAllWindows()
-
-                    route = path.route_to_closest_ball(currMidpoint, data.getAllBallCordinates(), [(100,100), (800,0), (0,800), (800,800)], contours) #data.helppoints.coords"""
-                    print("here")
-                    points=[]
-                    points.extend([(100,100), (800,0), (0,800), (800,800)])
-                    points.extend(data.getAllBallCordinates())
-                    for point in points:
+                   
+                    hpoints=data.helpPoints
+                    bcontours=[]
+                    balls=ballcontours
+                    for ball in balls:
+                        bcontours.append(ComputerVision.ImageProcessor.find_contour_center(ball))
+                    print(bcontours)
+                    
+                    print(balls)
+                    print(currMidpoint)
+                    help_points_tuples = [tuple(point) for point in hpoints]
+                    print(help_points_tuples) 
+                    route = path.route_to_closest_ball(currMidpoint, bcontours, help_points_tuples, contours) #data.helppoints.coords"""
+                               
+                    
+                    for point in hpoints:
                         cv.circle(image, (int(point[0]), int(point[1])), 5, (0, 255, 0), -1)  # Green points
                     if route is None:
                         route=[]
                     image = ComputerVision.ImageProcessor.draw_route_on_image(image,route)
-
+                    ComputerVision.ImageProcessor.paintballs(ballcontours,"test", image)
+                    
                     cv.imshow("Detected Objects", image)
                     cv.waitKey(0)
                     cv.destroyAllWindows()
