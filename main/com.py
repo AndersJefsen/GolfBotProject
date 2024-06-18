@@ -1,4 +1,5 @@
 import socket
+from ComputerVision import ImageProcessor
 from path import find_close_ball
 import math
 
@@ -46,9 +47,17 @@ async def command_robot_async(robot_position, balls, robot_orientation, socket, 
     print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
 
     command_turn = f"TURN {angle_to_turn}"
+    robot_position, robot_orientation = ImageProcessor.getrobot()
+    angle_to_turn_corrected = calculate_angle(robot_position, closest_ball)
+    command_adjust_turn = f"TURN {angle_to_turn_corrected}"
+
     command_move = f"MOVE {distance_to_ball}"
 
+
+
     res_turn = await send_command_async(command_turn, socket)
+    res_adjust_turn = await send_command_async(command_adjust_turn, socket)
+
     res_move = await send_command_async(command_move, socket)
 
     # Set the completion flag to True when both commands are done
@@ -94,9 +103,6 @@ def drive_robot_to_point(point, pos, socket):
 
     command = f"TURN {angle_to_turn}"
     res = send_command(command, socket=socket)
-    command_adjust_ = f"TURN {angle_to_turn}"
-    res = send_command(command_adjust_, socket=socket)
-
 
     distance_to_move = calculate_distance(pos, point)
     command = f"MOVE {distance_to_move}"
