@@ -319,7 +319,7 @@ def main(mode):
                     correctmidCorrect = ComputerVision.ImageProcessor.convert_to_cartesian(
                     currMidpoint)
 
-                    target_point = (12, 61.5)
+                    target_point = (150, 61)
                     result = com.move_to_position_and_release(target_point, correctmidCorrect, currAngle, data.socket)
                     if result:
                         print("Operation BigGOALGOAL successful")

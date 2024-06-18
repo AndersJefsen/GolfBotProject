@@ -101,7 +101,7 @@ def move_to_position_and_release(point, pos, orientation, sock):
     if not arrived:
         return False
 
-    correct_angle = turn_robot(orientation, 180, sock)
+    correct_angle = turn_robot(orientation, 0, sock)
     if not correct_angle:
         return False
 
