@@ -17,7 +17,8 @@ from queue import Queue
 from time import time, strftime, gmtime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
-def paint_output(data, output_image):
+def paint_output(data: Data, output_image):
+      print("painting")
       #paint white balls
       output_image=ComputerVision.ImageProcessor.paintballs(data.getAllBallContours(), "ball", output_image)
                     #ComputerVision.ImageProcessor.showimage("balls", outputimage)
@@ -26,7 +27,12 @@ def paint_output(data, output_image):
       #paint orang              #ComputerVision.ImageProcessor.showimage("egg", outputimage
       output_image=ComputerVision.ImageProcessor.paintballs(data.orangeBall.con, "orange", output_image)
                     #ComputerVision.ImageProcessor.showimage("final", outputimage)
-
+      if data.cross.corner_con is not None:
+            output_image = ComputerVision.ImageProcessor.draw_cross_corners(output_image, data.cross.corner_con)
+       
+      imageManipulationTools.drawHelpPoints(output_image, data.helpPoints)
+      print("center :", data.cross.center)
+      imageManipulationTools.drawHelpPoints(output_image, [data.cross.center]) 
         #Skal laves om
       #output_image = ComputerVision.ImageProcessor.draw_cross_corners(data.cross.con, output_image)
 
@@ -35,7 +41,7 @@ def paint_output(data, output_image):
         output_image=ComputerVision.ImageProcessor.paintballs(data.robot.con, "robo ball", output_image)
         output_image=ComputerVision.ImageProcessor.paintrobot(data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction)
         output_image=ComputerVision.ImageProcessor.paintrobot(data.robot.midpoint, data.robot.angle, output_image, data.robot.direction)
-
+      print("painted")
       return output_image
     
 def resize_with_aspect_ratio(image, target_width, target_height):
@@ -96,7 +102,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'GrønneCirklerRobot 3.jpg'
+    testpicturename = 'punkter.jpg'
 
     def getPicture():
         if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
@@ -198,11 +204,12 @@ def main(mode):
                     #balls
                     ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
                     # find cross contour
-                    cross_contour = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
-                    if cross_contour is not None:
-                        cross_contour_corner = ComputerVision.ImageProcessor.find_cross_corners(cross_contour)
-                    if cross_contour_corner is not None:
-                        output_image = ComputerVision.ImageProcessor.draw_cross_corners(inputimg, cross_contour_corner)
+                   
+                    data.cross.con = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
+                    if  data.cross.con is not None:
+                        data.cross.corner_con = ComputerVision.ImageProcessor.find_cross_corners(data.cross.con)
+           
+                 
 
                     if ballcontours is not None:
                         #print("")
@@ -269,6 +276,11 @@ def main(mode):
                   
            
             # painting time
+            data.helpPoints = []
+            if data.cross.corner_con is not None:
+                data.find_Cross_HP()
+                
+            data.find_Corner_HP()
             output_image = paint_output(data, output_image)
            
 
@@ -300,7 +312,7 @@ def main(mode):
                     else:
                         print("No best position found")
             if(mode == "test"):
-           
+                
                 if(data.robot.detected and data.getAllBallCordinates()):
                     currMidpoint,currAngle = data.robot.get_best_robot_position()
                    # print("Robot orientation:")
