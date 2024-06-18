@@ -1,3 +1,4 @@
+import numpy as np
 class Data:
    
 
@@ -11,7 +12,8 @@ class Data:
         self.arenaMask = None
         self.socket = None
         self.robot = Robot()
-        self.cross = ArenaObject()
+        self.cross = cross()
+        self.helpPoints = []
 
     def addBalls(self, contours, cordinates):
         for contour, cord in zip(contours, cordinates):
@@ -66,7 +68,106 @@ class Data:
         return [ball.con for ball in self.whiteballs]
     def resetRobot(self):
         self.robot = Robot()
+    def find_Corner_HP(self):
+        if not self.arenaCorners:
+            return False
 
+        
+        num_corners = len(self.arenaCorners)
+
+        for i in range(num_corners):
+            prev_corner = self.arenaCorners[i - 1]
+            current_corner = self.arenaCorners[i]
+            next_corner = self.arenaCorners[(i + 1) % num_corners]
+
+            # Calculate vectors
+            vec1 = np.array(prev_corner) - np.array(current_corner)
+            vec2 = np.array(next_corner) - np.array(current_corner)
+
+            # Normalize vectors
+            vec1_norm = vec1 / np.linalg.norm(vec1)
+            vec2_norm = vec2 / np.linalg.norm(vec2)
+
+            # Calculate the bisector vector
+            bisector = vec1_norm + vec2_norm
+            bisector_norm = bisector / np.linalg.norm(bisector)
+
+            # Define the length of the help point line (extend into the arena)
+            length = 300  # You can adjust this length as needed
+
+            # Calculate the help point position
+            help_point = np.array(current_corner) + bisector_norm * length
+            self.helpPoints.append(help_point.tolist())
+
+    def extend_vector(self,vec, len_x, len_y):
+            return np.array([
+                vec[0] * len_x / np.abs(vec[0]),
+                vec[1] * len_y / np.abs(vec[1])
+            ])    
+    def find_Cross_HP(self):
+
+       
+        
+        if  self.cross.corner_con is None:
+            print("Error: contour_points is empty.")
+            return False
+
+ 
+        self.cross.calculate_center()
+        center = np.array(self.cross.center)
+
+        # Calculate distances from the center to all points
+        distances = []
+        for point in self.cross.corner_con:
+            distance = np.linalg.norm(center - np.array(point[0]))
+            distances.append((distance, point[0]))
+
+        # Sort points by distance and select the four closest
+        distances.sort()
+        closest_points = [point for _, point in distances[:4]]
+
+        # Find vectors between opposite points and calculate help point
+        for point in closest_points:
+            current_point = np.array(point)
+
+            # Calculate the direction vector from the center to the point
+            direction_vector = current_point - center
+
+            # Normalize the direction vector
+            direction_norm = direction_vector / np.linalg.norm(direction_vector)
+
+            # Define the length of the help point line (extend outwards)
+         # Adjust this length as needed
+
+            # Calculate the help point position
+    
+            help_point = center + direction_norm*225
+            #print("help_point: ", help_point)
+            self.helpPoints.append(help_point.tolist())
+            for i in range(4):
+                for j in range(i+1, 4):
+                    if (i + j) % 2 != 0:  # Ensuring they are not opposite pairs
+                        point1 = np.array(closest_points[i])
+                        point2 = np.array(closest_points[j])
+
+                        # Calculate the mid-direction vector from the center to the average of the points
+                        mid_direction_vector = ((point1 + point2) / 2) - center
+
+                        # Normalize the mid-direction vector
+                        mid_direction_norm = mid_direction_vector / np.linalg.norm(mid_direction_vector)
+
+                        # Calculate the help point position
+                      
+                        mid_help_point = center + mid_direction_norm * 300
+                        #print("mid_help_point: ", mid_help_point)
+                        self.helpPoints.append(mid_help_point.tolist())
+
+        #print("done with cross hp")
+      
+      
+
+
+    
 
 class ArenaObject:
     def __init__(self):
@@ -75,6 +176,32 @@ class ArenaObject:
         self.cord = []
         self.det = 0
         self.recentlyDetected = False
+        self.angle = None
+class cross(ArenaObject):
+    def __init__(self):
+        super().__init__()
+        self.corner_con = []
+        self.center = None
+    def calculate_center(self):
+        # Calculate the center of the cross
+        if self.corner_con is None:
+            print("Error: contour_points is empty.")
+            return (0, 0)
+
+        #print("Calculating center")
+        try:
+            x_coords = [p[0][0] for p in self.corner_con]
+            y_coords = [p[0][1] for p in self.corner_con]
+        except IndexError as e:
+            print(f"Error accessing point coordinates: {e}")
+            return (0, 0)
+
+        center_x = sum(x_coords) / len(self.corner_con)
+        center_y = sum(y_coords) / len(self.corner_con)
+        #print(f"Center calculated at: ({center_x}, {center_y})")
+        center = (center_x, center_y)
+        self.center = center
+    
 class Robot:
     def __init__(self):
         #con = contour, cord = coordinates, det = detections (number of detections)
@@ -115,3 +242,11 @@ class Robot:
 
     def set_min_detections(self, min_detections):
         self.min_detections = min_detections
+
+
+
+class HelpPoint:
+    def __init__(self):
+        self.con = []
+        self.cord = []
+      

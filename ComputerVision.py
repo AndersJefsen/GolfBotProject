@@ -352,6 +352,76 @@ class ImageProcessor:
         robot_counters = sorted(robot_counters, key=cv2.contourArea, reverse=True)[:3]
 
         return robot_counters
+
+    @staticmethod
+    def remove_cross(contours, image, expansion_factor):
+        if contours is None:
+            print("No contours provided.")
+            return image
+
+        # Create a mask of the same size as the image, initialized to all white (255)
+        mask = np.ones(image.shape[:2], dtype="uint8") * 255
+
+        for contour in contours:
+            # Ensure the contour is a numpy array
+            if isinstance(contour, np.ndarray):
+                # Find the bounding box of the contour
+                x, y, w, h = cv2.boundingRect(contour)
+
+                # Expand the bounding box to cover the desired area
+                x_start = max(int(x - w * (expansion_factor - 1) / 2), 0)
+                y_start = max(int(y - h * (expansion_factor - 1) / 2), 0)
+                x_end = min(int(x + w * (1 + (expansion_factor - 1) / 2)), image.shape[1])
+                y_end = min(int(y + h * (1 + (expansion_factor - 1) / 2)), image.shape[0])
+
+                # Draw a filled rectangle over the expanded bounding box
+                cv2.rectangle(mask, (x_start, y_start), (x_end, y_end), (0), thickness=cv2.FILLED)
+            else:
+                print(f"Unexpected contour type: {type(contour)}")
+
+        # Apply the mask to the image: where mask is 0 (the cross area), set the image to black
+        result_image = cv2.bitwise_and(image, image, mask=mask)
+
+        return result_image
+    @staticmethod
+    def mask_out_arena_corners(corners,image,mask_size):
+        # Create a mask of the same size as the image, initialized to all white (255)
+        mask = np.ones(image.shape[:2], dtype="uint8") * 255
+
+        # Define the corners
+        bottom_left, bottom_right, top_left, top_right = corners
+
+        # Define the triangles to mask each corner
+        triangles = [
+            [bottom_left, (bottom_left[0] + mask_size, bottom_left[1]), (bottom_left[0], bottom_left[1] - mask_size)],
+            # Bottom left
+            [bottom_right, (bottom_right[0] - mask_size, bottom_right[1]),
+             (bottom_right[0], bottom_right[1] - mask_size)],  # Bottom right
+            [top_left, (top_left[0] + mask_size, top_left[1]), (top_left[0], top_left[1] + mask_size)],  # Top left
+            [top_right, (top_right[0] - mask_size, top_right[1]), (top_right[0], top_right[1] + mask_size)]  # Top right
+        ]
+
+        # Correcting the triangles' directions
+        triangles = [
+            [bottom_left, (bottom_left[0] + mask_size, bottom_left[1]), (bottom_left[0], bottom_left[1] - mask_size)],
+            # Bottom left
+            [bottom_right, (bottom_right[0] - mask_size, bottom_right[1]),
+             (bottom_right[0], bottom_right[1] - mask_size)],  # Bottom right
+            [top_left, (top_left[0] - mask_size, top_left[1]), (top_left[0], top_left[1] + mask_size)],  # Top left
+            [top_right, (top_right[0] + mask_size, top_right[1]), (top_right[0], top_right[1] + mask_size)]  # Top right
+        ]
+
+        # Draw the triangles on the mask
+        for triangle in triangles:
+            pts = np.array(triangle, np.int32)
+            pts = pts.reshape((-1, 1, 2))
+            cv2.fillPoly(mask, [pts], (0))
+
+        # Apply the mask to the image: where mask is 0 (the corner areas), set the image to black
+        result_image = cv2.bitwise_and(image, image, mask=mask)
+
+        return result_image
+
     @staticmethod
     def adjust_coordinates(cX, cY, width, height, adjustment_factor=0.2):
         # Calculate the center of the area
@@ -525,7 +595,7 @@ class ImageProcessor:
             if 0.8 <= aspect_ratio <= 1.2 and area > 1000:  # Aspect ratio bounds for a cross-like shape
                 cross_contours.append(cnt)
                 found_cross = True
-                print("Cross contour found")
+                #print("Cross contour found")
                 break  # Stop searching after a cross is found
 
         if not found_cross:
@@ -551,10 +621,10 @@ class ImageProcessor:
                 iterations += 1
 
             if len(approx) == 12:
-                print(f"Cross corners found {len(approx)} after {iterations} iterations.")
+                #print(f"Cross corners found {len(approx)} after {iterations} iterations.")
                 return approx
-            else:
-                print(f"Found {len(approx)} corners after {iterations} iterations, could not find exactly 12 corners.")
+           # else:
+               # print(f"Found {len(approx)} corners after {iterations} iterations, could not find exactly 12 corners.")
 
         return None  # Return None if no contour with exactly 12 corners is found
 
