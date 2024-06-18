@@ -312,11 +312,15 @@ def main(mode):
 
                         #last_ball_detection_time = time.time()
                         #loop_time = time.time()
-                if(len(data.whiteballs) == 0):
+                while len(data.whiteballs) == 0:
                     print("Operation Messi Commenced - wait ")
                             # Load the small goal
+                    currMidpoint,currAngle = data.robot.get_best_robot_position()
+                    correctmidCorrect = ComputerVision.ImageProcessor.convert_to_cartesian(
+                    currMidpoint)
+
                     target_point = (12, 61.5)
-                    result = com.move_to_position_and_release(target_point, data.robot.midpoint, data.robot.angle, data.socket)
+                    result = com.move_to_position_and_release(target_point, correctmidCorrect, currAngle, data.socket)
                     if result:
                         print("Operation BigGOALGOAL successful")
                     else:
