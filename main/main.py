@@ -73,7 +73,7 @@ def main(mode):
         print("test mode")
    
     elif mode == "videotest":
-        video_path = "robotudeforbanevideo.mp4"  # Specify the path to the video file in the parent folder
+        video_path = 'Robot Video.mp4'  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
         if not wincap.isOpened():
             print("Error: Could not open video file.")
@@ -96,7 +96,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'GrønneCirklerRobot 3.jpg'
+    testpicturename = 'Kryds 1.jpg'
 
     def getPicture():
         if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
@@ -198,11 +198,20 @@ def main(mode):
                     #balls
                     ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
                     # find cross contour
+
                     cross_contour = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
+                    """
                     if cross_contour is not None:
                         cross_contour_corner = ComputerVision.ImageProcessor.find_cross_corners(cross_contour)
                     if cross_contour_corner is not None:
                         output_image = ComputerVision.ImageProcessor.draw_cross_corners(inputimg, cross_contour_corner)
+                        
+                    """
+
+                    # remove cross
+                    #output_image = ComputerVision.ImageProcessor.remove_cross(cross_contour,inputimg, 1.5)
+                    # remove corners
+                    # output_image = ComputerVision.ImageProcessor.mask_out_arena_corners(arenaCorners,inputimg, 200)
 
                     if ballcontours is not None:
                         #print("")
