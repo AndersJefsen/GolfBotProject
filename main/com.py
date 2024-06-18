@@ -69,7 +69,7 @@ def drive_robot_to_point(point, pos, orientation, sock):
     command = f"TURN {angle_to_turn}"
     res = send_command(command, sock)
 
-    command = f"MOVE {distance_to_move}"
+    command = f"MOVE_GOAL {distance_to_move}"
     res = send_command(command, sock)
 
     if res == "success":

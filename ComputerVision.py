@@ -494,7 +494,7 @@ class ImageProcessor:
                 break  # Stop searching after a cross is found
 
         if not found_cross:
-            print("Cross not found.")  # Debug statement'
+            #print("Cross not found.")  # Debug statement'
             return None
 
         return cross_contours
