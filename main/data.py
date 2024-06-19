@@ -16,6 +16,7 @@ class Data:
         self.cross = cross()
         self.helpPoints = []
         self.outerArea = OuterArea()
+        self.drivepoints = []
 
     def addBalls(self, contours, cordinates):
         for contour, cord in zip(contours, cordinates):
@@ -70,7 +71,8 @@ class Data:
         return [ball.con for ball in self.whiteballs]
     def resetRobot(self):
         self.robot = Robot()
-
+    def getAllHelpPointsCon(self):
+        return [hp.con for hp in self.helpPoints]
     #NEEEDS FIXING TOMORROW 18/06 2024 only length-1 arrays can be converted to Python scalars
     def find_outer_ball_HP(self):
         self.outerArea.create_areas(self.arenaCorners[0],self.arenaCorners[1],self.arenaCorners[2],self.arenaCorners[3])
@@ -78,6 +80,7 @@ class Data:
             x, y, w, h = cv.boundingRect(whiteball.con)
             center_x = x + w // 2
             center_y = y + h // 2
+            in_outer_area = False
             for area in self.outerArea.areas:
                
                 max_x = max([p[0] for p in area.points])
@@ -86,6 +89,7 @@ class Data:
                 min_y = min([p[1] for p in area.points])
               
                 if center_x > min_x and center_x < max_x and center_y > min_y and center_y < max_y:
+                    in_outer_area = True
                     x_addision = 0
                     y_addision = 0
                     factor = 150
@@ -109,14 +113,19 @@ class Data:
                         y_addision =  factor
                     elif area.type == "bottom_side":
                         y_addision = - factor
+                    
                     print("FOUND BALL IN OUTER AREA")
                     whiteball_center = np.array([center_x, center_y])
-                    helpPointCord = (whiteball_center[0] + x_addision, whiteball_center[1] + y_addision)
+                    helpPointCord = HelpPoint((whiteball_center[0] + x_addision, whiteball_center[1] + y_addision),whiteball)
                     self.helpPoints.append(helpPointCord)
                     print("FOUND BALL IN OUTER AREA")
                     
                     break
-            
+            if in_outer_area == False:
+                whiteball_center = np.array([center_x, center_y])
+                helpPointCord = HelpPoint((whiteball_center[0], whiteball_center[1]),whiteball)
+                self.helpPoints.append(helpPointCord)
+
         
     def find_Corner_HP(self):
         if not self.arenaCorners:
@@ -147,7 +156,7 @@ class Data:
 
             # Calculate the help point position
             help_point = np.array(current_corner) + bisector_norm * length
-            self.helpPoints.append(help_point.tolist())
+            self.drivepoints.append(help_point.tolist())
 
     def extend_vector(self,vec, len_x, len_y):
             return np.array([
@@ -190,10 +199,13 @@ class Data:
          # Adjust this length as needed
 
             # Calculate the help point position
-    
-            help_point = center + direction_norm*225
+            con = center + direction_norm*225
+            print("con: ", con)
+            help_point = HelpPoint(tuple(con))
             #print("help_point: ", help_point)
-            self.helpPoints.append(help_point.tolist())
+            
+            self.helpPoints.append(help_point)
+            '''
             for i in range(4):
                 for j in range(i+1, 4):
                     if (i + j) % 2 != 0:  # Ensuring they are not opposite pairs
@@ -208,10 +220,11 @@ class Data:
 
                         # Calculate the help point position
                       
-                        mid_help_point = center + mid_direction_norm * 300
+                        mid_help_point = HelpPoint(tuple(center + mid_direction_norm * 300))
+                        
                         #print("mid_help_point: ", mid_help_point)
-                        self.helpPoints.append(mid_help_point.tolist())
-
+                        self.helpPoints.append(mid_help_point)
+            '''
         #print("done with cross hp")
       
       
@@ -227,6 +240,9 @@ class ArenaObject:
         self.det = 0
         self.recentlyDetected = False
         self.angle = None
+
+
+
 class cross(ArenaObject):
     def __init__(self):
         super().__init__()
@@ -296,9 +312,9 @@ class Robot:
 
 
 class HelpPoint:
-    def __init__(self):
-        self.con = []
-        self.cord = []
+    def __init__(self,con,ball = None):
+        self.con = con
+        self.ball = ball
 
 class OuterArea:
     def __init__(self):

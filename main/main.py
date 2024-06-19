@@ -14,7 +14,7 @@ import visualisation
 from data import Data as Data
 import imageManipulationTools
 import time
-
+import runFlow as rf
 from queue import Queue
 from time import time, strftime, gmtime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -31,8 +31,10 @@ def paint_output(data: Data, output_image):
                     #ComputerVision.ImageProcessor.showimage("final", outputimage)
       if data.cross.corner_con is not None:
             output_image = ComputerVision.ImageProcessor.draw_cross_corners(output_image, data.cross.corner_con)
-      #print("help points: ", data.helpPoints)
-      imageManipulationTools.drawHelpPoints(output_image, data.helpPoints)
+      
+      imageManipulationTools.drawHelpPoints(output_image, data.getAllHelpPointsCon())
+     
+      imageManipulationTools.drawHelpPoints(output_image, data.drivepoints,color=(0, 255, 0))
       #print("done painting")
       for area in data.outerArea.areas:
           if area.type == "BL_corner" or area.type == "BR_corner" or area.type == "TR_corner" or area.type == "TL_corner":
@@ -154,25 +156,17 @@ def main(mode):
                 if screenshot is None:
                     print("Failed to capture screenshot.")
                     continue
-
-            print("finding arena")
-            findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner, filtered_contoures = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
-            print("her",findArena,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
-            if findArena:
-                arenaCorners = []
-                arenaCorners.append(bottom_left_corner)
-                arenaCorners.append(bottom_right_corner)
-
-                arenaCorners.append(top_right_corner)
-                arenaCorners.append(top_left_corner)
-                data.arenaCorners = arenaCorners
-                data.mask = imageManipulationTools.createMask(screenshot,arenaCorners)
-                print("mask Created")
-                break
-
         except Exception as e:
-            print(f"An error occurred while trying to detect arena: {e}")
+                print(f"An error occurred while trying to detect arena: {e}")
+                break
+        print("finding arena")
+        try:
+            findArena = rf.findArena_flow(screenshot,output_image,data)
+        except Exception as e:
+            print(f"An error occurredin rf.findArena_flow: {e}")
             break
+
+      
 
 
 
@@ -287,10 +281,11 @@ def main(mode):
                   
            
             # painting time
+            
             data.helpPoints = []
-            if len(data.cross.corner_con) != 0:
-                data.find_Cross_HP()
-
+            #if data.cross.con is not None:
+               # data.find_Cross_HP()
+      
             data.find_Corner_HP()
             data.find_outer_ball_HP()
             output_image = paint_output(data, output_image)
