@@ -33,30 +33,22 @@ async def send_command_async(command, sock):
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, send_command, command, sock)
 
-async def command_robot_async(robot_position, balls, robot_orientation, sock, completion_flag):
-    logger.info("Entering command_robot_async")
+
+
+def command_robot_turn(robot_position,balls,robot_orientation,socket):
+    balls = balls
     closest_ball, distance_to_ball, angle_to_turn = find_close_ball(robot_position, balls, robot_orientation)
-    print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
-
-    print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
-
-    command_turn = f"TURN {angle_to_turn}"
-    command_move = f"MOVE {distance_to_ball}"
-
-    res_turn = await send_command_async(command_turn, sock)
-    res_move = await send_command_async(command_move, sock)
-
-    completion_flag.set()
-
-def command_robot(robot_position, balls, robot_orientation, sock):
-    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(robot_position, balls, robot_orientation)
-    print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
-
-    print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
     command = f"TURN {angle_to_turn}"
-    res = send_command(command, sock)
+    res = send_command(command, socket=socket)
+    return res
+
+def command_robot_move(robot_position,balls,socket):
+    balls = balls
+    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(robot_position, balls, 0)
     command = f"MOVE {distance_to_ball}"
-    res = send_command(command, sock)
+    res = send_command(command, socket=socket)
+    return res
+
 
 def drive_robot_to_point(point, pos, orientation, sock):
     angle_to_turn = calculate_angle(pos, point, orientation)
