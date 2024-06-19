@@ -289,7 +289,7 @@ def main(mode):
                         print("command robot done")
 
                         #get new position
-                        update_positions(True,False,False,False,False,30)
+                        update_positions(True,False,False,False,False,10)
                         newpos =  data.robot.get_best_robot_position()
                         if(newpos is not None):
                             currMidpoint,currAngle = newpos
