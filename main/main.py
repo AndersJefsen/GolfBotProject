@@ -13,12 +13,14 @@ import detectionTools
 import visualisation
 from data import Data as Data
 import imageManipulationTools
+import time
+import runFlow as rf
 from queue import Queue
 from time import time, strftime, gmtime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
 def paint_output(data: Data, output_image):
-      print("painting")
+      #print("painting")
       #paint white balls
       output_image=ComputerVision.ImageProcessor.paintballs(data.getAllBallContours(), "ball", output_image)
                     #ComputerVision.ImageProcessor.showimage("balls", outputimage)
@@ -29,12 +31,22 @@ def paint_output(data: Data, output_image):
                     #ComputerVision.ImageProcessor.showimage("final", outputimage)
       if data.cross.corner_con is not None:
             output_image = ComputerVision.ImageProcessor.draw_cross_corners(output_image, data.cross.corner_con)
-       
-      imageManipulationTools.drawHelpPoints(output_image, data.helpPoints)
-      print("center :", data.cross.center)
-      imageManipulationTools.drawHelpPoints(output_image, [data.cross.center]) 
+      
+      imageManipulationTools.drawHelpPoints(output_image, data.getAllHelpPointsCon())
+     
+      imageManipulationTools.drawHelpPoints(output_image, data.drivepoints,color=(0, 255, 0))
+      #print("done painting")
+      for area in data.outerArea.areas:
+          if area.type == "BL_corner" or area.type == "BR_corner" or area.type == "TR_corner" or area.type == "TL_corner":
+              color = (0, 255, 0)
+          else:
+              color = (0, 0, 255)
+
+          output_image = imageManipulationTools.drawArea(output_image, area.points,color)
+      
         #Skal laves om
       #output_image = ComputerVision.ImageProcessor.draw_cross_corners(data.cross.con, output_image)
+     
 
       if data.robot.detected:
         
@@ -66,7 +78,8 @@ def resize_with_aspect_ratio(image, target_width, target_height):
     
     return resized_image
 def main(mode):
-    data = Data() 
+    global last_ball_detection_time
+    data = Data()
     if mode == "camera" or mode == "robot" or mode == "Goal":
         wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
@@ -143,25 +156,17 @@ def main(mode):
                 if screenshot is None:
                     print("Failed to capture screenshot.")
                     continue
-
-            print("finding arena")
-            findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner, filtered_contoures = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
-            print("her",findArena,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
-            if findArena:
-                arenaCorners = []
-                arenaCorners.append(bottom_left_corner)
-                arenaCorners.append(bottom_right_corner)
-
-                arenaCorners.append(top_right_corner)
-                arenaCorners.append(top_left_corner)
-                data.arenaCorners = arenaCorners
-                data.mask = imageManipulationTools.createMask(screenshot,arenaCorners)
-                print("mask Created")
-                break
-
         except Exception as e:
-            print(f"An error occurred while trying to detect arena: {e}")
+                print(f"An error occurred while trying to detect arena: {e}")
+                break
+        print("finding arena")
+        try:
+            findArena = rf.findArena_flow(screenshot,output_image,data)
+        except Exception as e:
+            print(f"An error occurredin rf.findArena_flow: {e}")
             break
+
+      
 
 
 
@@ -204,12 +209,12 @@ def main(mode):
                     #balls
                     ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
                     # find cross contour
-                    cross_contour_corner= None
-                    cross_contour = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
-                    if cross_contour is not None:
-                        cross_contour_corner = ComputerVision.ImageProcessor.find_cross_corners(cross_contour)
-                    if cross_contour_corner is not None:
-                        output_image = ComputerVision.ImageProcessor.draw_cross_corners(inputimg, cross_contour_corner)
+
+                    data.cross.con = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
+                    if  data.cross.con is not None:
+                        data.cross.corner_con = ComputerVision.ImageProcessor.find_cross_corners(data.cross.con)
+
+
 
                     if ballcontours is not None:
                         #print("")
@@ -275,14 +280,17 @@ def main(mode):
 
                   
            
-            # painting time\
-
+            # painting time
+            
             data.helpPoints = []
-            if data.cross.corner_con != []:
-                data.find_Cross_HP()
-            if data.arenaCorners is not []:
-                data.find_Corner_HP()
+            #if data.cross.con is not None:
+               # data.find_Cross_HP()
+      
+            data.find_Corner_HP()
+            data.find_outer_ball_HP()
             output_image = paint_output(data, output_image)
+
+            
            
 
             if(output_image is not None):
@@ -313,8 +321,27 @@ def main(mode):
                         print("command robot done")
                     else:
                         print("No best position found")
+                        #start_time = time.time()
+
+                        #last_ball_detection_time = time.time()
+                        #loop_time = time.time()
+                while len(data.whiteballs) == 0:
+                    print("Operation Messi Commenced - wait ")
+                            # Load the small goal
+                    currMidpoint,currAngle = data.robot.get_best_robot_position()
+                    correctmidCorrect = ComputerVision.ImageProcessor.convert_to_cartesian(
+                    currMidpoint)
+
+                    target_point = (150, 61)
+                    result = com.move_to_position_and_release(target_point, correctmidCorrect, currAngle, data.socket)
+                    if result:
+                        print("Operation BigGOALGOAL successful")
+                    else:
+                        print("Operation Goal got fuckd mate")
+                    break
+
             if(mode == "test"):
-                
+           
                 if(data.robot.detected and data.getAllBallCordinates()):
                     currMidpoint,currAngle = data.robot.get_best_robot_position()
                     
@@ -387,7 +414,7 @@ def main(mode):
                     print(angle)
                     print(data.robot.midpoint)
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
-                        currMidpoint, data.arenaCorners[0], data.arenaCorners[1], data.arenaCorners[3], data.arenaCorners[2]
+                        currMidpoint
                     )
 
                     target_point = (12, 61.5)
