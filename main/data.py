@@ -75,17 +75,17 @@ class Data:
     def find_outer_ball_HP(self):
         self.outerArea.create_areas(self.arenaCorners[0],self.arenaCorners[1],self.arenaCorners[2],self.arenaCorners[3])
         for whiteball in self.whiteballs:
-            if not isinstance(whiteball.con, np.ndarray):
-                whiteball.con = np.array(whiteball.con, dtype=np.int32).reshape((-1, 1, 2))
             x, y, w, h = cv.boundingRect(whiteball.con)
             center_x = x + w // 2
             center_y = y + h // 2
             for area in self.outerArea.areas:
-                polygon = np.array(area.points, dtype=np.int32)
-                if polygon.ndim != 3 or polygon.shape[1] != 1:
-                    polygon = polygon.reshape((-1, 1, 2))
+               
+                max_x = max([p[0] for p in area.points])
+                min_x = min([p[0] for p in area.points])
+                max_y = max([p[1] for p in area.points])
+                min_y = min([p[1] for p in area.points])
               
-                if cv.pointPolygonTest(np.array(area.points), (center_x,center_y), False) >= 0:
+                if center_x > min_x and center_x < max_x and center_y > min_y and center_y < max_y:
                     x_addision = 0
                     y_addision = 0
                     factor = 150
@@ -109,10 +109,14 @@ class Data:
                         y_addision =  factor
                     elif area.type == "bottom_side":
                         y_addision = - factor
-                    helpPointCord = (whiteball.con[0] + x_addision, whiteball.con[1] + y_addision)
+                    print("FOUND BALL IN OUTER AREA")
+                    whiteball_center = np.array([center_x, center_y])
+                    helpPointCord = (whiteball_center[0] + x_addision, whiteball_center[1] + y_addision)
                     self.helpPoints.append(helpPointCord)
                     print("FOUND BALL IN OUTER AREA")
+                    
                     break
+            
         
     def find_Corner_HP(self):
         if not self.arenaCorners:

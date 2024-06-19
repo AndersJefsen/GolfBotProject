@@ -20,7 +20,7 @@ from time import time, strftime, gmtime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
 def paint_output(data: Data, output_image):
-      print("painting")
+      #print("painting")
       #paint white balls
       output_image=ComputerVision.ImageProcessor.paintballs(data.getAllBallContours(), "ball", output_image)
                     #ComputerVision.ImageProcessor.showimage("balls", outputimage)
@@ -31,9 +31,9 @@ def paint_output(data: Data, output_image):
                     #ComputerVision.ImageProcessor.showimage("final", outputimage)
       if data.cross.corner_con is not None:
             output_image = ComputerVision.ImageProcessor.draw_cross_corners(output_image, data.cross.corner_con)
-
+      #print("help points: ", data.helpPoints)
       imageManipulationTools.drawHelpPoints(output_image, data.helpPoints)
-      
+      #print("done painting")
       for area in data.outerArea.areas:
           if area.type == "BL_corner" or area.type == "BR_corner" or area.type == "TR_corner" or area.type == "TL_corner":
               color = (0, 255, 0)
@@ -90,7 +90,7 @@ def main(mode):
         print("test mode")
    
     elif mode == "videotest":
-        video_path = "robotudeforbanevideo.mp4"  # Specify the path to the video file in the parent folder
+        video_path = "testvid.mp4"  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
         if not wincap.isOpened():
             print("Error: Could not open video file.")
@@ -288,10 +288,10 @@ def main(mode):
            
             # painting time
             data.helpPoints = []
-           # if data.cross.corner_con is not None:
-                #data.find_Cross_HP()
+            if len(data.cross.corner_con) != 0:
+                data.find_Cross_HP()
 
-            #data.find_Corner_HP()
+            data.find_Corner_HP()
             data.find_outer_ball_HP()
             output_image = paint_output(data, output_image)
 
