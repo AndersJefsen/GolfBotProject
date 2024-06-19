@@ -1,5 +1,5 @@
 import socket
-from ComputerVision import ImageProcessor
+
 from path import find_close_ball
 import math
 

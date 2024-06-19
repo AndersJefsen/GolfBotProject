@@ -12,6 +12,8 @@ class Data:
         self.socket = None
         self.robot = Robot()
         self.cross = ArenaObject()
+        self.wincap = None
+        self.mode = None
 
     def addBalls(self, contours, cordinates):
         for contour, cord in zip(contours, cordinates):

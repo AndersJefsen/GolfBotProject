@@ -143,7 +143,12 @@ def main(mode):
                 if screenshot is None:
                     print("Failed to capture screenshot.")
                     continue
-
+            if(output_image is not None):
+                # Resize the image
+                desired_size = (1200, 800)
+                resized_image = cv.resize(output_image, desired_size, interpolation=cv.INTER_LINEAR)
+                cv.imshow("Resized Image", resized_image)
+                cv.waitKey(1)
             print("finding arena")
             findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner, filtered_contoures = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
             print("her",findArena,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
@@ -165,10 +170,13 @@ def main(mode):
 
 
     def update_positions(robot:bool,balls:bool,egg:bool,orange:bool, cross:bool,iteration:int):
-              for i in range(iteration):
+            screenshot = None
+            output_image = None
+            for i in range(iteration):
+                    print("iteration: ", i)
                     #print("iteration: ", i)
                     
-                    screenshot = None
+                   
                     while(screenshot is None):
                         screenshot=getPicture()
                         if screenshot is None:
@@ -238,7 +246,7 @@ def main(mode):
                             else:
 
                                 data.robot.detected = False
-
+            return output_image
                             
 
     loop_time = time()
@@ -247,7 +255,7 @@ def main(mode):
         try:
             if(data.robot.detected):
                 data.resetRobot()
-            update_positions(True,True,True,True,True,30)
+            output_image = update_positions(True,True,True,True,True,30)
 
 
                     #ComputerVision.ImageProcessor.showimage("", outputimage)
@@ -287,17 +295,29 @@ def main(mode):
                         print("command robot")
                         com.command_robot_turn(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
                         print("command robot done")
+                       
+                        data.resetRobot()
+                        #get new positions
+                        output_image = update_positions(True,False,False,False,False,30)
+                        output_image = paint_output(data, output_image)
+           
 
-                        #get new position
-                        update_positions(True,False,False,False,False,10)
+                        if(output_image is not None):
+                            # Resize the image
+                            desired_size = (1200, 800)
+                            resized_image = cv.resize(output_image, desired_size, interpolation=cv.INTER_LINEAR)
+                            cv.imshow("Resized Image", resized_image)
+                            cv.waitKey(1)
+                        data.robot.set_min_detections(10)
                         newpos =  data.robot.get_best_robot_position()
                         if(newpos is not None):
-                            currMidpoint,currAngle = newpos
+                            currMidpoint,curAngle = newpos
                             correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
                             #turn to corrected position
-                            com.command_robot_turn(correctmid, data.getAllBallCordinates(),data.socket)
+                            com.command_robot_turn(correctmid, data.getAllBallCordinates(),curAngle,data.socket)
                             print("command robot done")
                         #move
+                        
                         com.command_robot_move(correctmid, data.getAllBallCordinates(),data.socket)
                         print("command robot done")
                     else:
