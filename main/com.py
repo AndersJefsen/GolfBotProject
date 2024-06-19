@@ -39,33 +39,11 @@ async def send_command_async(command, socket):
     return await loop.run_in_executor(None, send_command, command, socket)
 
 
-async def command_robot_async(robot_position, balls, robot_orientation, socket, completion_flag):
-    logger.info("Entering command_robot_async")
-    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(robot_position, balls, robot_orientation)
-    print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
 
-    print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
-
-    command_turn = f"TURN {angle_to_turn}"
-    robot_position, robot_orientation = ImageProcessor.getrobot()
-    angle_to_turn_corrected = calculate_angle(robot_position, closest_ball)
-    command_adjust_turn = f"TURN {angle_to_turn_corrected}"
-
-    command_move = f"MOVE {distance_to_ball}"
-
-
-
-    res_turn = await send_command_async(command_turn, socket)
-    res_adjust_turn = await send_command_async(command_adjust_turn, socket)
-
-    res_move = await send_command_async(command_move, socket)
-
-    # Set the completion flag to True when both commands are done
-    completion_flag.set()
 async def command_robot(robot_position, balls, robot_orientation,socket):
         #ImageProcessor.get_robot_position()
         balls = balls #ImageProcessor.get_robot_position().get_balls()
-       #ImageProcessor.get_robot_orientation()
+        #ImageProcessor.get_robot_orientation()
 
 
 
@@ -78,8 +56,11 @@ async def command_robot(robot_position, balls, robot_orientation,socket):
         res = send_command(command,socket=socket)
         command = f"MOVE {distance_to_ball}"
         res = send_command(command,socket=socket)
-        return True
 
+def drive_robot_to_point(point, pos,socket):    
+
+        return True
+        
 
 
 def command_robot(robot_position, balls, robot_orientation, socket):
@@ -92,10 +73,28 @@ def command_robot(robot_position, balls, robot_orientation, socket):
 
     print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
     # Get command input from the user
+    #intial TURN command
+  
     command = f"TURN {angle_to_turn}"
     res = send_command(command, socket=socket)
+
     command = f"MOVE {distance_to_ball}"
     res = send_command(command, socket=socket)
+
+
+def command_robot_turn(robot_position,balls,robot_orientation,socket):
+    balls = balls
+    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(robot_position, balls, robot_orientation)
+    command = f"TURN {angle_to_turn}"
+    res = send_command(command, socket=socket)
+    return res
+
+def command_robot_move(robot_position,balls,socket):
+    balls = balls
+    closest_ball, distance_to_ball, angle_to_turn = find_close_ball(robot_position, balls, 0)
+    command = f"MOVE {distance_to_ball}"
+    res = send_command(command, socket=socket)
+    return res
 
 
 def drive_robot_to_point(point, pos, socket):

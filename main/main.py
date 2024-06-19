@@ -59,6 +59,12 @@ def resize_with_aspect_ratio(image, target_width, target_height):
     resized_image = cv.resize(image, (new_width, new_height), interpolation=cv.INTER_AREA)
     
     return resized_image
+
+
+
+
+
+
 def main(mode):
     data = Data() 
     if mode == "camera" or mode == "robot" or mode == "Goal":
@@ -158,16 +164,8 @@ def main(mode):
             break
 
 
-
-    loop_time = time()
-    
-    while(True):
-        try:
-            if(data.robot.detected):
-                data.resetRobot()
-            #this is how many iterations you want to run detection on before sending the robot commands with the collected data
-            #if set to 1 its working like it did before
-            for i in range(30):
+    def update_positions(robot:bool,balls:bool,egg:bool,orange:bool, cross:bool,iteration:int):
+              for i in range(iteration):
                     #print("iteration: ", i)
                     
                     screenshot = None
@@ -182,90 +180,74 @@ def main(mode):
 
 
                     inputimg = imageManipulationTools.useMask(screenshot,data.mask)
-                    #timestamp = strftime("%Y%m%d_%H%M%S", gmtime())
-                    #cv.imwrite("test_"+timestamp+".jpg", screenshot)
-                    #inputimg = screenshot
+                   
                     output_image = inputimg.copy()
                     outputhsv_image = vision_image.apply_hsv_filter(inputimg)
 
 
+                    if egg:
+                        data.egg.con = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg, 2000, 8000)
 
-                    #egg
-                    #edged, output_image,eggcordinats = detectionTools.detect_objects(inputimg,output_image,vision_image, HsvFilter(0, 0, 243, 179, 255, 255, 0, 0, 0, 0), minThreshold=100,maxThreshold=200,minArea=100,maxArea=600,name ="egg",rgb_Color=(255, 0, 204),threshold=227,minPoints=7,maxPoints=12,arenaCorners=arenaCorners)
-                    data.egg.con = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg, 2000, 8000)
-                    #orange
-                    data.orangeBall.con = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
-                    #balls
-                    ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
-                    # find cross contour
+                    if orange:
+                        data.orangeBall.con = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
 
-                    cross_contour = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
-                    """
-                    if cross_contour is not None:
-                        cross_contour_corner = ComputerVision.ImageProcessor.find_cross_corners(cross_contour)
-                    if cross_contour_corner is not None:
-                        output_image = ComputerVision.ImageProcessor.draw_cross_corners(inputimg, cross_contour_corner)
-                        
-                    """
+                    if balls:
+                        ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
+                        if ballcontours is not None:
+                            ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
+                            data.addBalls(ballcontours, ballcordinats)
 
-                    # remove cross
-                    #output_image = ComputerVision.ImageProcessor.remove_cross(cross_contour,inputimg, 1.5)
-                    # remove corners
-                    # output_image = ComputerVision.ImageProcessor.mask_out_arena_corners(arenaCorners,inputimg, 200)
+                    if cross:
+                        cross_contour = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
 
-                    if ballcontours is not None:
-                        #print("")
-                        ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
-                        #print("ballcordinats before: ",ballcordinats)
-                        #print("ballcordinats after: ",ballcordinats)
-                        data.addBalls(ballcontours, ballcordinats)
-                    #data.printBalls()
 
-                    data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=60, max_size=100000)
-                    angle = None
-                    img = screenshot
+                    if robot:
+                        data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=60, max_size=100000)
+                        angle = None
+                        img = screenshot
 
-                    if data.robot.con is not None:
-                        if (len(data.robot.con)==3):
-                            data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,output_image)
+                        if data.robot.con is not None:
+                            if (len(data.robot.con)==3):
+                                data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,output_image)
+                                
+                                data.robot.midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1])
+                                
+                                data.robot.add_detection(data.robot.midpoint, data.robot.angle)
                             
-                            #print("old midpoint: ", midpoint)
-                            data.robot.midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1])
-                            #print("shape 0 :",inputimg.shape[0])
-                            #print("shape 1 :",inputimg.shape[1])    
-                            #data.robot.midpoint = ComputerVision.ImageProcessor.adjust_coordinates(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1],inputimg.shape[0],inputimg.shape[1])
-                            #print("new midpoint: ", midpoint)  
-                            #print(midpoint)
-                           
-                            data.robot.add_detection(data.robot.midpoint, data.robot.angle)
-                          
-                            data.robot.detected = True
-
-
-                    else:
-
-                        print("Robot not detected in masked image, trying full image.")
-
-                        data.robot.con = ComputerVision.ImageProcessor.find_robot(screenshot, min_size=60,
-                                                                                  max_size=100000)
-
-                        if data.robot.con is not None and len(data.robot.con) == 3:
-
-                            data.robot.detected = True
-
-                            data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction = ComputerVision.ImageProcessor.getrobot(
-                                data.robot.con, output_image)
-
-                            data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(
-                                data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1])
-
-                            data.robot.add_detection(data.robot.midpoint, data.robot.angle)
+                                data.robot.detected = True
 
                         else:
 
-                            data.robot.detected = False
+                            print("Robot not detected in masked image, trying full image.")
+
+                            data.robot.con = ComputerVision.ImageProcessor.find_robot(screenshot, min_size=60,
+                                                                                    max_size=100000)
+
+                            if data.robot.con is not None and len(data.robot.con) == 3:
+
+                                data.robot.detected = True
+
+                                data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction = ComputerVision.ImageProcessor.getrobot(
+                                    data.robot.con, output_image)
+
+                                data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(
+                                    data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1])
+
+                                data.robot.add_detection(data.robot.midpoint, data.robot.angle)
+
+                            else:
+
+                                data.robot.detected = False
+
                             
 
+    loop_time = time()
+    
+    while(True):
+        try:
+            if(data.robot.detected):
+                data.resetRobot()
+            update_positions(True,True,True,True,True,30)
 
 
                     #ComputerVision.ImageProcessor.showimage("", outputimage)
@@ -295,16 +277,28 @@ def main(mode):
                     data.robot.set_min_detections(10)
                     bestpos =  data.robot.get_best_robot_position()
                     if(bestpos is not None):
-                   
-                        currMidpoint,currAngle = bestpos
-                    
+                        currMidpoint,currAngle = bestpos 
                         correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
 
                         print("Robot orientation sss:")
                         print(currAngle)
 
+                        #first turn
                         print("command robot")
-                        com.command_robot(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
+                        com.command_robot_turn(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
+                        print("command robot done")
+
+                        #get new position
+                        update_robot_position(data)
+                        newpos =  data.robot.get_best_robot_position()
+                        if(newpos is not None):
+                            currMidpoint,currAngle = newpos
+                            correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
+                            #turn to corrected position
+                            com.command_robot_turn(correctmid, data.getAllBallCordinates(),data.socket)
+                            print("command robot done")
+                        #move
+                        com.command_robot_move(correctmid, data.getAllBallCordinates(),data.socket)
                         print("command robot done")
                     else:
                         print("No best position found")
@@ -373,6 +367,7 @@ def main(mode):
         com.close_connection(data.socket)
     print('Done.')
 
+    
 
 
 if __name__ == "__main__":
