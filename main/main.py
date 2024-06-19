@@ -287,7 +287,8 @@ def main(mode):
                         print("command robot")
                         com.command_robot_turn(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
                         print("command robot done")
-
+                        
+                        data.resetRobot()
                         #get new position
                         update_positions(True,False,False,False,False,10)
                         newpos =  data.robot.get_best_robot_position()
@@ -295,7 +296,7 @@ def main(mode):
                             currMidpoint,currAngle = newpos
                             correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
                             #turn to corrected position
-                            com.command_robot_turn(correctmid, data.getAllBallCordinates(),data.socket)
+                            com.command_robot_turn(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
                             print("command robot done")
                         #move
                         com.command_robot_move(correctmid, data.getAllBallCordinates(),data.socket)
