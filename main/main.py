@@ -19,6 +19,8 @@ from queue import Queue
 from time import time, strftime, gmtime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
+
+
 def paint_output(data: Data, output_image):
       #print("painting")
       #paint white balls
@@ -77,6 +79,45 @@ def resize_with_aspect_ratio(image, target_width, target_height):
     resized_image = cv.resize(image, (new_width, new_height), interpolation=cv.INTER_AREA)
     
     return resized_image
+
+def høvl(data: Data,robot=True, image=None ):
+        if(data.robot.detected and data.getAllBallCordinates() is not None):
+                    currMidpoint,currAngle = data.robot.get_best_robot_position()
+                    
+
+                    contours=[]
+                    egg_contour = data.egg.con
+                    if egg_contour is not None:
+                        contours.extend(egg_contour)
+                        crosscon= data.cross.con
+                    if crosscon is not None:
+                        contours.extend(crosscon)
+                    orange_ball_contour = data.orangeBall.con
+                    if orange_ball_contour is not None:
+                        contours.extend(orange_ball_contour)
+                    
+                    helpPoints=data.helpPoints
+                    
+                    drivepoints=data.drivepoints
+
+                    closest_help_point, selected_ball,best_angle_to_turn, min_distance = path.find_shortest_path(data.robot.midpoint,data.robot.angle, helpPoints, contours,drivepoints) #data.helppoints.coords"""
+                    #for point in helppoints:
+                        #cv.circle(image, (int(point.con[0]), int(point.con[1])), 5, (0, 255, 0), -1)  # Green points
+                    #if closest_help_point and selected_ball:
+                        #cv.line(image, (int(currMidpoint[0]), int(currMidpoint[1])), (int(closest_help_point[0]), int(closest_help_point[1])), (0, 0, 255), 2)
+                    if closest_help_point and selected_ball:
+                        cv.line(image, (int(data.robot.midpoint[0]), int(data.robot.midpoint[1])), (int(closest_help_point[0]), int(closest_help_point[1])), (0, 0, 255), 2)  # Red line for movement
+                    if(image is not None):
+                # Resize the image
+                        desired_size = (1200, 800)
+                        resized_image = cv.resize(image, desired_size, interpolation=cv.INTER_LINEAR)
+                        cv.imshow("Resized Image", resized_image)
+                        cv.waitKey(1)
+                    if robot:
+                        com.drive_robot_to_point(ComputerVision.ImageProcessor.convert_to_cartesian(closest_help_point),ComputerVision.ImageProcessor.convert_to_cartesian(data.robot.midpoint),data.robot.angle,data.socket)
+                        com.drive_robot_to_point(ComputerVision.ImageProcessor.convert_to_cartesian(selected_ball),ComputerVision.ImageProcessor.convert_to_cartesian(closest_help_point),data.robot.angle,data.socket)
+
+
 def main(mode):
     global last_ball_detection_time
     data = Data()
@@ -92,7 +133,7 @@ def main(mode):
         print("test mode")
    
     elif mode == "videotest":
-        video_path = "../goodvideo.mp4"  # Specify the path to the video file in the parent folder
+        video_path = "../master.mp4"  # Specify the path to the video file in the parent folder
         wincap = cv.VideoCapture(video_path)
         if not wincap.isOpened():
             print("Error: Could not open video file.")
@@ -198,7 +239,7 @@ def main(mode):
                     #inputimg = screenshot
                     output_image = inputimg.copy()
                     outputhsv_image = vision_image.apply_hsv_filter(inputimg)
-
+                    
 
 
                     #egg
@@ -293,12 +334,7 @@ def main(mode):
             
            
 
-            if(output_image is not None):
-                # Resize the image
-                desired_size = (1200, 800)
-                resized_image = cv.resize(output_image, desired_size, interpolation=cv.INTER_LINEAR)
-                cv.imshow("Resized Image", resized_image)
-                cv.waitKey(1)
+           
                
             
 
@@ -341,72 +377,9 @@ def main(mode):
                     break
 
             if(mode == "test"):
-           
-                if(data.robot.detected and data.getAllBallCordinates()):
-                    currMidpoint,currAngle = data.robot.get_best_robot_position()
-                    
-                    
-                    egg_contour = data.egg.con
-                    #cross_contour = data.cross.con
-                    orange_ball_contour = data.orangeBall.con
-
-                    image = imageManipulationTools.useMask(screenshot.copy(),data.mask)  # Create a copy of the screenshot if needed
-
-
-                    color_egg = (255, 255, 0)  # Cyan for egg
-                    color_cross = (0, 255, 0)  # Green for cross
-                    color_orange_ball = (0, 165, 255)  # Orange for orange ball
-
-                    # Check and draw each contour if it exists
-
-                    contours=[]
-                    if egg_contour is not None:
-                        contours.extend(egg_contour)
-                        cv.drawContours(image, egg_contour, -1, color_egg, 2)
-                    if cross_contour is not None:
-                        contours.extend(cross_contour)
-                        cv.drawContours(image, cross_contour, -1, color_cross, 2)
-                        
-                    if orange_ball_contour is not None:
-                        contours.extend(orange_ball_contour)
-
-                        cv.drawContours(image, orange_ball_contour, -1, color_orange_ball, 2)
-                    # Call the function
-                   
-                    # Display the result
-                   
-                    hpoints=data.helpPoints
-                    bcontours=[]
-                    balls=ballcontours
-                    for ball in balls:
-                        bcontours.append(ComputerVision.ImageProcessor.find_contour_center(ball))
-                    #print(bcontours)
-                    
-                    #print(balls)
-                    #print(currMidpoint)
-                    help_points_tuples = [tuple(point) for point in hpoints]
-                    #print(help_points_tuples) 
-                    route, all_paths = path.find_shortest_path(currMidpoint, bcontours, help_points_tuples, contours) #data.helppoints.coords"""
-                    
-
-                    for point in hpoints:
-                        cv.circle(image, (int(point[0]), int(point[1])), 5, (0, 255, 0), -1)  # Green points
-                    if route is None:
-                        route=[]
-                    
-                    cv.imshow("Detected Objects", image)
-                    cv.waitKey(0)
-                    cv.destroyAllWindows()
-                    
-
-                   # print("Robot orientation:")
-                   # print(angle)
-                    #correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
-                    #closest_ball, distance_to_ball, angle_to_turn = path.find_close_ball(correctmid,data.getAllBallCordinates(), currAngle)
-                   # print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
-
-                    #print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
-
+                høvl(data,False, output_image)
+            if (mode== "videotest"):
+                høvl(data,False, output_image)
             if (mode == "Goal"):
                 if data.robot.detected:
                     currMidpoint,currAngle = data.robot.get_best_robot_position()
@@ -452,7 +425,11 @@ def main(mode):
         except Exception as e:
             print(f"An error occurred while trying to detect objects: {e}")
             break
+    
+                    
 
+
+                    
     cv.destroyAllWindows()
     if mode == "window":
         wincap.release()

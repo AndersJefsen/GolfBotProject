@@ -1,7 +1,19 @@
 import math
 from collections import deque
 import numpy as np
-import cv2
+from time import time
+import cv2 as cv
+from vision import Vision
+from hsvfilter import HsvFilter
+from edgefilter import EdgeFilter
+import numpy as np
+import sys
+import os
+from data import Data as Data
+
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import ComputerVision
 
 def calculate_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
@@ -40,14 +52,15 @@ def find_shortest_path(robot_position, robot_orientation, paired_help_points_and
     selected_ball = None
 
     # Iterate over each help point and ball pair
-    for help_point, ball in paired_help_points_and_balls:
-        if is_path_clear(robot_position, help_point, contours):
-            distance = calculate_distance(robot_position, help_point)
-            if distance < min_distance and is_path_clear(help_point, ball, contours):
+    for help_point in paired_help_points_and_balls:
+        if is_path_clear(robot_position, help_point.con, contours):
+            distance = calculate_distance(robot_position, help_point.con)
+            if distance < min_distance:
                 min_distance = distance
-                closest_help_point = help_point
-                selected_ball = ball
-                best_angle_to_turn = calculate_angle(robot_position, help_point, robot_orientation)
+                closest_help_point = help_point.con
+                print("hey")
+                selected_ball = ComputerVision.ImageProcessor.find_contour_center(help_point.ball.con)
+                best_angle_to_turn = calculate_angle(robot_position, help_point.con, robot_orientation)
 
     # If a help point is selected and it has a clear path to its associated ball
     if closest_help_point and selected_ball:
@@ -117,6 +130,6 @@ def contour_intersect(cnt_ref, cnt_query):
 
 def segment_intersects(A, B, C, D):
     return ccw(A, C, D) != ccw(B, C, D) and ccw(A, B, C) != ccw(A, B, D)
-e
+
 def ccw(A, B, C):
     return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0])
