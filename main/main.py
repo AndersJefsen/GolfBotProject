@@ -359,15 +359,13 @@ def main(mode):
                     #print(currMidpoint)
                     help_points_tuples = [tuple(point) for point in hpoints]
                     #print(help_points_tuples) 
-                    route = path.route_to_closest_ball(currMidpoint, bcontours, help_points_tuples, contours, image) #data.helppoints.coords"""
-                               
+                    route, all_paths = path.find_shortest_path(currMidpoint, bcontours, help_points_tuples, contours) #data.helppoints.coords"""
                     
+
                     for point in hpoints:
                         cv.circle(image, (int(point[0]), int(point[1])), 5, (0, 255, 0), -1)  # Green points
                     if route is None:
                         route=[]
-                    image = ComputerVision.ImageProcessor.draw_route_on_image(image,route)
-                    ComputerVision.ImageProcessor.paintballs(ballcontours,"test", image)
                     
                     cv.imshow("Detected Objects", image)
                     cv.waitKey(0)
@@ -376,8 +374,8 @@ def main(mode):
 
                    # print("Robot orientation:")
                    # print(angle)
-                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
-                    closest_ball, distance_to_ball, angle_to_turn = path.find_close_ball(correctmid,data.getAllBallCordinates(), currAngle)
+                    #correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
+                    #closest_ball, distance_to_ball, angle_to_turn = path.find_close_ball(correctmid,data.getAllBallCordinates(), currAngle)
                    # print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
 
                     #print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")

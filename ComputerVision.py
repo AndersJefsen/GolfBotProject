@@ -36,7 +36,7 @@ class ImageProcessor:
         return mask
     
     @staticmethod
-    def draw_route_on_image(image, points, line_color=(255, 0, 0), line_thickness=2, show_image=True):
+    def draw_route_on_image(image, points, line_color=(255, 0, 0), line_thickness=2,):
 
         """
         Draw a route as a series of lines connecting a list of points on an existing image.
@@ -64,10 +64,7 @@ class ImageProcessor:
             
 
         # Optionally display the image
-        if show_image:
-            cv2.imshow('Route', image)
-            cv2.waitKey(0)  # Wait for a key press to close
-            cv2.destroyAllWindows()
+      
 
         return image
     @staticmethod
@@ -138,11 +135,11 @@ class ImageProcessor:
             center_y = y + h // 2
 
             # Convert to Cartesian coordinates if needed
-            cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y))
+            #cartesian_coords = ImageProcessor.convert_to_cartesian((center_x, center_y))
 
             # Display the Cartesian coordinates on the image
             text_location = (x, y + h + 20)  # Display below the contour
-            cv2.putText(output_image, f"Coords: {cartesian_coords}", text_location, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            cv2.putText(output_image, f"Coords: {(center_x, center_y)}", text_location, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
         return output_image
 
@@ -743,7 +740,22 @@ class ImageProcessor:
         y_cartesian = max(min(y_cartesian, 121), 0)
         return x_cartesian, y_cartesian
     
-    
+    def show_graph(image, valid_paths):
+    # Draw all valid paths
+        for path, _ in valid_paths:
+            print(path)
+            for i in range(len(path) - 1):
+                cv2.line(image, (int(path[i][0]), int(path[i][1])),
+                        (int(path[i+1][0]), int(path[i+1][1])), (255, 255, 0), 2)  # Yellow lines for paths
+
+        # Highlight the nodes (optional, if needed)
+        nodes = set()
+        for path, _ in valid_paths:
+            nodes.update(path)
+        for node in nodes:
+            cv2.circle(image, (int(node[0]), int(node[1])), 5, (0, 0, 255), -1)  # Red nodes
+
+        return image
     
     @staticmethod
     def process_and_convert_contours(image, contours, label="pic"):
