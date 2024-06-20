@@ -1,19 +1,20 @@
 import math
-from collections import deque
-import numpy as np
-from time import time
-import cv2 as cv
-from vision import Vision
-from hsvfilter import HsvFilter
-from edgefilter import EdgeFilter
 import numpy as np
 import sys
 import os
-from data import Data as Data
-
-
+import cv2 as cv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
+
+
+
+def find_contour_center(contour):
+    M = cv.moments(contour)
+    if M["m00"] != 0:
+        cX = int(M["m10"] / M["m00"])  # Calculate the X coordinate of the centroid
+        cY = int(M["m01"] / M["m00"])  # Calculate the Y coordinate of the centroid
+        return (cX, cY)
+    return None
 
 def calculate_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)

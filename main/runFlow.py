@@ -117,7 +117,7 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                     if (len(data.robot.con)==3):
                         data.robot.originalMidtpoint, data.robot.angle, data.output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,data.output_image)
                         
-                        data.robot.midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1])
+                        data.robot.midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1], data)
                         
                         data.robot.add_detection(data.robot.midpoint, data.robot.angle)
                     
@@ -140,7 +140,7 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                         data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(
                             data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1])
 
-                        data.robot.add_detection(data.robot.midpoint, data.robot.angle)
+                        data.robot.add_detection(data.robot.midpoint, data.robot.angle, data)
 
                     else:
 
