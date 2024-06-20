@@ -459,7 +459,9 @@ class ImageProcessor:
             return None, None
    
         # Use the first point of each contour directly
-        points = [contour[0][0] for contour in contours]  # Take the first point from each contour
+        points=[]
+        for cnt in contours:
+            points.append(ImageProcessor.find_contour_center(cnt))  # Take the first point from each contour
         #points = contours
         
         # Calculate pairwise distances and find the shortest

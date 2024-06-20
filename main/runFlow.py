@@ -138,7 +138,7 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                             data.robot.con, data.output_image)
 
                         data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(
-                            data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1])
+                            data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1],data)
 
                         data.robot.add_detection(data.robot.midpoint, data.robot.angle, data)
 
