@@ -179,9 +179,15 @@ def main(mode):
                         print("command robot")
                         com.command_robot_turn(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
                         print("command robot done")
-                        
+                        print("command robot move")
+                         #move
+                        com.command_robot_move(correctmid, data.getAllBallCordinates(),data.socket)
+                        print("command robot done")
+
+                        '''
                         data.resetRobot()
                         #get new position
+                        
                         rf.update_positions(data,True,False,False,False,False,10)
                         newpos =  data.robot.get_best_robot_position()
                         if(newpos is not None):
@@ -191,15 +197,14 @@ def main(mode):
                             rf.drawAndShow(data)
                             com.command_robot_turn(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
                             print("command robot done")
-                        #move
-                        com.command_robot_move(correctmid, data.getAllBallCordinates(),data.socket)
-                        print("command robot done")
+                       
                     else:
                         print("No best position found")
                     #start_time = time.time()
 
                     #last_ball_detection_time = time.time()
                     #loop_time = time.time()
+                    '''
                 while len(data.whiteballs) == 0:
                     print("Operation Messi Commenced - wait ")
                             # Load the small goal
