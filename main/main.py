@@ -21,64 +21,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
 
 
-def paint_output(data: Data, output_image):
-      #print("painting")
-      #paint white balls
-      output_image=ComputerVision.ImageProcessor.paintballs(data.getAllBallContours(), "ball", output_image)
-                    #ComputerVision.ImageProcessor.showimage("balls", outputimage)
-      #paint egg
-      output_image=ComputerVision.ImageProcessor.paintballs(data.egg.con, "egg", output_image)
-      #paint orang              #ComputerVision.ImageProcessor.showimage("egg", outputimage
-      output_image=ComputerVision.ImageProcessor.paintballs(data.orangeBall.con, "orange", output_image)
-                    #ComputerVision.ImageProcessor.showimage("final", outputimage)
-      if data.cross.corner_con is not None:
-            output_image = ComputerVision.ImageProcessor.draw_cross_corners(output_image, data.cross.corner_con)
-      
-      imageManipulationTools.drawHelpPoints(output_image, data.getAllHelpPointsCon())
-     
-      imageManipulationTools.drawHelpPoints(output_image, data.drivepoints,color=(0, 255, 0))
-      #print("done painting")
-      for area in data.outerArea.areas:
-          if area.type == "BL_corner" or area.type == "BR_corner" or area.type == "TR_corner" or area.type == "TL_corner":
-              color = (0, 255, 0)
-          else:
-              color = (0, 0, 255)
 
-          output_image = imageManipulationTools.drawArea(output_image, area.points,color)
-      
-        #Skal laves om
-      #output_image = ComputerVision.ImageProcessor.draw_cross_corners(data.cross.con, output_image)
-     
-
-      if data.robot.detected:
-        
-        output_image=ComputerVision.ImageProcessor.paintballs(data.robot.con, "robo ball", output_image)
-        output_image=ComputerVision.ImageProcessor.paintrobot(data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction)
-        output_image=ComputerVision.ImageProcessor.paintrobot(data.robot.midpoint, data.robot.angle, output_image, data.robot.direction)
-      print("painted")
-      return output_image
     
-def resize_with_aspect_ratio(image, target_width, target_height):
-    original_height, original_width = image.shape[:2]
-    
-    # Calculate the aspect ratio
-    aspect_ratio = original_width / original_height
-    
-    # Calculate the scaling factors
-    width_factor = target_width / original_width
-    height_factor = target_height / original_height
-    
-    # Use the smaller scaling factor to keep aspect ratio
-    scaling_factor = min(width_factor, height_factor)
-    
-    # Calculate the new dimensions
-    new_width = int(original_width * scaling_factor)
-    new_height = int(original_height * scaling_factor)
-    
-    # Resize the image
-    resized_image = cv.resize(image, (new_width, new_height), interpolation=cv.INTER_AREA)
-    
-    return resized_image
 
 def høvl(data: Data,robot=True, image=None ):
         if(data.robot.detected and data.getAllBallCordinates() is not None):
@@ -123,21 +67,22 @@ def høvl(data: Data,robot=True, image=None ):
 def main(mode):
     global last_ball_detection_time
     data = Data()
+    data.mode = mode
     if mode == "camera" or mode == "robot" or mode == "Goal":
-        wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
+        data.wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
     elif mode == "window":
         from windowcapture import WindowCapture
 
-        wincap = WindowCapture(None)
+        data.wincap = WindowCapture(None)
         print("window mode")
     elif mode == "test":
         print("test mode")
    
     elif mode == "videotest":
         video_path = "../master.mp4"  # Specify the path to the video file in the parent folder
-        wincap = cv.VideoCapture(video_path)
-        if not wincap.isOpened():
+        data.wincap = cv.VideoCapture(video_path)
+        if not data.wincap.isOpened():
             print("Error: Could not open video file.")
             return
         print("videotest mode")
@@ -158,134 +103,42 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    testpicturename = 'master.jpg'
+    data.testpicturename = 'master.jpg'
 
-    def getPicture():
-        if mode == "camera" or mode == "robot" or mode == "Goal" or mode == "videotest":
-            ret, screenshot = wincap.read()
-        elif mode == "window":
-            screenshot = wincap.get_screenshot()
-        elif mode == "test":
-            screenshot = cv.imread(testpicturename)
-            '''
-        if screenshot is not None:
-            # Get the resolution of the image
-            while True:
-                height, width, channels = screenshot.shape
-                print(f"Resolution: {width}x{height}")
-                '''
-        if screenshot is not None:
-            #whight, wlength = vision_image.get_hight_and_length
-           
-            if  mode == "camera" or mode == "robot" or mode == "Goal":
-                screenshot = resize_with_aspect_ratio(screenshot, 2048, 1024)
-              
-               
-            else:
-                screenshot = cv.resize(screenshot, (2048,1024), interpolation=cv.INTER_AREA)
-
-        return screenshot
+    
 
 
     findArena = False
 
     while not findArena:
         try:
-            screenshot = None
-            while(screenshot is None):
-                screenshot=getPicture()
-                output_image = screenshot.copy()
+            data.screenshot = None
+            while(data.screenshot is None):
+                data.screenshot=rf.getPicture(data)
+                data.output_image = data.screenshot.copy()
 
-                if screenshot is None:
+                if data.screenshot is None:
                     print("Failed to capture screenshot.")
                     continue
         except Exception as e:
                 print(f"An error occurred while trying to detect arena: {e}")
                 break
+        if(data.output_image is not None):
+                # Resize the image
+                        desired_size = (1200, 800)
+                        resized_image = cv.resize(data.output_image, desired_size, interpolation=cv.INTER_LINEAR)
+                        cv.imshow("Resized Image", resized_image)
+                        cv.waitKey(1)
+
         print("finding arena")
         try:
-            findArena = rf.findArena_flow(screenshot,output_image,data)
+            findArena = rf.findArena_flow(data.screenshot,data.output_image,data)
         except Exception as e:
             print(f"An error occurredin rf.findArena_flow: {e}")
             break
 
 
-    def update_positions(robot:bool,balls:bool,egg:bool,orange:bool, cross:bool,iteration:int):
-        for i in range(iteration):
-            #print("iteration: ", i)
-            
-            screenshot = None
-            while(screenshot is None):
-                screenshot=getPicture()
-                if screenshot is None:
-                    print("Failed to capture screenshot.")
-                    if mode == "videotest":
-                        wincap.set(cv.CAP_PROP_POS_FRAMES, 0)
-                        print("Restarting video.")
-                    continue
-
-
-            inputimg = imageManipulationTools.useMask(screenshot,data.mask)
-            
-            output_image = inputimg.copy()
-            outputhsv_image = vision_image.apply_hsv_filter(inputimg)
-
-
-            if egg:
-                data.egg.con = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg, 2000, 8000)
-
-            if orange:
-                data.orangeBall.con = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
-
-            if balls:
-                ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
-                if ballcontours is not None:
-                    ballcordinats, output_image = ComputerVision.ImageProcessor.process_and_convert_contours(output_image, ballcontours)
-                    data.addBalls(ballcontours, ballcordinats)
-
-            if cross:
-                data.cross.con = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
-                if  data.cross.con is not None:
-                    data.cross.corner_con = ComputerVision.ImageProcessor.find_cross_corners(data.cross.con)
-
-
-            if robot:
-                data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=60, max_size=100000)
-                angle = None
-                img = screenshot
-
-                if data.robot.con is not None:
-                    if (len(data.robot.con)==3):
-                        data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,output_image)
-                        
-                        data.robot.midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1])
-                        
-                        data.robot.add_detection(data.robot.midpoint, data.robot.angle)
-                    
-                        data.robot.detected = True
-
-                else:
-
-                    print("Robot not detected in masked image, trying full image.")
-
-                    data.robot.con = ComputerVision.ImageProcessor.find_robot(screenshot, min_size=60,
-                                                                            max_size=100000)
-
-                    if data.robot.con is not None and len(data.robot.con) == 3:
-
-                        data.robot.detected = True
-
-                        data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction = ComputerVision.ImageProcessor.getrobot(
-                            data.robot.con, output_image)
-
-                        data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(
-                            data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1])
-
-                        data.robot.add_detection(data.robot.midpoint, data.robot.angle)
-
-                    else:
-
-                        data.robot.detected = False
+  
 
 
 
@@ -295,10 +148,12 @@ def main(mode):
         try:
             if(data.robot.detected):
                 data.resetRobot()
+            data.output_image = None
             #this is how many iterations you want to run detection on before sending the robot commands with the collected data
             #if set to 1 its working like it did before
-            update_positions(True,True,True,True,True,30)
-
+            print("update positions")
+            rf.update_positions(data,True,True,True,True,True,30)
+            print("done updating positions")
             
             # painting time
             
@@ -308,8 +163,8 @@ def main(mode):
       
             data.find_Corner_HP()
             data.find_outer_ball_HP()
-            output_image = paint_output(data, output_image)
-
+            
+            rf.drawAndShow(data)
 
             if(mode == "robot" ):
                 if(data.robot.detected and data.getAllBallCordinates()):
@@ -329,12 +184,13 @@ def main(mode):
                         
                         data.resetRobot()
                         #get new position
-                        update_positions(True,False,False,False,False,10)
+                        rf.update_positions(data,True,False,False,False,False,10)
                         newpos =  data.robot.get_best_robot_position()
                         if(newpos is not None):
                             currMidpoint,currAngle = newpos
                             correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
                             #turn to corrected position
+                            rf.drawAndShow(data)
                             com.command_robot_turn(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
                             print("command robot done")
                         #move
@@ -362,14 +218,14 @@ def main(mode):
                     break
 
             if(mode == "test"):
-                høvl(data,False, output_image)
+                høvl(data,False, data.output_image)
             if (mode== "videotest"):
-                høvl(data,False, output_image)
+                høvl(data,False, data.output_image)
             if (mode == "Goal"):
                 if data.robot.detected:
                     currMidpoint,currAngle = data.robot.get_best_robot_position()
                     print("Robot orientation:")
-                    print(angle)
+                    print(currAngle)
                     print(data.robot.midpoint)
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
                         currMidpoint
@@ -385,9 +241,9 @@ def main(mode):
 
             if (mode == "camera"):
 
-                image_center = (screenshot.shape[1] // 2, screenshot.shape[0] // 2)
+                image_center = (data.screenshot.shape[1] // 2, data.screenshot.shape[0] // 2)
                 #print("Image Center - Pixel Coordinates:", image_center)
-                cv.circle(screenshot,image_center, radius= 10 , color=(255,0,0),thickness=-1)
+                cv.circle(data.screenshot,image_center, radius= 10 , color=(255,0,0),thickness=-1)
 
                 image_center = ComputerVision.ImageProcessor.convert_to_cartesian(image_center)
                 #print("Image Center - Cartisan coord q:", image_center)
@@ -417,7 +273,7 @@ def main(mode):
                     
     cv.destroyAllWindows()
     if mode == "window":
-        wincap.release()
+        data.wincap.release()
     if(data.socket != None):
         com.close_connection(data.socket)
     print('Done.')

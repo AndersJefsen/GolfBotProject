@@ -17,6 +17,13 @@ class Data:
         self.helpPoints = []
         self.outerArea = OuterArea()
         self.drivepoints = []
+        self.mode = None
+        self.wincap = None
+        self.testpicturename = None
+        self.screenshot = None
+        self.output_image = None
+        
+
 
     def addBalls(self, contours, cordinates):
         for contour, cord in zip(contours, cordinates):

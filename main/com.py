@@ -7,7 +7,7 @@ from path import calculate_distance, calculate_angle, find_close_ball
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SERVER_ADDRESS = '172.20.10.3'  # IP address of EV3
+SERVER_ADDRESS = '192.168.11.243'  # IP address of EV3
 SERVER_PORT = 1024  # Port server script
 
 
@@ -39,14 +39,14 @@ def command_robot_turn(robot_position,balls,robot_orientation,socket):
     balls = balls
     closest_ball, distance_to_ball, angle_to_turn = find_close_ball(robot_position, balls, robot_orientation)
     command = f"TURN {angle_to_turn}"
-    res = send_command(command, socket=socket)
+    res = send_command(command, socket)
     return res
 
 def command_robot_move(robot_position,balls,socket):
     balls = balls
     closest_ball, distance_to_ball, angle_to_turn = find_close_ball(robot_position, balls, 0)
     command = f"MOVE {distance_to_ball}"
-    res = send_command(command, socket=socket)
+    res = send_command(command, socket)
     return res
 
 
