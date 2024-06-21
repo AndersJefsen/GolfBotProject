@@ -140,7 +140,7 @@ class Data:
     
         
         num_corners = len(self.arenaCorners)
-
+        self.drivepoints = []
         for i in range(num_corners):
             prev_corner = self.arenaCorners[i - 1]
             current_corner = self.arenaCorners[i]

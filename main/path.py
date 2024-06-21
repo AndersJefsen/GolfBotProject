@@ -2,6 +2,7 @@ import math
 import numpy as np
 import sys
 import os
+import time
 import cv2 as cv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
@@ -84,13 +85,17 @@ def find_shortest_path(robot_position, robot_orientation, paired_help_points_and
     if not closest_help_point:
         print("No accessible help point found, looking for the nearest drive point.")
         closest_drive_point, drive_point_distance, drive_angle_to_turn = find_close_ball(robot_position, drive_points, robot_orientation)
-        print("outofFind1")
+       
+       
 
-        if calculate_distance(robot_position, closest_drive_point) < 5:
-            drive_points.pop(closest_drive_point)
-
+        if calculate_distance(robot_position, closest_drive_point) < 50:
+            print("before pop",drive_points)
+            drive_points.remove(closest_drive_point)
+            print("after pop",drive_points)
+            time.sleep(30)
             closest_drive_point, drive_point_distance, drive_angle_to_turn = find_close_ball(robot_position, drive_points, robot_orientation)
-            print("outofFind2")
+           
+           
         if closest_drive_point:
             return closest_drive_point,None ,drive_angle_to_turn,drive_point_distance
             
