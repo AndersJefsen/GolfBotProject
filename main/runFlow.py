@@ -74,17 +74,17 @@ def getPicture(data: Data):
         return data.screenshot
 
 def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cross:bool,iteration:int):
-        start_time = time.time()
-        timeout = 10  # seconds
+        # start_time = time.time()
+        # timeout = 10  # seconds
         for i in range(iteration):
             #print("iteration: ", i)
-            current_time = time.time()
-            elapsed_time = current_time - start_time
+            # current_time = time.time()
+            # elapsed_time = current_time - start_time
 
-            if elapsed_time > timeout:
-                print("20 seconds passed without finding the robot. Driving backward.")
-                com.command_robot_move2(10,socket)
-                return
+            # if elapsed_time > timeout:
+                # print("20 seconds passed without finding the robot. Driving backward.")
+                # com.command_robot_move2(10,socket)
+                # return
             
             data.screenshot = None
             while(data.screenshot is None):
