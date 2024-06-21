@@ -34,7 +34,7 @@ def getRobotAngle(data:Data, selected_point):
     return angle_to_turn,distance_to_drive, correctmid
      
 
-def angleCorrectionAndDrive(data:Data, selected_point):
+def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,iteration = 0):
   
     while True:
         angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
@@ -49,22 +49,25 @@ def angleCorrectionAndDrive(data:Data, selected_point):
             break
         com.turn_Robot( angle_to_turn,data.socket)
         print("done turning")
-   
+    
+    if isBall is True and iteration == 0:
+        distance_to_drive = distance_to_drive/2
+        iteration = 1
     
     com.drive_Robot(distance_to_drive,data.socket)
     print("done driving")
 
-   
-    angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
-    print("check angle: ", angle_to_turn)
-    print("check distance: ", distance_to_drive)
-  
-    if distance_to_drive > 15:
-        print("not arrived at point trying again with distance: ",distance_to_drive)
-      
-        angleCorrectionAndDrive(data,selected_point)
-    else:
-        print("arrived at point with distance: ",distance_to_drive)
+    if isBall is False or iteration == 0:
+        angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
+        print("check angle: ", angle_to_turn)
+        print("check distance: ", distance_to_drive)
+    
+        if distance_to_drive > 5:
+            print("not arrived at point trying again with distance: ",distance_to_drive)
+        
+            angleCorrectionAndDrive(data,selected_point,isBall,iteration)
+        else:
+            print("arrived at point with distance: ",distance_to_drive)
       
 
     
@@ -109,12 +112,12 @@ def høvl(data: Data,robot=True, image=None ):
                         print("distance between helppoint and ball: ",distance)
                         if distance > 5:
                             print("drive to first point")
-                            angleCorrectionAndDrive(data,closest_help_point)
+                            angleCorrectionAndDrive(data,closest_help_point, isBall=False)
                             print("drive to second point")
-                            angleCorrectionAndDrive(data,selected_ball)
+                            angleCorrectionAndDrive(data,selected_ball, isBall=True)
                         else:
                             print("drive helpoint which is also helppoint")
-                            angleCorrectionAndDrive(data,closest_help_point)
+                            angleCorrectionAndDrive(data,closest_help_point, isBall=True)
 
 
 
