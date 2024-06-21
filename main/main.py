@@ -139,7 +139,7 @@ def main(mode):
         print("test mode")
    
     elif mode == "videotest":
-        video_path = "../master.mp4"  # Specify the path to the video file in the parent folder
+        video_path = "robotudeforbanevideo.mp4"  # Specify the path to the video file in the parent folder
         data.wincap = cv.VideoCapture(video_path)
         if not data.wincap.isOpened():
             print("Error: Could not open video file.")
@@ -162,7 +162,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    data.testpicturename = 'master.jpg'
+    data.testpicturename = 'billede6(bold i hjørnet).png'
 
     
 

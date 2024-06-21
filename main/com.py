@@ -49,6 +49,10 @@ def command_robot_move(robot_position,balls,socket):
     res = send_command(command, socket)
     return res
 
+def command_robot_move2(distance,socket):
+    command = f"MOVE {distance}"
+    res = send_command(command, socket)
+    return res
 
 def drive_robot_to_point(point, pos, orientation, sock):
     angle_to_turn = calculate_angle(pos, point, orientation)

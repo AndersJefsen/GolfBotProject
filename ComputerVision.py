@@ -178,29 +178,16 @@ class ImageProcessor:
 
     @staticmethod
     def find_balls_hsv1(image, min_size=200, white_area_size=1000, padding=15, min_size2=400, max_size=10000):
-        def detect_balls_original_mask(hsv_image, white_lower, white_upper):
-            # Threshhold the HSV image to get only white colors
+        def detect_balls_with_mask(hsv_image, white_lower, white_upper):
             white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
-
-            # Use morphological operations to clean up the mask
-            kernel = np.ones((5, 5), np.uint8)
-            white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
-            white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
-
-            # Find contours
+            white_mask = ImageProcessor.clean_mask(white_mask)
             contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-
             ball_contours = []
 
             for cnt in contours:
                 area = cv2.contourArea(cnt)
-               # print("contour area:", {area})
-
                 if min_size < area < max_size:
                     if area > white_area_size:
-                       # print("entering multiple balls")
-                        # Extract the region of interest
                         x, y, w, h = cv2.boundingRect(cnt)
                         x_pad = max(x - padding, 0)
                         y_pad = max(y - padding, 0)
@@ -208,20 +195,11 @@ class ImageProcessor:
                         h_pad = min(h + 2 * padding, image.shape[0] - y_pad)
                         sub_image = white_mask[y_pad:y_pad + h_pad, x_pad:x_pad + w_pad]
 
-                        # sure background area
                         sure_bg = cv2.dilate(sub_image, kernel, iterations=3)
-
-                        # Distance transform
                         dist = cv2.distanceTransform(sub_image, cv2.DIST_L2, 0)
-
-                        # foreground area
                         ret, sure_fg = cv2.threshold(dist, 0.5 * dist.max(), 255, cv2.THRESH_BINARY)
                         sure_fg = sure_fg.astype(np.uint8)
-
-                        # unknown area
                         unknown = cv2.subtract(sure_bg, sure_fg)
-
-                        # Marker labelling
                         ret, markers = cv2.connectedComponents(sure_fg)
                         markers += 1
                         sub_image_color = cv2.cvtColor(sub_image, cv2.COLOR_GRAY2BGR)
@@ -246,9 +224,8 @@ class ImageProcessor:
                                     sub_cnt = sub_cnt + np.array([[x_pad, y_pad]])
                                     ball_contours.append(sub_cnt)
 
-                        ImageProcessor.filter_circles(sub_contours,min_size,max_size)            
+                        ImageProcessor.filter_circles(sub_contours, min_size, max_size)
                     else:
-                        #print("entering single ball")
                         perimeter = cv2.arcLength(cnt, True)
                         if perimeter == 0:
                             continue
@@ -282,31 +259,34 @@ class ImageProcessor:
                     unique_contours.append(cnt1)
             return unique_contours
 
-        # Convert the image to HSV color space
+        kernel = np.ones((5, 5), np.uint8)
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-        # Initial white mask range
-        white_lower = np.array([0, 0, 200], dtype="uint8")
-        white_upper = np.array([180, 60, 255], dtype="uint8")
-        ball_contours, white_mask = detect_balls_original_mask(hsv_image, white_lower, white_upper)
+        # Define multiple mask ranges
+        mask_ranges = [
+            (np.array([0, 0, 245], dtype="uint8"), np.array([180, 60, 255], dtype="uint8")),  # Normal lighting
+            (np.array([0, 0, 200], dtype="uint8"), np.array([180, 60, 255], dtype="uint8")),  # Normal lighting
+            (np.array([0, 0, 150], dtype="uint8"), np.array([180, 90, 255], dtype="uint8")),  # Darker conditions
+            (np.array([0, 0, 100], dtype="uint8"), np.array([180, 100, 255], dtype="uint8"))  # Even more lenient
+        ]
 
-        # Check if the number of detected balls is less than 12
-        if len(ball_contours) < 12:
-            # Adjust white mask range
-            white_lower = np.array([0, 0, 245], dtype="uint8")
-            white_upper = np.array([180, 60, 255], dtype="uint8")
-            additional_ball_contours, additional_white_mask = detect_balls_original_mask(hsv_image, white_lower,
-                                                                                         white_upper)
+        ball_contours = []
+
+        for white_lower, white_upper in mask_ranges:
+            additional_ball_contours, white_mask = detect_balls_with_mask(hsv_image, white_lower, white_upper)
             ball_contours.extend(additional_ball_contours)
 
-        # Remove duplicate contours
-        if ball_contours is not None:
-            ball_contours = remove_duplicate_contours(ball_contours)
+            # Display the processed image for debugging
+            # cv2.imshow(f'Processed Image Balls - Range {white_lower[2]}-{white_upper[2]}', white_mask)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
 
-        # Display the white mask
-        # cv2.imshow('Processed Image Balls', white_mask)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+            if len(ball_contours) >= 12:
+                break
+
+        # Remove duplicate contours
+        if ball_contours:
+            ball_contours = remove_duplicate_contours(ball_contours)
 
         # Draw contours on the original image
         output_image = image.copy()
@@ -333,9 +313,9 @@ class ImageProcessor:
         green_lower = np.array([36, 25, 25], dtype="uint8")
         green_upper = np.array([86, 255, 255], dtype="uint8")
         contours, green_mask = detect_robot_with_mask(input_image, green_lower, green_upper)
-        cv2.imshow('Processed Image Balls', green_mask)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.imshow('Processed Image Balls', green_mask)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 
         # Check if the number of detected robot parts is less than 3
         robot_contours = filter_and_return_robot_contours(contours)
@@ -346,9 +326,9 @@ class ImageProcessor:
             contours, green_mask = detect_robot_with_mask(input_image, green_lower, green_upper)
             robot_contours = filter_and_return_robot_contours(contours)
 
-            cv2.imshow('Processed Image Balls', green_mask)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            # cv2.imshow('Processed Image Balls', green_mask)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
 
         if robot_contours is None:
             print("Robot not found")
