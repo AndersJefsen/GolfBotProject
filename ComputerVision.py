@@ -314,7 +314,7 @@ class ImageProcessor:
 
         return ball_contours
     @staticmethod
-    def find_robot(indput_Image, min_size=100, max_size=400):
+    def find_robot(indput_Image, min_size=100, max_size=2000):
        
 
         # blue_lower = np.array([80, 66, 100], dtype="uint8")
@@ -322,6 +322,7 @@ class ImageProcessor:
         #blue_upper = np.array([131, 255, 255], dtype="uint8")
         #blue_mask=ImageProcessor.apply_hsv_filter(indput_Image, blue_lower,blue_upper)
         # Når robotten har grønne cirkler
+
         green_lower = np.array([36, 25, 25], dtype="uint8")
         green_upper = np.array([86, 255, 255], dtype="uint8")
 
@@ -423,34 +424,7 @@ class ImageProcessor:
 
         return result_image
 
-    @staticmethod
-    def adjust_coordinates(cX, cY, width, height, adjustment_factor=0.2):
-        # Calculate the center of the area
-        centerX = width / 2
-        centerY = height / 2
-        
-        # Calculate vector from the point to the center
-        vector_to_center_x = centerX - cX
-        vector_to_center_y = centerY - cY
-        
-        # Calculate the distance from the point to the center
-        distance_to_center = math.sqrt(vector_to_center_x**2 + vector_to_center_y**2)
-        
-        # Normalize the vector to the center
-        if distance_to_center != 0:  # Prevent division by zero
-            normalized_vector = (vector_to_center_x / distance_to_center, vector_to_center_y / distance_to_center)
-        else:
-            normalized_vector = (0, 0)
-        
-        # Scale the normalized vector by the adjustment factor
-        adjustment_x = normalized_vector[0] * adjustment_factor * distance_to_center
-        adjustment_y = normalized_vector[1] * adjustment_factor * distance_to_center
-        
-        # Adjust coordinates
-        new_cX = cX + adjustment_x
-        new_cY = cY + adjustment_y
-        
-        return new_cX, new_cY
+   
 
     @staticmethod
     def find_direction(contours):
@@ -832,6 +806,38 @@ class ImageProcessor:
         return diff
     
     
+    
+
+    @staticmethod
+     #johan
+    def get_corrected_coordinates_robot(cX, cY,data: Data, adjustment_factor=0.2):
+        # Calculate the center of the area
+        height, width, _ = data.screenshot.shape
+        centerX = width / 2
+        centerY = height / 2
+        
+        # Calculate vector from the point to the center
+        vector_to_center_x = centerX - cX
+        vector_to_center_y = centerY - cY
+        
+        # Calculate the distance from the point to the center
+        distance_to_center = math.sqrt(vector_to_center_x**2 + vector_to_center_y**2)
+        
+        # Normalize the vector to the center
+        if distance_to_center != 0:  # Prevent division by zero
+            normalized_vector = (vector_to_center_x / distance_to_center, vector_to_center_y / distance_to_center)
+        else:
+            normalized_vector = (0, 0)
+        
+        # Scale the normalized vector by the adjustment factor
+        adjustment_x = normalized_vector[0] * adjustment_factor * distance_to_center
+        adjustment_y = normalized_vector[1] * adjustment_factor * distance_to_center
+        
+        # Adjust coordinates
+        new_cX = cX + adjustment_x
+        new_cY = cY + adjustment_y
+        
+        return new_cX, new_cY
     '''
     @staticmethod
     def get_corrected_coordinates_robot(x,y):
@@ -885,8 +891,34 @@ class ImageProcessor:
         y_2d = y + (scale_factor * y)
 
         return (x_2d, y_2d)
-    '''
+    
+
     @staticmethod
+    #anders
+    def get_corrected_coordinates_robot(x, y, data: Data, robot_height=31, camera_height=165):
+
+        height, width, _ = data.screenshot.shape
+
+        cam_x, cam_y = width // 2, height // 2
+        cam_x,cam_y =ImageProcessor.convert_to_cartesian((cam_x,cam_y))
+        x,y =ImageProcessor.convert_to_cartesian((x,y))
+
+        B = math.sqrt((cam_x - x)**2 + (cam_y - y)**2)
+        
+        if B == 0:
+            return x, y
+        # Beregn den vandrette afstand x fra punkt P til robotten
+        x_robot = (B * robot_height) / camera_height
+        
+        # Beregn interpolationen for x og y koordinater
+        R_x = x + (x_robot / B) * (cam_x - x)
+        R_y = y + (x_robot / B) * (cam_y - y)
+        return ImageProcessor.convert_to_pixel((R_x, R_y))
+    
+
+    
+    @staticmethod
+    #victor
     def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=165 ):
         height, width, _ = data.screenshot.shape
 
@@ -902,12 +934,11 @@ class ImageProcessor:
         y_2d = cam_y + vector_y * (1 - scale_factor)
 
         return (x_2d, y_2d)
-
         
    
     
     
-    '''
+    
     @staticmethod
     def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=165 ):
         height, width, _ = data.screenshot.shape
