@@ -179,14 +179,14 @@ def paint_output(data: Data, output_image):
         output_image=ComputerVision.ImageProcessor.paintballs(data.robot.con, "robo ball", output_image)
         output_image=ComputerVision.ImageProcessor.paintrobot(data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction)
         output_image=ComputerVision.ImageProcessor.paintrobot(data.robot.midpoint, data.robot.angle, output_image, data.robot.direction)
-      print("painted")
+     
       return output_image
 
-def drawAndShow(data:Data):
+def drawAndShow(data:Data,windowName):
     data.output_image = paint_output(data, data.output_image)
     if(data.output_image is not None):
         # Resize the image
-                desired_size = (1200, 800)
+                desired_size = (800, 600)
                 resized_image = cv.resize(data.output_image, desired_size, interpolation=cv.INTER_LINEAR)
-                cv.imshow("Resized Image", resized_image)
+                cv.imshow(windowName, resized_image)
                 cv.waitKey(1)

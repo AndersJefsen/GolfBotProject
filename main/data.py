@@ -22,7 +22,7 @@ class Data:
         self.testpicturename = None
         self.screenshot = None
         self.output_image = None
-        
+
 
 
     def addBalls(self, contours, cordinates):
@@ -121,11 +121,11 @@ class Data:
                     elif area.type == "bottom_side":
                         y_addision = - factor
                     
-                    print("FOUND BALL IN OUTER AREA")
+                   
                     whiteball_center = np.array([center_x, center_y])
                     helpPointCord = HelpPoint((whiteball_center[0] + x_addision, whiteball_center[1] + y_addision),whiteball)
                     self.helpPoints.append(helpPointCord)
-                    print("FOUND BALL IN OUTER AREA")
+                   
                     
                     break
             if in_outer_area == False:
