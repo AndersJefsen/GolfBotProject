@@ -109,7 +109,8 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
 
 
             if robot:
-                data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=60, max_size=100000)
+                data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=10, max_size=100000)
+            
                 angle = None
                 img = data.screenshot
 
@@ -127,11 +128,11 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
 
                     print("Robot not detected in masked image, trying full image.")
 
-                    data.robot.con = ComputerVision.ImageProcessor.find_robot(data.screenshot, min_size=60,
+                    data.robot.con = ComputerVision.ImageProcessor.find_robot(data.screenshot, min_size=10,
                                                                             max_size=100000)
-
+      
                     if data.robot.con is not None and len(data.robot.con) == 3:
-
+                              
                         data.robot.detected = True
 
                         data.robot.originalMidtpoint, data.robot.angle, data.output_image, data.robot.direction = ComputerVision.ImageProcessor.getrobot(
