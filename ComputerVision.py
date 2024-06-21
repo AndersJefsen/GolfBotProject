@@ -803,6 +803,7 @@ class ImageProcessor:
         if diff > 180:
             diff = 360 - diff
         return diff
+    """
     @staticmethod
     def find_map_midpoint():
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = corners
@@ -814,9 +815,17 @@ class ImageProcessor:
         mid_y = (bottom_left_corner[1] + bottom_right_corner[1] + top_left_corner[1] + top_right_corner[1]) // 4
 
         return mid_x, mid_y
+        """
 
     @staticmethod
-    def get_corrected_coordinates_robot(x,y,Data,corners):
+    def convert_distance_to_cm(pixel_distance):
+        bottom_left, bottom_right, top_left, top_right = ImageProcessor.corners.values()
+        x_scale = 166.7 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
+        return pixel_distance * x_scale
+
+    @staticmethod
+    # Peters version
+    def get_corrected_coordinates_robot(x, y, data, corners):
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = corners
         if None in corners:
             print("Some corners are missing.")
@@ -825,12 +834,38 @@ class ImageProcessor:
         mid_x = (bottom_left_corner[0] + bottom_right_corner[0] + top_left_corner[0] + top_right_corner[0]) // 4
         mid_y = (bottom_left_corner[1] + bottom_right_corner[1] + top_left_corner[1] + top_right_corner[1]) // 4
 
-        Robotcoords = x,y
+        # Calculate the Euclidean distance (B) between the midpoint and the robot's location
+        B = math.sqrt((x - mid_x) ** 2 + (y - mid_y) ** 2)
+        cm_B = ImageProcessor.convert_distance_to_cm(B)
+        # Given heights
+        H = 171
+        h = 31
 
+        # Calculate the true horizontal distance (x)
+        cm_x_offset = cm_B * (h / H)
+        # convert x_offset to pixel
+        pixel_offset_x, _ = ImageProcessor.convert_to_pixel((cm_x_offset, 0))
+        ## Det skal kigges på
+        pixel_offset_x -= ImageProcessor.convert_to_pixel((0, 0))[0]  # Subtract base offset
 
+        # find angle from robot to midpoint
+        dx = mid_x - x
+        dy = mid_y - y
+        angle = math.degrees(math.atan2(dy, dx))
+        radian_angle = np.deg2rad(angle)
 
-        return mid_x, mid_y
-    
+        # Calculate the true location of the robot using trigonometry
+        true_x = x + pixel_offset_x * math.cos(radian_angle)
+        true_y = y + pixel_offset_x * math.sin(radian_angle)
+        #print(f"Robot location in pixel:({x},{y})")
+        #print(f"Distance between robot and midpoint: {B}")
+        #print(f"Pixel offset x: {pixel_offset_x}")
+        print(f"True location of the robot: ({true_x}, {true_y})")
+        #print(f"Angle from robot to midpoint: {angle} degrees")
+
+        return true_x, true_y
+
+    #print(f"Robot location in pixel:({x},{y})")
 
     """
     @staticmethod
@@ -862,8 +897,11 @@ class ImageProcessor:
         new_cX = cX + adjustment_x
         new_cY = cY + adjustment_y
 
+        print(f"{new_cX},{new_cY}")
+
         return new_cX, new_cY
-    '''
+    """
+    """
     @staticmethod
     def get_corrected_coordinates_robot(x,y):
         
@@ -902,7 +940,9 @@ class ImageProcessor:
         corrected_coordinates=[corrected_x,corrected_y]
 
         return corrected_coordinates
+        """
    
+    """
     @staticmethod
     def get_corrected_coordinates_robot(x,y,roboth=31,camerah=170):
         
@@ -917,7 +957,8 @@ class ImageProcessor:
 
         return (x_2d, y_2d)
     
-
+    """
+    """
     @staticmethod
     #anders
     def get_corrected_coordinates_robot(x, y, data: Data, robot_height=31, camera_height=165):
@@ -938,10 +979,12 @@ class ImageProcessor:
         # Beregn interpolationen for x og y koordinater
         R_x = x + (x_robot / B) * (cam_x - x)
         R_y = y + (x_robot / B) * (cam_y - y)
-        return ImageProcessor.convert_to_pixel((R_x, R_y))
-    
 
-    
+        print(f"Victors pixel{ImageProcessor.convert_to_pixel((R_x,R_y))}")
+        return ImageProcessor.convert_to_pixel((R_x, R_y))
+    """
+
+    """
     @staticmethod
     #victor
     def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=165 ):
@@ -957,13 +1000,14 @@ class ImageProcessor:
         scale_factor = robot_z / cam_z
         x_2d = cam_x + vector_x * (1 - scale_factor)
         y_2d = cam_y + vector_y * (1 - scale_factor)
-
+        print(f"x_2d = {x_2d}, y_2d ={y_2d}")
         return (x_2d, y_2d)
+        """
 
         
    
     
-    
+    """
     @staticmethod
     def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=165 ):
         height, width, _ = data.screenshot.shape
