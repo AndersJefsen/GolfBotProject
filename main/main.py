@@ -39,7 +39,7 @@ def angleCorrectionAndDrive(data:Data, selected_point):
    while True:
     angle_to_turn, distance_to_drive =  getRobotAngle(data,selected_point)
     print("angle to turn to ball: ", angle_to_turn)
-    rf.drawAndShow(data,"angle correction")
+    rf.drawAndShow(data,"Resized Image")
     if angle_to_turn < 2 and angle_to_turn > -2: 
         print("correct angle achived: ",angle_to_turn)
         break
@@ -48,6 +48,11 @@ def angleCorrectionAndDrive(data:Data, selected_point):
     
    print(com.drive_Robot(distance_to_drive,data.socket))
    
+   angle_to_turn, distance_to_drive =  getRobotAngle(data,selected_point)
+   if distance_to_drive > 5:
+       print("not arrived at point trying again")
+       angleCorrectionAndDrive(data,selected_point)
+
 
     
 
@@ -191,7 +196,7 @@ def main(mode):
             data.find_Corner_HP()
             data.find_outer_ball_HP()
             
-            rf.drawAndShow(data,"all detections")
+            rf.drawAndShow(data,"Resized Image")
 
             if(mode == "robot" ):
                 if(data.robot.detected and data.getAllBallCordinates()):
