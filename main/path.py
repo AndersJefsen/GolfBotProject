@@ -72,6 +72,9 @@ def find_shortest_path(robot_position, robot_orientation, paired_help_points_and
     if not closest_help_point:
         print("No accessible help point found, looking for the nearest drive point.")
         closest_drive_point, drive_point_distance, drive_angle_to_turn = find_close_ball(robot_position, drive_points, contours)
+        if calculate_distance(robot_position, drive_points) < 5:
+            drive_points.pop(closest_drive_point)
+            closest_drive_point, drive_point_distance, drive_angle_to_turn = find_close_ball(robot_position, drive_points, contours)
         if closest_drive_point:
             return closest_drive_point,None ,drive_angle_to_turn,drive_point_distance
             
