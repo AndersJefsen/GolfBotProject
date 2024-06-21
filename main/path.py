@@ -20,11 +20,17 @@ def calculate_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 def calculate_angle(robot_position, ball_position, robot_orientation):
+    print("here2")
+    print("robot_position",robot_position)
+    print("ball_position",ball_position)
+    print("robot_orientation",robot_orientation)
+
     dy = ball_position[1] - robot_position[1]
     dx = ball_position[0] - robot_position[0]
     angle_to_target_radians = math.atan2(dy, dx)
     angle_to_target_degrees = math.degrees(angle_to_target_radians)
     angle = robot_orientation + angle_to_target_degrees
+    print("here5")
     if abs(angle) > 180:
         angle = abs(angle) - 360
     return -angle
@@ -34,18 +40,24 @@ def find_close_ball(robot_position, balls, robot_orientation):
     min_distance = float('inf')
     angle_to_turn = 0
     for ball in balls:
+        
         distance = calculate_distance(robot_position, ball)
+       
         if distance < min_distance:
+            
             min_distance = distance
             closest_ball = ball
+            
             angle_to_turn = calculate_angle(robot_position, ball, robot_orientation)
+            
     return closest_ball, min_distance, angle_to_turn
 
 def find_shortest_path(robot_position, robot_orientation, paired_help_points_and_balls, contours, drive_points):
     # If no help points are available, use drive points as a fallback
     if not paired_help_points_and_balls:
         print("No help point and ball pairs available.")
-        return find_close_ball(robot_position, drive_points, contours)
+        return find_close_ball(robot_position, drive_points, robot_orientation)
+    
 
     closest_help_point = None
     min_distance = float('inf')
@@ -59,7 +71,7 @@ def find_shortest_path(robot_position, robot_orientation, paired_help_points_and
             if distance < min_distance:
                 min_distance = distance
                 closest_help_point = help_point.con
-                print("hey")
+                
                 selected_ball = ComputerVision.ImageProcessor.find_contour_center(help_point.ball.con)
                 best_angle_to_turn = calculate_angle(robot_position, help_point.con, robot_orientation)
 
@@ -71,10 +83,14 @@ def find_shortest_path(robot_position, robot_orientation, paired_help_points_and
     # If no accessible help point is found, find the nearest drive point
     if not closest_help_point:
         print("No accessible help point found, looking for the nearest drive point.")
-        closest_drive_point, drive_point_distance, drive_angle_to_turn = find_close_ball(robot_position, drive_points, contours)
-        if calculate_distance(robot_position, drive_points) < 5:
+        closest_drive_point, drive_point_distance, drive_angle_to_turn = find_close_ball(robot_position, drive_points, robot_orientation)
+        print("outofFind1")
+
+        if calculate_distance(robot_position, closest_drive_point) < 5:
             drive_points.pop(closest_drive_point)
-            closest_drive_point, drive_point_distance, drive_angle_to_turn = find_close_ball(robot_position, drive_points, contours)
+
+            closest_drive_point, drive_point_distance, drive_angle_to_turn = find_close_ball(robot_position, drive_points, robot_orientation)
+            print("outofFind2")
         if closest_drive_point:
             return closest_drive_point,None ,drive_angle_to_turn,drive_point_distance
             

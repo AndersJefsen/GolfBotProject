@@ -85,8 +85,7 @@ def høvl(data: Data,robot=True, image=None ):
                         crosscon= data.cross.con
                     if crosscon is not None:
 
-                        print("crosscon added: " ,crosscon)
-                        time.sleep(10)
+                   
                         contours.extend(crosscon)
                     orange_ball_contour = data.orangeBall.con
                     if orange_ball_contour is not None:
@@ -95,8 +94,9 @@ def høvl(data: Data,robot=True, image=None ):
                     helpPoints=data.helpPoints
                     
                     drivepoints=data.drivepoints
-
+                    print("drivepoints: ",drivepoints)
                     closest_help_point, selected_ball,best_angle_to_turn, min_distance = path.find_shortest_path(data.robot.midpoint,data.robot.angle, helpPoints, contours,drivepoints) #data.helppoints.coords"""
+                    print("here")
                     if selected_ball is not None:
                         #for point in helppoints:
                             #cv.circle(image, (int(point.con[0]), int(point.con[1])), 5, (0, 255, 0), -1)  # Green points
