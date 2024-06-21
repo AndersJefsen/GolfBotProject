@@ -14,7 +14,7 @@ import imageManipulationTools
 import time
 import runFlow as rf
 from queue import Queue
-from time import time, strftime, gmtime
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
 
@@ -31,28 +31,41 @@ def getRobotAngle(data:Data, selected_point):
             distance_to_drive = path.calculate_distance(correctmid,ComputerVision.ImageProcessor.convert_to_cartesian(selected_point))
                    
                             
-    return angle_to_turn,distance_to_drive
+    return angle_to_turn,distance_to_drive, correctmid
      
 
 def angleCorrectionAndDrive(data:Data, selected_point):
   
-   while True:
-    angle_to_turn, distance_to_drive =  getRobotAngle(data,selected_point)
-    print("angle to turn to ball: ", angle_to_turn)
-    rf.drawAndShow(data,"Resized Image")
-    if angle_to_turn < 2 and angle_to_turn > -2: 
-        print("correct angle achived: ",angle_to_turn)
-        break
-    print(com.turn_Robot( angle_to_turn,data.socket))
+    while True:
+        angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
+        print("selected point: ", ComputerVision.ImageProcessor.convert_to_cartesian(selected_point))  
+        print("robot angle: ", data.robot.angle)
+        print("robot midpoint: ", corrmid)
+        print("angle to turn to ball: ", angle_to_turn)
+        
+        rf.drawAndShow(data,"Resized Image")
+        if angle_to_turn < 2 and angle_to_turn > -2: 
+            print("correct angle achived: ",angle_to_turn)
+            break
+        com.turn_Robot( angle_to_turn,data.socket)
+        print("done turning")
    
     
-   print(com.drive_Robot(distance_to_drive,data.socket))
-   
-   angle_to_turn, distance_to_drive =  getRobotAngle(data,selected_point)
-   if distance_to_drive > 5:
-       print("not arrived at point trying again")
-       angleCorrectionAndDrive(data,selected_point)
+    com.drive_Robot(distance_to_drive,data.socket)
+    print("done driving")
 
+   
+    angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
+    print("check angle: ", angle_to_turn)
+    print("check distance: ", distance_to_drive)
+  
+    if distance_to_drive > 15:
+        print("not arrived at point trying again with distance: ",distance_to_drive)
+      
+        angleCorrectionAndDrive(data,selected_point)
+    else:
+        print("arrived at point with distance: ",distance_to_drive)
+      
 
     
 
@@ -90,8 +103,18 @@ def høvl(data: Data,robot=True, image=None ):
                         cv.imshow("Resized Image", resized_image)
                         cv.waitKey(1)
                     if robot:
-                       angleCorrectionAndDrive(data,closest_help_point)
-                       angleCorrectionAndDrive(data,selected_ball)
+                        cp = np.array([closest_help_point[0],closest_help_point[1]])
+                        bp = np.array([selected_ball[0],selected_ball[1]])
+                        distance = np.linalg.norm(cp - bp)
+                        print("distance between helppoint and ball: ",distance)
+                        if distance > 5:
+                            print("drive to first point")
+                            angleCorrectionAndDrive(data,closest_help_point)
+                            print("drive to second point")
+                            angleCorrectionAndDrive(data,selected_ball)
+                        else:
+                            print("drive helpoint which is also helppoint")
+                            angleCorrectionAndDrive(data,closest_help_point)
 
 
 
@@ -174,7 +197,7 @@ def main(mode):
 
 
 
-    loop_time = time()
+    
     
     while(True):
         try:
