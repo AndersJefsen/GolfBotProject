@@ -118,7 +118,7 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                         data.robot.originalMidtpoint, data.robot.angle, data.output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,data.output_image)
                         
                       #  data.robot.midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1], data)
-                        data.robot.midpoint = ComputerVision.ImageProcessor.adjust_coordinates(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data.screenshot.shape[1], data.screenshot.shape[0],0.2)
+                        data.robot.midpoint = ComputerVision.ImageProcessor.adjust_coordinates(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data.screenshot.shape[1], data.screenshot.shape[0],0.15)
                         data.robot.add_detection(data.robot.midpoint, data.robot.angle)
                     
                         data.robot.detected = True
@@ -139,7 +139,7 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
 
                         #data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(
                            # data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1],data)
-                        data.robot.midpoint = ComputerVision.ImageProcessor.adjust_coordinates(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data.screenshot.shape[1], data.screenshot.shape[0],0.2)
+                        data.robot.midpoint = ComputerVision.ImageProcessor.adjust_coordinates(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data.screenshot.shape[1], data.screenshot.shape[0],0.15)
                         data.robot.add_detection(data.robot.midpoint, data.robot.angle)
 
                     else:
@@ -179,14 +179,14 @@ def paint_output(data: Data, output_image):
         output_image=ComputerVision.ImageProcessor.paintballs(data.robot.con, "robo ball", output_image)
         output_image=ComputerVision.ImageProcessor.paintrobot(data.robot.originalMidtpoint, data.robot.angle, output_image, data.robot.direction)
         output_image=ComputerVision.ImageProcessor.paintrobot(data.robot.midpoint, data.robot.angle, output_image, data.robot.direction)
-      print("painted")
+     
       return output_image
 
-def drawAndShow(data:Data):
+def drawAndShow(data:Data,windowName):
     data.output_image = paint_output(data, data.output_image)
     if(data.output_image is not None):
         # Resize the image
-                desired_size = (1200, 800)
+                desired_size = (800, 600)
                 resized_image = cv.resize(data.output_image, desired_size, interpolation=cv.INTER_LINEAR)
-                cv.imshow("Resized Image", resized_image)
+                cv.imshow(windowName, resized_image)
                 cv.waitKey(1)
