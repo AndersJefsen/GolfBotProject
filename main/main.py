@@ -18,6 +18,40 @@ from time import time, strftime, gmtime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
 
+def getRobotAngle(data:Data, selected_point):
+    newpos = None
+    while newpos is None:
+        data.resetRobot()
+        rf.update_positions(data,True,False,False,False,False,10)
+        newpos =  data.robot.get_best_robot_position()
+        if(newpos is not None):
+            currMidpoint,currAngle = newpos
+            correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
+            angle_to_turn = path.calculate_angle(correctmid,ComputerVision.ImageProcessor.convert_to_cartesian(selected_point),currAngle)
+            distance_to_drive = path.calculate_distance(correctmid,ComputerVision.ImageProcessor.convert_to_cartesian(selected_point))
+                   
+                            
+    return angle_to_turn,distance_to_drive
+     
+
+def angleCorrectionAndDrive(data:Data, selected_point):
+  
+   while True:
+    angle_to_turn, distance_to_drive =  getRobotAngle(data,selected_point)
+    print("angle to turn to ball: ", angle_to_turn)
+    rf.drawAndShow(data,"Resized Image")
+    if angle_to_turn < 2 and angle_to_turn > -2: 
+        print("correct angle achived: ",angle_to_turn)
+        break
+    print(com.turn_Robot( angle_to_turn,data.socket))
+   
+    
+   print(com.drive_Robot(distance_to_drive,data.socket))
+   
+   angle_to_turn, distance_to_drive =  getRobotAngle(data,selected_point)
+   if distance_to_drive > 5:
+       print("not arrived at point trying again")
+       angleCorrectionAndDrive(data,selected_point)
 
 
     
@@ -56,8 +90,8 @@ def høvl(data: Data,robot=True, image=None ):
                         cv.imshow("Resized Image", resized_image)
                         cv.waitKey(1)
                     if robot:
-                        com.drive_robot_to_point(ComputerVision.ImageProcessor.convert_to_cartesian(closest_help_point),ComputerVision.ImageProcessor.convert_to_cartesian(data.robot.midpoint),data.robot.angle,data.socket)
-                        com.drive_robot_to_point(ComputerVision.ImageProcessor.convert_to_cartesian(selected_ball),ComputerVision.ImageProcessor.convert_to_cartesian(closest_help_point),data.robot.angle,data.socket)
+                       angleCorrectionAndDrive(data,closest_help_point)
+                       angleCorrectionAndDrive(data,selected_ball)
 
 
 
@@ -162,16 +196,18 @@ def main(mode):
             data.find_Corner_HP()
             data.find_outer_ball_HP()
             
-            rf.drawAndShow(data)
+            rf.drawAndShow(data,"Resized Image")
 
             if(mode == "robot" ):
                 if(data.robot.detected and data.getAllBallCordinates()):
                     data.robot.set_min_detections(10)
+                    høvl(data,True, data.output_image)
+                    '''
                     bestpos =  data.robot.get_best_robot_position()
                     if(bestpos is not None):
                         currMidpoint,currAngle = bestpos 
                         correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
-
+                        
                         print("Robot orientation sss:")
                         print(currAngle)
 
@@ -184,7 +220,7 @@ def main(mode):
                         com.command_robot_move(correctmid, data.getAllBallCordinates(),data.socket)
                         print("command robot done")
 
-                        '''
+                        
                         data.resetRobot()
                         #get new position
                         
@@ -219,7 +255,7 @@ def main(mode):
                     else:
                         print("Operation Goal got fuckd mate")
                     break
-
+            
             if(mode == "test"):
                 høvl(data,False, data.output_image)
             if (mode== "videotest"):

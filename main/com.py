@@ -99,6 +99,16 @@ def move_to_position_and_release(point, pos, orientation, sock):
 
     release_res = release(sock)
     return release_res
+def turn_Robot(angle_to_turn,sock ):
+    command = f"TURN {angle_to_turn}"
+    res = send_command(command, sock)
+    return res
+
+    
+def drive_Robot(distance_to_drive,sock):
+    command = f"MOVE_COLLECT {distance_to_drive}"
+    res = send_command(command, sock)
+    return res
 
 # Example usage
 # point = (x_target, y_target)
