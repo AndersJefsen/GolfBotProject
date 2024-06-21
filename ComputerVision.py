@@ -830,7 +830,18 @@ class ImageProcessor:
         if diff > 180:
             diff = 360 - diff
         return diff
-    
+    @staticmethod
+    def find_map_midpoint():
+        map_mid_x=83
+        map_mid_y=61
+
+        return map_mid_x, map_mid_y
+
+    @staticmethod
+    def get_corrected_coordinates_robot():
+        map_mid_x=83
+        map_mid_y=61
+        return map_mid_x, map_mid_y
     
     '''
     @staticmethod
@@ -886,7 +897,9 @@ class ImageProcessor:
 
         return (x_2d, y_2d)
     '''
+    """
     @staticmethod
+    
     def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=165 ):
         height, width, _ = data.screenshot.shape
 
@@ -902,6 +915,8 @@ class ImageProcessor:
         y_2d = cam_y + vector_y * (1 - scale_factor)
 
         return (x_2d, y_2d)
+        """
+
 
         
    
@@ -924,6 +939,8 @@ class ImageProcessor:
         return (x_2d, y_2d)
     
     '''
+
+
 
 
 if __name__ == "__main__":
