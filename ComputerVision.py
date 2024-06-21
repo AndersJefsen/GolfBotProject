@@ -313,47 +313,49 @@ class ImageProcessor:
         cv2.drawContours(output_image, ball_contours, -1, (0, 255, 0), 2)
 
         return ball_contours
+
     @staticmethod
-    def find_robot(indput_Image, min_size=100, max_size=2000):
-       
+    def find_robot(input_image, min_size=100, max_size=400):
+        def detect_robot_with_mask(input_image, lower, upper):
+            mask = ImageProcessor.apply_hsv_filter(input_image, lower, upper)
+            mask = ImageProcessor.clean_mask(mask)
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            return contours, mask
 
-        # blue_lower = np.array([80, 66, 100], dtype="uint8")
-        #blue_lower = np.array([85, 100, 100], dtype="uint8")
-        #blue_upper = np.array([131, 255, 255], dtype="uint8")
-        #blue_mask=ImageProcessor.apply_hsv_filter(indput_Image, blue_lower,blue_upper)
-        # Når robotten har grønne cirkler
+        def filter_and_return_robot_contours(contours):
+            robot_contours = ImageProcessor.filter_circles(contours, min_size, max_size)
+            if robot_contours is None or len(robot_contours) < 3:
+                return None
+            robot_contours = sorted(robot_contours, key=cv2.contourArea, reverse=True)[:3]
+            return robot_contours
 
+        # Initial green mask range
         green_lower = np.array([36, 25, 25], dtype="uint8")
         green_upper = np.array([86, 255, 255], dtype="uint8")
-
-        green_mask = ImageProcessor.apply_hsv_filter(indput_Image, green_lower, green_upper)
-
-        green_mask = ImageProcessor.clean_mask(green_mask)
-
-        #blue_mask = ImageProcessor.clean_mask(blue_mask)
-        #koden for at se masken bliver brugt
-        """
-        cv2.imshow('Processed Image Robot', green_mask)
+        contours, green_mask = detect_robot_with_mask(input_image, green_lower, green_upper)
+        cv2.imshow('Processed Image Balls', green_mask)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-        """
-        # Find contours
-        contours, _ = cv2.findContours(green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        #contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # Check if the number of detected robot parts is less than 3
+        robot_contours = filter_and_return_robot_contours(contours)
+        if robot_contours is None:
+            # Adjust green mask range
+            green_lower = np.array([35, 50, 50], dtype="uint8")
+            green_upper = np.array([85, 255, 255], dtype="uint8")
+            contours, green_mask = detect_robot_with_mask(input_image, green_lower, green_upper)
+            robot_contours = filter_and_return_robot_contours(contours)
 
-        robot_counters=ImageProcessor.filter_circles(contours, min_size,max_size)
-        if robot_counters is None:
-            print("robot not found")
+            cv2.imshow('Processed Image Balls', green_mask)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+        if robot_contours is None:
+            print("Robot not found")
             return None
-        if len(robot_counters) <3:
-            print("Robot not found, Not enough contours found.")
-            return None
 
-        # Sort the round contours by area and select the three largest
-        robot_counters = sorted(robot_counters, key=cv2.contourArea, reverse=True)[:3]
+        return robot_contours
 
-        return robot_counters
 
     @staticmethod
     def remove_cross(contours, image, expansion_factor):
