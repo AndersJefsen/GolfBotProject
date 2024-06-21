@@ -89,15 +89,15 @@ def find_shortest_path(robot_position, robot_orientation, paired_help_points_and
        
 
         if calculate_distance(robot_position, closest_drive_point) < 50:
-            print("before pop",drive_points)
-            drive_points.remove(closest_drive_point)
-            print("after pop",drive_points)
-            time.sleep(30)
-            closest_drive_point, drive_point_distance, drive_angle_to_turn = find_close_ball(robot_position, drive_points, robot_orientation)
+           print("here1")
+           index= drive_points.index(closest_drive_point)
+           print("here2")
+           
+           
            
            
         if closest_drive_point:
-            return closest_drive_point,None ,drive_angle_to_turn,drive_point_distance
+            return drive_points[index+1%4],None ,drive_angle_to_turn,drive_point_distance
             
         else:
             print("No accessible drive points found.")

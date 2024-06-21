@@ -65,7 +65,7 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
         if distance_to_drive > 5:
             print("not arrived at point trying again with distance: ",distance_to_drive)
         
-            angleCorrectionAndDrive(data,selected_point,isBall,iteration)
+            angleCorrectionAndDrive(data,selected_point,isBall,isMiddleBall=False,iteration=iteration)
         else:
             print("arrived at point with distance: ",distance_to_drive)
       
