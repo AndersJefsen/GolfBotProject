@@ -34,7 +34,7 @@ def getRobotAngle(data:Data, selected_point):
     return angle_to_turn,distance_to_drive, correctmid
      
 
-def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,iteration = 0):
+def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBall = False,iteration = 0):
   
     while True:
         angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
@@ -50,7 +50,7 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,iteration 
         com.turn_Robot( angle_to_turn,data.socket)
         print("done turning")
     
-    if isBall is True and iteration == 0:
+    if isMiddleBall is True and iteration == 0:
         distance_to_drive = distance_to_drive/2
         iteration = 1
     
@@ -84,6 +84,9 @@ def høvl(data: Data,robot=True, image=None ):
                         contours.extend(egg_contour)
                         crosscon= data.cross.con
                     if crosscon is not None:
+
+                        print("crosscon added: " ,crosscon)
+                        time.sleep(10)
                         contours.extend(crosscon)
                     orange_ball_contour = data.orangeBall.con
                     if orange_ball_contour is not None:
@@ -114,14 +117,14 @@ def høvl(data: Data,robot=True, image=None ):
                             print("distance between helppoint and ball: ",distance)
                             if distance > 5:
                                 print("drive to first point")
-                                angleCorrectionAndDrive(data,closest_help_point)
+                                angleCorrectionAndDrive(data,closest_help_point,isBall=False,isMiddleBall=False)
                                 print("drive to second point")
-                                angleCorrectionAndDrive(data,selected_ball)
+                                angleCorrectionAndDrive(data,selected_ball,isBall=True,isMiddleBall=False)
                             else:
                                 print("drive helpoint which is also helppoint")
-                                angleCorrectionAndDrive(data,closest_help_point)
+                                angleCorrectionAndDrive(data,closest_help_point,isBall=True, isMiddleBall=True)
                     else:
-                        angleCorrectionAndDrive(data,closest_help_point)
+                        angleCorrectionAndDrive(data,closest_help_point,isBall=False,isMiddleBall=False)
 
 
 
@@ -279,7 +282,16 @@ def main(mode):
                     currMidpoint)
 
                     target_point = (150, 61)
-                    result = com.move_to_position_and_release(target_point, correctmidCorrect, currAngle, data.socket)
+                    goal_point = (200,61)
+                    angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(target_point),isBall=False,isMiddleBall=False)
+                    while(True):
+                        angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,ComputerVision.ImageProcessor.convert_to_pixel(goal_point)) 
+                        if angle_to_turn < 2 and angle_to_turn > -2:
+                            print("correct angle achived: ",angle_to_turn)
+                            break
+                        com.turn_Robot( angle_to_turn,data.socket)
+                    com.release(data.socket)
+                    #result = com.move_to_position_and_release(target_point, correctmidCorrect, currAngle, data.socket)
                     if result:
                         print("Operation BigGOALGOAL successful")
                     else:
