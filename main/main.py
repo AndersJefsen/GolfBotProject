@@ -130,7 +130,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    data.testpicturename = 'master.jpg'
+    data.testpicturename = 'dingsetest.jpeg'
 
     
 
