@@ -805,10 +805,15 @@ class ImageProcessor:
         return diff
     @staticmethod
     def find_map_midpoint():
-        map_mid_x=83
-        map_mid_y=61
+        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = corners
+        if None in corners:
+            print("Some corners are missing.")
+            return None
 
-        return map_mid_x, map_mid_y
+        mid_x = (bottom_left_corner[0] + bottom_right_corner[0] + top_left_corner[0] + top_right_corner[0]) // 4
+        mid_y = (bottom_left_corner[1] + bottom_right_corner[1] + top_left_corner[1] + top_right_corner[1]) // 4
+
+        return mid_x, mid_y
 
     @staticmethod
     def get_corrected_coordinates_robot(x,y,Data,corners):
@@ -819,6 +824,10 @@ class ImageProcessor:
 
         mid_x = (bottom_left_corner[0] + bottom_right_corner[0] + top_left_corner[0] + top_right_corner[0]) // 4
         mid_y = (bottom_left_corner[1] + bottom_right_corner[1] + top_left_corner[1] + top_right_corner[1]) // 4
+
+        Robotcoords = x,y
+
+
 
         return mid_x, mid_y
     
