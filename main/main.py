@@ -71,6 +71,7 @@ def angleCorrectionAndDrive(data:Data, selected_point):
 
 def høvl(data: Data,robot=True, image=None ):
         if(data.robot.detected and data.getAllBallCordinates() is not None):
+                    
                     currMidpoint,currAngle = data.robot.get_best_robot_position()
                     
 
@@ -90,31 +91,34 @@ def høvl(data: Data,robot=True, image=None ):
                     drivepoints=data.drivepoints
 
                     closest_help_point, selected_ball,best_angle_to_turn, min_distance = path.find_shortest_path(data.robot.midpoint,data.robot.angle, helpPoints, contours,drivepoints) #data.helppoints.coords"""
-                    #for point in helppoints:
-                        #cv.circle(image, (int(point.con[0]), int(point.con[1])), 5, (0, 255, 0), -1)  # Green points
-                    #if closest_help_point and selected_ball:
-                        #cv.line(image, (int(currMidpoint[0]), int(currMidpoint[1])), (int(closest_help_point[0]), int(closest_help_point[1])), (0, 0, 255), 2)
-                    if closest_help_point and selected_ball:
-                        cv.line(image, (int(data.robot.midpoint[0]), int(data.robot.midpoint[1])), (int(closest_help_point[0]), int(closest_help_point[1])), (0, 0, 255), 2)  # Red line for movement
-                    if(image is not None):
-                # Resize the image
-                        desired_size = (1200, 800)
-                        resized_image = cv.resize(image, desired_size, interpolation=cv.INTER_LINEAR)
-                        cv.imshow("Resized Image", resized_image)
-                        cv.waitKey(1)
-                    if robot:
-                        cp = np.array([closest_help_point[0],closest_help_point[1]])
-                        bp = np.array([selected_ball[0],selected_ball[1]])
-                        distance = np.linalg.norm(cp - bp)
-                        print("distance between helppoint and ball: ",distance)
-                        if distance > 5:
-                            print("drive to first point")
-                            angleCorrectionAndDrive(data,closest_help_point)
-                            print("drive to second point")
-                            angleCorrectionAndDrive(data,selected_ball)
-                        else:
-                            print("drive helpoint which is also helppoint")
-                            angleCorrectionAndDrive(data,closest_help_point)
+                    if selected_ball is not None:
+                        #for point in helppoints:
+                            #cv.circle(image, (int(point.con[0]), int(point.con[1])), 5, (0, 255, 0), -1)  # Green points
+                        #if closest_help_point and selected_ball:
+                            #cv.line(image, (int(currMidpoint[0]), int(currMidpoint[1])), (int(closest_help_point[0]), int(closest_help_point[1])), (0, 0, 255), 2)
+                        if closest_help_point and selected_ball:
+                            cv.line(image, (int(data.robot.midpoint[0]), int(data.robot.midpoint[1])), (int(closest_help_point[0]), int(closest_help_point[1])), (0, 0, 255), 2)  # Red line for movement
+                        if(image is not None):
+                    # Resize the image
+                            desired_size = (1200, 800)
+                            resized_image = cv.resize(image, desired_size, interpolation=cv.INTER_LINEAR)
+                            cv.imshow("Resized Image", resized_image)
+                            cv.waitKey(1)
+                        if robot:
+                            cp = np.array([closest_help_point[0],closest_help_point[1]])
+                            bp = np.array([selected_ball[0],selected_ball[1]])
+                            distance = np.linalg.norm(cp - bp)
+                            print("distance between helppoint and ball: ",distance)
+                            if distance > 5:
+                                print("drive to first point")
+                                angleCorrectionAndDrive(data,closest_help_point)
+                                print("drive to second point")
+                                angleCorrectionAndDrive(data,selected_ball)
+                            else:
+                                print("drive helpoint which is also helppoint")
+                                angleCorrectionAndDrive(data,closest_help_point)
+                    else:
+                        angleCorrectionAndDrive(data,closest_help_point)
 
 
 
