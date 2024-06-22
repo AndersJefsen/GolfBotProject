@@ -34,6 +34,7 @@ def calculate_angle(robot_position, ball_position, robot_orientation):
     print("here5")
     if abs(angle) > 180:
         angle = abs(angle) - 360
+ 
     return -angle
 
 def find_close_ball(robot_position, balls, robot_orientation):
@@ -105,7 +106,7 @@ def find_shortest_path(robot_position, robot_orientation, paired_help_points_and
 
     return None
 
-
+# Function to create n parallel lines to a given line
 def create_parallel_lines(p1, p2, n, spacing):
     # Calculate the direction vector from p1 to p2
     dx, dy = p2[0] - p1[0], p2[1] - p1[1]
