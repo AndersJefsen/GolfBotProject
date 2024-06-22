@@ -34,7 +34,7 @@ def getRobotAngle(data:Data, selected_point):
     return angle_to_turn,distance_to_drive, correctmid
      
 
-def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBall = False,iteration = 0):
+def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBall = False,iteration = 1):
   
     while True:
         angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
@@ -42,6 +42,9 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
         print("robot angle: ", data.robot.angle)
         print("robot midpoint: ", corrmid)
         print("angle to turn to ball: ", angle_to_turn)
+        print("isball: ",isBall)
+        print("ismiddleball: ",isMiddleBall)
+
         
         rf.drawAndShow(data,"Resized Image")
         if angle_to_turn < 2 and angle_to_turn > -2: 
@@ -52,7 +55,7 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
     
     if isMiddleBall is True and iteration == 0:
         distance_to_drive = distance_to_drive/2
-        iteration = 1
+        
     
     com.drive_Robot(distance_to_drive,data.socket)
     print("done driving")
@@ -61,8 +64,11 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
         angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
         print("check angle: ", angle_to_turn)
         print("check distance: ", distance_to_drive)
-    
-        if distance_to_drive > 5:
+
+        if distance_to_drive > 20 or iteration ==0:
+            print("distance to drive is: ", distance_to_drive)
+            time.sleep(5)
+            iteration = 1
             print("not arrived at point trying again with distance: ",distance_to_drive)
         
             angleCorrectionAndDrive(data,selected_point,isBall,isMiddleBall=False,iteration=iteration)
@@ -115,6 +121,7 @@ def høvl(data: Data,robot=True, image=None ):
                             bp = np.array([selected_ball[0],selected_ball[1]])
                             distance = np.linalg.norm(cp - bp)
                             print("distance between helppoint and ball: ",distance)
+                           
                             if distance > 5:
                                 print("drive to first point")
                                 angleCorrectionAndDrive(data,closest_help_point,isBall=False,isMiddleBall=False)
@@ -122,7 +129,7 @@ def høvl(data: Data,robot=True, image=None ):
                                 angleCorrectionAndDrive(data,selected_ball,isBall=True,isMiddleBall=False)
                             else:
                                 print("drive helpoint which is also helppoint")
-                                angleCorrectionAndDrive(data,closest_help_point,isBall=True, isMiddleBall=True)
+                                angleCorrectionAndDrive(data,closest_help_point,isBall=True, isMiddleBall=True,iteration=0)
                     else:
                         angleCorrectionAndDrive(data,closest_help_point,isBall=False,isMiddleBall=False)
 
@@ -225,9 +232,9 @@ def main(mode):
             data.helpPoints = []
             #if data.cross.con is not None:
                # data.find_Cross_HP()
-      
-            data.find_Corner_HP()
-            data.find_outer_ball_HP()
+            print("beforeHP")
+            data.find_HP()
+            print("AfterHP")
             
             rf.drawAndShow(data,"Resized Image")
 

@@ -177,7 +177,7 @@ class ImageProcessor:
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size, min_curvature, max_curvature)
 
     @staticmethod
-    def find_balls_hsv1(image, min_size=100, white_area_size=1000, padding=15, min_size2=400, max_size=10000):
+    def find_balls_hsv1(image, min_size=200, white_area_size=1000, padding=15, min_size2=400, max_size=10000):
         def detect_balls_original_mask(hsv_image, white_lower, white_upper):
             # Threshhold the HSV image to get only white colors
             white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
@@ -606,11 +606,12 @@ class ImageProcessor:
         return None  # Return None if no contour with exactly 12 corners is found
 
     @staticmethod
-    def draw_cross_corners(image,corners):
-    # Draw circles at each corner with the specified color
-        for point in corners:
+    def draw_cross_corners(image, corners):
+        # Draw circles and indices at each corner with the specified color
+        for i, point in enumerate(corners):
             x, y = point.ravel()
             cv2.circle(image, (x, y), 5, (128, 0, 128), -1)  # Purple color circles
+            cv2.putText(image, str(i), (x + 10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)  # Green color indices
         return image
 
 

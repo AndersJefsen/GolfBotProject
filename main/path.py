@@ -19,19 +19,21 @@ def find_contour_center(contour):
 
 def calculate_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
-
+def calculate_distance_correct(p1,p2):
+     cp = np.array([p1[0],p1[1]])
+     bp = np.array([p2[0],p2[1]])
+     distance = np.linalg.norm(cp - bp)
+     return distance
 def calculate_angle(robot_position, ball_position, robot_orientation):
-    print("here2")
-    print("robot_position",robot_position)
-    print("ball_position",ball_position)
-    print("robot_orientation",robot_orientation)
+    
+    
 
     dy = ball_position[1] - robot_position[1]
     dx = ball_position[0] - robot_position[0]
     angle_to_target_radians = math.atan2(dy, dx)
     angle_to_target_degrees = math.degrees(angle_to_target_radians)
     angle = robot_orientation + angle_to_target_degrees
-    print("here5")
+    
     if abs(angle) > 180:
         angle = abs(angle) - 360
     return -angle
@@ -40,6 +42,7 @@ def find_close_ball(robot_position, balls, robot_orientation):
     closest_ball = None
     min_distance = float('inf')
     angle_to_turn = 0
+    print("indside find_close_ball")
     for ball in balls:
         
         distance = calculate_distance(robot_position, ball)
@@ -75,6 +78,7 @@ def find_shortest_path(robot_position, robot_orientation, paired_help_points_and
                 
                 selected_ball = ComputerVision.ImageProcessor.find_contour_center(help_point.ball.con)
                 best_angle_to_turn = calculate_angle(robot_position, help_point.con, robot_orientation)
+                print("Best angle to turn: ", best_angle_to_turn)
 
     # If a help point is selected and it has a clear path to its associated ball
     if closest_help_point and selected_ball:
@@ -85,23 +89,22 @@ def find_shortest_path(robot_position, robot_orientation, paired_help_points_and
     if not closest_help_point:
         print("No accessible help point found, looking for the nearest drive point.")
         closest_drive_point, drive_point_distance, drive_angle_to_turn = find_close_ball(robot_position, drive_points, robot_orientation)
+        print("here0")
        
-       
-
-        if calculate_distance(robot_position, closest_drive_point) < 50:
+        print("closest drivepoint: ", closest_drive_point)
+        print("robot position: ", robot_position)
+        distance = calculate_distance_correct(robot_position, closest_drive_point)
+        if distance < 50:
            print("here1")
            index= drive_points.index(closest_drive_point)
            print("here2")
-           
-           
-           
-           
-        if closest_drive_point:
-            return drive_points[index+1%4],None ,drive_angle_to_turn,drive_point_distance
-            
-        else:
-            print("No accessible drive points found.")
-            return None, None,None,None
+           if closest_drive_point:
+                return drive_points[(index+1)%4],None ,drive_angle_to_turn,drive_point_distance
+        else:   
+            return closest_drive_point, None, drive_angle_to_turn, drive_point_distance
+    '''else:
+        print("No accessible drive points found.")
+        return None, None,None,None'''
 
     return None
 

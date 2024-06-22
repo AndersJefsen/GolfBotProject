@@ -103,7 +103,9 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                     data.addBalls(ballcontours, ballcordinats)
 
             if cross:
-                data.cross.con = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
+                crosscon = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
+                if crosscon is not None:
+                    data.cross.con = crosscon
                 if  data.cross.con is not None:
                     data.cross.corner_con = ComputerVision.ImageProcessor.find_cross_corners(data.cross.con)
 
@@ -164,8 +166,24 @@ def paint_output(data: Data, output_image):
       imageManipulationTools.drawHelpPoints(output_image, data.drivepoints,color=(0, 255, 0))
       #print("done painting")
       for area in data.outerArea.areas:
+          index = 0
           if area.type == "BL_corner" or area.type == "BR_corner" or area.type == "TR_corner" or area.type == "TL_corner":
               color = (0, 255, 0)
+             
+          elif area.type == "cross_corner":
+            if index == 0:
+                color = (179, 0, 255)
+            elif index == 1:
+                color = (0, 255, 255)
+            elif index == 2:
+                color = (255, 0, 255)
+            elif index == 3:
+                color = (255, 255, 0)
+            elif index == 4:
+                color = (255, 0, 0)
+            else:
+                color = (0, 0, 0)
+            index = index + 1
           else:
               color = (0, 0, 255)
 
