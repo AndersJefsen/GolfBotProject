@@ -82,14 +82,14 @@ class Data:
     def getAllHelpPointsCon(self):
         return [hp.con for hp in self.helpPoints]
     
-    def add_cross_factor(self,factor,corner,center):
+    def add_cross_factor(self,factor,corner,center,ballcenter):
         direction_vector = np.array(corner) - np.array(center)
         norm = np.linalg.norm(direction_vector)
         if norm == 0:
             raise ValueError("Center and corner cannot be the same point")
         normalized_vector = direction_vector / norm
         addition = factor * normalized_vector
-        new_point = np.array(corner) + addition
+        new_point = np.array(ballcenter) + addition
     
     # Extract the x and y additions for output if needed
         
@@ -127,7 +127,18 @@ class Data:
             return True
         else:
             return False
-
+    def is_pos_in_corner(self,pos):
+        for area in self.outerArea.areas:
+            if area.type == "BR_corner" or area.type == "BL_corner" or area.type == "TR_corner" or area.type == "TL_corner":
+                max_x = max([p[0] for p in area.points])
+                min_x = min([p[0] for p in area.points])
+                max_y = max([p[1] for p in area.points])
+                min_y = min([p[1] for p in area.points])
+            
+                if pos[0] > min_x and pos[0] < max_x and pos[1] > min_y and pos[1] < max_y:
+                    return True
+        return False
+        
     def find_HP(self):
         self.outerArea = OuterArea()
         print("dbug1")
@@ -149,7 +160,7 @@ class Data:
                     if(self.is_point_in_triangle_cross_product((center_x,center_y),area.points[0],area.points[1],area.points[2])):
                         in_outer_area = True
 
-                        new_point = self.add_cross_factor(factor,area.points[1],self.cross.center)
+                        new_point = self.add_cross_factor(factor,area.points[1],self.cross.center,(center_x,center_y))
                         print("newpoint: ",new_point)
                         print("x: ",center_x," y: ",center_y)
                         helpPointCord = HelpPoint((new_point[0],new_point[1]),whiteball)

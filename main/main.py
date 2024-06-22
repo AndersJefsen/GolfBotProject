@@ -34,7 +34,7 @@ def getRobotAngle(data:Data, selected_point):
     return angle_to_turn,distance_to_drive, correctmid
      
 
-def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBall = False,iteration = 1):
+def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBall = False,iteration = 1,isGoal = False):
   
     while True:
         angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
@@ -55,9 +55,15 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
     
     if isMiddleBall is True and iteration == 0:
         distance_to_drive = distance_to_drive/2
-        
-    
-    com.drive_Robot(distance_to_drive,data.socket)
+    if isGoal is True:
+        print("ITS A GOALPOINT SPECIAL DRIVE sleeping")
+        com.drive_Goal(distance_to_drive,data.socket)   
+        return 
+    elif(data.is_pos_in_corner(selected_point)):
+        print("ITS A CORNERPOINT SPECIAL DRIVE sleeping")
+        com.drive_Robot_Corner(distance_to_drive,data.socket)
+    else:
+        com.drive_Robot(distance_to_drive,data.socket)
     print("done driving")
 
     if isBall is False or iteration == 0:
@@ -65,9 +71,9 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
         print("check angle: ", angle_to_turn)
         print("check distance: ", distance_to_drive)
 
-        if distance_to_drive > 20 or iteration ==0:
+        if distance_to_drive > 10 or iteration ==0:
             print("distance to drive is: ", distance_to_drive)
-            time.sleep(5)
+         
             iteration = 1
             print("not arrived at point trying again with distance: ",distance_to_drive)
         
@@ -240,7 +246,7 @@ def main(mode):
 
             if(mode == "robot" ):
                 if(data.robot.detected and data.getAllBallCordinates()):
-                    data.robot.set_min_detections(10)
+                    data.robot.set_min_detections(15)
                     høvl(data,True, data.output_image)
                     '''
                     bestpos =  data.robot.get_best_robot_position()
@@ -284,26 +290,23 @@ def main(mode):
                 while len(data.whiteballs) == 0:
                     print("Operation Messi Commenced - wait ")
                             # Load the small goal
-                    currMidpoint,currAngle = data.robot.get_best_robot_position()
-                    correctmidCorrect = ComputerVision.ImageProcessor.convert_to_cartesian(
-                    currMidpoint)
+                    
 
-                    target_point = (150, 61)
-                    goal_point = (200,61)
+                    target_point = (130, 61)
+                    goal_point = (160,61)
                     angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(target_point),isBall=False,isMiddleBall=False)
+                    angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(goal_point),isBall=False,isMiddleBall=False,isGoal=True)
+                    '''
                     while(True):
                         angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,ComputerVision.ImageProcessor.convert_to_pixel(goal_point)) 
                         if angle_to_turn < 2 and angle_to_turn > -2:
                             print("correct angle achived: ",angle_to_turn)
                             break
-                        com.turn_Robot( angle_to_turn,data.socket)
+                        com.turn_Robot( angle_to_turn,data.socket)'''
                     com.release(data.socket)
+
                     #result = com.move_to_position_and_release(target_point, correctmidCorrect, currAngle, data.socket)
-                    if result:
-                        print("Operation BigGOALGOAL successful")
-                    else:
-                        print("Operation Goal got fuckd mate")
-                    break
+                   
             
             if(mode == "test"):
                 høvl(data,False, data.output_image)

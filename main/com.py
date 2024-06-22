@@ -109,7 +109,14 @@ def drive_Robot(distance_to_drive,sock):
     command = f"MOVE_COLLECT {distance_to_drive}"
     res = send_command(command, sock)
     return res
-
+def drive_Robot_Corner(distance_to_drive,sock):
+    command = f"MOVE_CORNER {distance_to_drive}"
+    res = send_command(command, sock)
+    return res
+def drive_Goal(distance_to_drive,sock):
+    command = f"MOVE_GOAL {distance_to_drive}"
+    res = send_command(command, sock)
+    return res
 # Example usage
 # point = (x_target, y_target)
 # pos = (x_current, y_current)
