@@ -8,7 +8,7 @@ import numpy as np
 import sys
 import os
 import detectionTools
-import visualisation
+
 from data import Data as Data
 import imageManipulationTools
 import time
@@ -29,37 +29,37 @@ def getRobotAngle(data:Data, selected_point):
             correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
             angle_to_turn = path.calculate_angle(correctmid,ComputerVision.ImageProcessor.convert_to_cartesian(selected_point),currAngle)
             distance_to_drive = path.calculate_distance(correctmid,ComputerVision.ImageProcessor.convert_to_cartesian(selected_point))
-                   
-                            
+
+
     return angle_to_turn,distance_to_drive
-     
+
 
 def angleCorrectionAndDrive(data:Data, selected_point):
-  
+
    while True:
     angle_to_turn, distance_to_drive =  getRobotAngle(data,selected_point)
     print("angle to turn to ball: ", angle_to_turn)
     rf.drawAndShow(data,"Resized Image")
-    if angle_to_turn < 2 and angle_to_turn > -2: 
+    if angle_to_turn < 2 and angle_to_turn > -2:
         print("correct angle achived: ",angle_to_turn)
         break
     print(com.turn_Robot( angle_to_turn,data.socket))
-   
-    
+
+
    print(com.drive_Robot(distance_to_drive,data.socket))
-   
+
    angle_to_turn, distance_to_drive =  getRobotAngle(data,selected_point)
    if distance_to_drive > 5:
        print("not arrived at point trying again")
        angleCorrectionAndDrive(data,selected_point)
 
 
-    
+
 
 def høvl(data: Data,robot=True, image=None ):
         if(data.robot.detected and data.getAllBallCordinates() is not None):
                     currMidpoint,currAngle = data.robot.get_best_robot_position()
-                    
+
 
                     contours=[]
                     egg_contour = data.egg.con
@@ -71,9 +71,9 @@ def høvl(data: Data,robot=True, image=None ):
                     orange_ball_contour = data.orangeBall.con
                     if orange_ball_contour is not None:
                         contours.extend(orange_ball_contour)
-                    
+
                     helpPoints=data.helpPoints
-                    
+
                     drivepoints=data.drivepoints
 
                     closest_help_point, selected_ball,best_angle_to_turn, min_distance = path.find_shortest_path(data.robot.midpoint,data.robot.angle, helpPoints, contours,drivepoints) #data.helppoints.coords"""
@@ -110,7 +110,7 @@ def main(mode):
         print("window mode")
     elif mode == "test":
         print("test mode")
-   
+
     elif mode == "videotest":
         video_path = "../master.mp4"  # Specify the path to the video file in the parent folder
         data.wincap = cv.VideoCapture(video_path)
@@ -122,22 +122,22 @@ def main(mode):
         print("Invalid mode")
         return
 
-  
+
     if mode == "robot":
         data.socket = com.connect_to_robot()
 
     if mode == "Goal":
         data.socket = com.connect_to_robot()
-    
+
     gui = False
 
     vision_image = Vision('ball.png')
 
     vision_image.init_control_gui()
 
-    data.testpicturename = 'TESTER.jpg'
+    data.testpicturename = 'outerball.jpg'
 
-    
+
 
 
     findArena = False
@@ -170,12 +170,12 @@ def main(mode):
             break
 
 
-  
+
 
 
 
     loop_time = time()
-    
+
     while(True):
         try:
             if(data.robot.detected):
@@ -186,16 +186,16 @@ def main(mode):
             print("update positions")
             rf.update_positions(data,True,True,True,True,True,30)
             print("done updating positions")
-            
+
             # painting time
-            
+
             data.helpPoints = []
             #if data.cross.con is not None:
                # data.find_Cross_HP()
-      
+
             data.find_Corner_HP()
             data.find_outer_ball_HP()
-            
+
             rf.drawAndShow(data,"Resized Image")
 
             if(mode == "robot" ):
@@ -255,7 +255,7 @@ def main(mode):
                     else:
                         print("Operation Goal got fuckd mate")
                     break
-            
+
             if(mode == "test"):
                 høvl(data,False, data.output_image)
             if (mode== "videotest"):
@@ -287,7 +287,7 @@ def main(mode):
                 image_center = ComputerVision.ImageProcessor.convert_to_cartesian(image_center)
                 #print("Image Center - Cartisan coord q:", image_center)
                 if data.robot.detected:
-                     
+
                     currMidpoint,currAngle = data.robot.get_best_robot_position()
                     print(currAngle)
                     correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
@@ -305,11 +305,11 @@ def main(mode):
         except Exception as e:
             print(f"An error occurred while trying to detect objects: {e}")
             break
-    
-                    
 
 
-                    
+
+
+
     cv.destroyAllWindows()
     if mode == "window":
         data.wincap.release()
