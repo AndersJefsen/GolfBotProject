@@ -230,7 +230,7 @@ class ImageProcessor:
                         if perimeter == 0:
                             continue
                         circularity = 4 * np.pi * (area / (perimeter * perimeter))
-                        if 0.7 <= circularity <= 1.2:
+                        if 0.8 <= circularity <= 1.1:
                             ball_contours.append(cnt)
             return ball_contours, white_mask
 
@@ -264,10 +264,10 @@ class ImageProcessor:
 
         # Define multiple mask ranges
         mask_ranges = [
-            (np.array([0, 0, 245], dtype="uint8"), np.array([180, 60, 255], dtype="uint8")),  # Normal lighting
-            (np.array([0, 0, 200], dtype="uint8"), np.array([180, 60, 255], dtype="uint8")),  # Normal lighting
+            (np.array([0, 0, 245], dtype="uint8"), np.array([180, 60, 255], dtype="uint8")),  # bright lighting
+            #(np.array([0, 0, 200], dtype="uint8"), np.array([180, 60, 255], dtype="uint8")),  # Normal lighting
             (np.array([0, 0, 150], dtype="uint8"), np.array([180, 90, 255], dtype="uint8")),  # Darker conditions
-            (np.array([0, 0, 100], dtype="uint8"), np.array([180, 100, 255], dtype="uint8"))  # Even more lenient
+            #(np.array([0, 0, 100], dtype="uint8"), np.array([180, 100, 255], dtype="uint8"))  # Even more lenient
         ]
 
         ball_contours = []
