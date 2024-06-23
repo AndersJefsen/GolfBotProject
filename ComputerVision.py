@@ -325,7 +325,10 @@ class ImageProcessor:
         green_lower = np.array([36, 25, 25], dtype="uint8")
         green_upper = np.array([86, 255, 255], dtype="uint8")
 
+
+
         green_mask = ImageProcessor.apply_hsv_filter(indput_Image, green_lower, green_upper)
+
 
         green_mask = ImageProcessor.clean_mask(green_mask)
 
