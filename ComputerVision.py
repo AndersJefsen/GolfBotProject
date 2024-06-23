@@ -863,7 +863,7 @@ class ImageProcessor:
         #print(f"Robot location in pixel:({x},{y})")
         #print(f"Distance between robot and midpoint: {B}")
         #print(f"Pixel offset x: {pixel_offset_x}")
-        print(f"True location of the robot: ({true_x}, {true_y})")
+        #print(f"True location of the robot: ({true_x}, {true_y})")
         #print(f"Angle from robot to midpoint: {angle} degrees")
 
         return true_x, true_y

@@ -135,7 +135,7 @@ def main(mode):
 
     vision_image.init_control_gui()
 
-    data.testpicturename = 'outerball.jpg'
+    data.testpicturename = 'nymask.jpg'
 
 
 
