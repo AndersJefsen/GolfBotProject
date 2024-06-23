@@ -44,14 +44,15 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
   
     while True:
         angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
+        '''
         print("selected point: ", ComputerVision.ImageProcessor.convert_to_cartesian(selected_point))  
         print("robot angle: ", data.robot.angle)
         print("robot midpoint: ", corrmid)
-        print("angle to turn to ball: ", angle_to_turn)
+       
         print("isball: ",isBall)
         print("ismiddleball: ",isMiddleBall)
-
-        
+        '''
+        print("angle to turn to ball: ", angle_to_turn)
         rf.drawAndShow(data,"Resized Image")
         if angle_to_turn < 2 and angle_to_turn > -2: 
             print("correct angle achived: ",angle_to_turn)
@@ -62,11 +63,11 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
     if isMiddleBall is True and iteration == 0:
         distance_to_drive = distance_to_drive/2
     if isGoal is True:
-        print("ITS A GOALPOINT SPECIAL DRIVE sleeping")
+        print("ITS A GOALPOINT SPECIAL DRIVE ")
         com.drive_Goal(distance_to_drive,data.socket)   
         return 
     elif(data.is_pos_in_corner(selected_point)):
-        print("ITS A CORNERPOINT SPECIAL DRIVE sleeping")
+        print("ITS A CORNERPOINT SPECIAL DRIVE ")
         com.drive_Robot_Corner(distance_to_drive,data.socket)
     else:
         com.drive_Robot(distance_to_drive,data.socket)
@@ -136,6 +137,7 @@ def høvlOrange(data:Data):
                 
             
         else:
+            print("PATH NOT CLEAR TRYING TO FIND DRIVEPOINT")
             drivepoint, drive_point_distance, drive_angle_to_turn = path.find_close_ball(robotPos, data.drivepoints, data.robot.angle)
             distance = path.calculate_distance_correct(robotPos, drivepoint)
 
@@ -175,12 +177,12 @@ def høvl(data: Data,robot=True, image=None):
                     
                     
                     drivepoints=data.drivepoints
-                    print("drivepoints: ",drivepoints)
+                    
                    
                     closest_help_point, selected_ball,best_angle_to_turn, min_distance = path.find_shortest_path(data.robot.midpoint,data.robot.angle, helpPoints, contours,drivepoints) #data.helppoints.coords"""
                   
 
-                    print("here")
+                    
                     if selected_ball is not None:
                         #for point in helppoints:
                             #cv.circle(image, (int(point.con[0]), int(point.con[1])), 5, (0, 255, 0), -1)  # Green points
@@ -198,7 +200,7 @@ def høvl(data: Data,robot=True, image=None):
                             cp = np.array([closest_help_point[0],closest_help_point[1]])
                             bp = np.array([selected_ball[0],selected_ball[1]])
                             distance = np.linalg.norm(cp - bp)
-                            print("distance between helppoint and ball: ",distance)
+                           
                            
                             if distance > 5:
                                 print("drive to first point")
@@ -209,6 +211,7 @@ def høvl(data: Data,robot=True, image=None):
                                 print("drive helpoint which is also helppoint")
                                 angleCorrectionAndDrive(data,closest_help_point,isBall=True, isMiddleBall=True,iteration=0)
                     else:
+                        print("No availerble helpoint trying drivepoint")
                         angleCorrectionAndDrive(data,closest_help_point,isBall=False,isMiddleBall=False)
 
 
@@ -286,21 +289,22 @@ def main(mode):
         data.helpPoints = []
         #if data.cross.con is not None:
             # data.find_Cross_HP()
-        print("beforeHP")
+        print("finding helppoints")
         data.find_HP()
-        print("AfterHP")
+      
         
-        print("before drawandshow")
+        print("Drawing image and showing it")
         rf.drawAndShow(data,"Resized Image")
-        print("after drawandshow")
+       
+       
 
         if(mode == "robot" ):
             if(data.robot.detected and data.getAllBallCordinates()):
                 data.timesNotDetected = 0
                 data.robot.set_min_detections(5)
-                print("before høvl")
+                print("HØVL MODE")
                 høvl(data,True, data.output_image)
-                print("after høvl")
+                print("HØVL DONE")
             
 
             if len(data.whiteballs) == 0:

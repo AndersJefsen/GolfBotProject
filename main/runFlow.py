@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
 def findArena_flow(screenshot,output_image,data:Data):
     findArena, output_image,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner, filtered_contoures = ComputerVision.ImageProcessor.find_Arena(screenshot, output_image)
-    print("her",findArena,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
+    print("found arena corners",findArena,bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner)
     if findArena:
         arenaCorners = []
         arenaCorners.append(bottom_left_corner)
@@ -98,6 +98,11 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                 #data.orangeBall.con = None
                 orangecon = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg)
                 if orangecon is not None:
+                    ''' print("DEBUG: ", len(orangecon))
+                    for con in orangecon:
+                            print("DEBUG Area: ", cv.contourArea(con))'''
+                    if len(orangecon) > 1:
+                        print("WARNING MORE THAN ONE ORANGE BALL DETECTED")
                     data.orangeBall.con = orangecon
               
 
@@ -157,7 +162,8 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                     else:
 
                         data.robot.detected = False
-            print("done with iterations in update position robot detected = ",data.robot.detected )
+        
+        print("done with iterations in update position robot detected = ",data.robot.detected )
 def paint_output(data: Data, output_image):
       #print("painting")
       #paint white balls
