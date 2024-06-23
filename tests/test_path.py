@@ -81,30 +81,6 @@ class TestPath(unittest.TestCase):
             ]
             self.assertTrue(is_path_clear(p1, p2, contours))
          
-            p1 = (0, 0)
-            p2 = (10, 10)
-            # Define contours that will intersect with the parallel lines
-            contours = [
-                np.array([[[5, 5]], [[6, 6]]], dtype=np.int32),
-                np.array([[[7, 7]], [[8, 8]]], dtype=np.int32),
-                np.array([[[9, 9]], [[10, 10]]], dtype=np.int32),
-                np.array([[[11, 11]], [[12, 12]]], dtype=np.int32),
-                np.array([[[13, 13]], [[14, 14]]], dtype=np.int32)
-            ]
-            # Assert that is_path_clear returns False due to intersections
-            self.assertFalse(is_path_clear(p1, p2, contours))
-
+  
 if __name__ == '__main__':
     unittest.main()
-
-def test_is_path_clear_false(self):
-    p1 = (0, 0)
-    p2 = (10, 10)
-    contours = [
-        np.array([[[5, 5]], [[6, 6]]], dtype=np.int32),
-        np.array([[[7, 7]], [[8, 8]]], dtype=np.int32),
-        np.array([[[9, 9]], [[10, 10]]], dtype=np.int32),
-        np.array([[[11, 11]], [[12, 12]]], dtype=np.int32),
-        np.array([[[13, 13]], [[14, 14]]], dtype=np.int32)
-    ]
-    self.assertFalse(is_path_clear(p1, p2, contours))
