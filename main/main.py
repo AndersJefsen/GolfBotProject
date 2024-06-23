@@ -19,9 +19,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision
 
 def main(mode):
-    global last_ball_detection_time
     data = Data()
     data.mode = mode
+    start_time = time.time()
+    timer_duration = 390 #this is seconds so 6.5 minutes
     if mode == "camera" or mode == "robot" or mode == "Goal":
         data.wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
@@ -95,10 +96,14 @@ def main(mode):
         
         print("Drawing image and showing it")
         rf.drawAndShow(data,"Resized Image")
-       
-       
+        elapsed_time = time.time() - start_time
+        remaining_time = timer_duration - elapsed_time
+        print(f"Time remaining for mandetory messi: {remaining_time:.2f} seconds")
 
         if(mode == "robot" ):
+            if(remaining_time < 0):
+                print("Time is up")
+                rf.messi(data)
             if(data.robot.detected and data.getAllBallCordinates()):
                 data.timesNotDetected = 0
                 data.robot.set_min_detections(5)
