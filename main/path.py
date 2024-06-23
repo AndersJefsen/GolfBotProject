@@ -54,7 +54,7 @@ def find_close_ball(robot_position, balls, robot_orientation):
             
             angle_to_turn = calculate_angle(robot_position, ball, robot_orientation)
             
-    return closest_ball, min_distance, angle_to_turn
+    return closest_ball,None, min_distance, angle_to_turn
 
 def find_shortest_path(robot_position, robot_orientation, paired_help_points_and_balls, contours, drive_points):
     # If no help points are available, use drive points as a fallback

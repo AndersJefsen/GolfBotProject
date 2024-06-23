@@ -223,142 +223,107 @@ def main(mode):
     
     
     while(True):
-        try:
-            if(data.robot.detected):
-                data.resetRobot()
-            data.output_image = None
-            #this is how many iterations you want to run detection on before sending the robot commands with the collected data
-            #if set to 1 its working like it did before
-            print("update positions")
-            rf.update_positions(data,True,True,True,True,True,30)
-            print("done updating positions")
-            
-            # painting time
-            
-            data.helpPoints = []
-            #if data.cross.con is not None:
-               # data.find_Cross_HP()
-            print("beforeHP")
-            data.find_HP()
-            print("AfterHP")
-            
-            rf.drawAndShow(data,"Resized Image")
-
-            if(mode == "robot" ):
-                if(data.robot.detected and data.getAllBallCordinates()):
-                    data.robot.set_min_detections(15)
-                    høvl(data,True, data.output_image)
-                    '''
-                    bestpos =  data.robot.get_best_robot_position()
-                    if(bestpos is not None):
-                        currMidpoint,currAngle = bestpos 
-                        correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
-                        
-                        print("Robot orientation sss:")
-                        print(currAngle)
-
-                        #first turn
-                        print("command robot")
-                        com.command_robot_turn(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
-                        print("command robot done")
-                        print("command robot move")
-                         #move
-                        com.command_robot_move(correctmid, data.getAllBallCordinates(),data.socket)
-                        print("command robot done")
-
-                        
-                        data.resetRobot()
-                        #get new position
-                        
-                        rf.update_positions(data,True,False,False,False,False,10)
-                        newpos =  data.robot.get_best_robot_position()
-                        if(newpos is not None):
-                            currMidpoint,currAngle = newpos
-                            correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
-                            #turn to corrected position
-                            rf.drawAndShow(data)
-                            com.command_robot_turn(correctmid, data.getAllBallCordinates(),currAngle,data.socket)
-                            print("command robot done")
-                       
-                    else:
-                        print("No best position found")
-                    #start_time = time.time()
-
-                    #last_ball_detection_time = time.time()
-                    #loop_time = time.time()
-                    '''
-                while len(data.whiteballs) == 0:
-                    print("Operation Messi Commenced - wait ")
-                            # Load the small goal
-                    
-
-                    target_point = (130, 61)
-                    goal_point = (160,61)
-                    angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(target_point),isBall=False,isMiddleBall=False)
-                    angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(goal_point),isBall=False,isMiddleBall=False,isGoal=True)
-                    '''
-                    while(True):
-                        angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,ComputerVision.ImageProcessor.convert_to_pixel(goal_point)) 
-                        if angle_to_turn < 2 and angle_to_turn > -2:
-                            print("correct angle achived: ",angle_to_turn)
-                            break
-                        com.turn_Robot( angle_to_turn,data.socket)'''
-                    com.release(data.socket)
-
-                    #result = com.move_to_position_and_release(target_point, correctmidCorrect, currAngle, data.socket)
-                   
-            
-            if(mode == "test"):
-                høvl(data,False, data.output_image)
-            if (mode== "videotest"):
-                høvl(data,False, data.output_image)
-            if (mode == "Goal"):
-                if data.robot.detected:
-                    currMidpoint,currAngle = data.robot.get_best_robot_position()
-                    print("Robot orientation:")
-                    print(currAngle)
-                    print(data.robot.midpoint)
-                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
-                        currMidpoint
-                    )
-
-                    target_point = (12, 61.5)
-
-                    result = com.move_to_position_and_release(target_point, correctmid, currAngle, data.socket)
-                    if result:
-                        print("Operation BigGOALGOAL successful")
-                    else:
-                        print("Operation Goal got fuckd mate")
-
-            if (mode == "camera"):
-
-                image_center = (data.screenshot.shape[1] // 2, data.screenshot.shape[0] // 2)
-                #print("Image Center - Pixel Coordinates:", image_center)
-                cv.circle(data.screenshot,image_center, radius= 10 , color=(255,0,0),thickness=-1)
-
-                image_center = ComputerVision.ImageProcessor.convert_to_cartesian(image_center)
-                #print("Image Center - Cartisan coord q:", image_center)
-                if data.robot.detected:
-                     
-                    currMidpoint,currAngle = data.robot.get_best_robot_position()
-                    print(currAngle)
-                    correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
-                        currMidpoint
-                    )
-                    print(correctmid)
-                    #Ik ud med riven Viktor, det her for hjælp til Anders Offset beregning via fysisk pixel midterpunkt ud fra kameraet's position.
-                    closest_ball, distance_to_ball, angle_to_turn = path.find_close_ball(correctmid, data.getAllBallCordinates(), currAngle)
-                    print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
-
-                    print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
-
-                    if cv.waitKey(1) & 0xFF == ord('q'):
-                        break
-        except Exception as e:
-            print(f"An error occurred while trying to detect objects: {e}")
-            break
     
+        if(data.robot.detected):
+            data.resetRobot()
+        data.output_image = None
+        #this is how many iterations you want to run detection on before sending the robot commands with the collected data
+        #if set to 1 its working like it did before
+        print("update positions")
+        rf.update_positions(data,True,True,True,True,True,30)
+        print("done updating positions")
+        
+        # painting time
+        
+        data.helpPoints = []
+        #if data.cross.con is not None:
+            # data.find_Cross_HP()
+        print("beforeHP")
+        data.find_HP()
+        print("AfterHP")
+        
+        print("before drawandshow")
+        rf.drawAndShow(data,"Resized Image")
+        print("after drawandshow")
+
+        if(mode == "robot" ):
+            if(data.robot.detected and data.getAllBallCordinates()):
+                data.robot.set_min_detections(15)
+                print("before høvl")
+                høvl(data,True, data.output_image)
+                print("after høvl")
+                
+            while len(data.whiteballs) == 0:
+                print("Operation Messi Commenced - wait ")
+                        # Load the small goal'
+                if(data.orangeBall.con is not None):
+                    data.find_orange_HP()
+                    høvl(data,True, data.output_image)
+
+                target_point = (130, 61)
+                goal_point = (160,61)
+                angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(target_point),isBall=False,isMiddleBall=False)
+                angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(goal_point),isBall=False,isMiddleBall=False,isGoal=True)
+                '''
+                while(True):
+                    angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,ComputerVision.ImageProcessor.convert_to_pixel(goal_point)) 
+                    if angle_to_turn < 2 and angle_to_turn > -2:
+                        print("correct angle achived: ",angle_to_turn)
+                        break
+                    com.turn_Robot( angle_to_turn,data.socket)'''
+                com.release(data.socket)
+
+                #result = com.move_to_position_and_release(target_point, correctmidCorrect, currAngle, data.socket)
+                
+        
+        if(mode == "test"):
+            høvl(data,False, data.output_image)
+        if (mode== "videotest"):
+            høvl(data,False, data.output_image)
+        if (mode == "Goal"):
+            if data.robot.detected:
+                currMidpoint,currAngle = data.robot.get_best_robot_position()
+                print("Robot orientation:")
+                print(currAngle)
+                print(data.robot.midpoint)
+                correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
+                    currMidpoint
+                )
+
+                target_point = (12, 61.5)
+
+                result = com.move_to_position_and_release(target_point, correctmid, currAngle, data.socket)
+                if result:
+                    print("Operation BigGOALGOAL successful")
+                else:
+                    print("Operation Goal got fuckd mate")
+
+        if (mode == "camera"):
+
+            image_center = (data.screenshot.shape[1] // 2, data.screenshot.shape[0] // 2)
+            #print("Image Center - Pixel Coordinates:", image_center)
+            cv.circle(data.screenshot,image_center, radius= 10 , color=(255,0,0),thickness=-1)
+
+            image_center = ComputerVision.ImageProcessor.convert_to_cartesian(image_center)
+            #print("Image Center - Cartisan coord q:", image_center)
+            if data.robot.detected:
                     
+                currMidpoint,currAngle = data.robot.get_best_robot_position()
+                print(currAngle)
+                correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(
+                    currMidpoint
+                )
+                print(correctmid)
+                #Ik ud med riven Viktor, det her for hjælp til Anders Offset beregning via fysisk pixel midterpunkt ud fra kameraet's position.
+                closest_ball, distance_to_ball, angle_to_turn = path.find_close_ball(correctmid, data.getAllBallCordinates(), currAngle)
+                print(f"Closest ball: {closest_ball}, Distance: {distance_to_ball}, Angle to turn: {angle_to_turn}")
+
+                print(f"TURN {angle_to_turn}", f"FORWARD {distance_to_ball}")
+
+                if cv.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+                
 
 
                     

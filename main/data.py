@@ -138,7 +138,73 @@ class Data:
                 if pos[0] > min_x and pos[0] < max_x and pos[1] > min_y and pos[1] < max_y:
                     return True
         return False
-        
+    def find_orange_HP(self):
+        if self.orangeBall.con:
+            for contour in self.orangeBall.con:
+                M = cv.moments(contour)
+                if M['m00'] != 0:
+                    center_x = int(M['m10'] / M['m00'])
+                    center_y = int(M['m01'] / M['m00']) 
+            factor = 150
+            for area in self.outerArea.areas:
+                if area.type == "cross_corner":
+                    if(self.is_point_in_triangle_cross_product((center_x,center_y),area.points[0],area.points[1],area.points[2])):
+                        in_outer_area = True
+
+                        new_point = self.add_cross_factor(factor,area.points[1],self.cross.center,(center_x,center_y))
+                        print("newpoint: ",new_point)
+                        print("x: ",center_x," y: ",center_y)
+                        helpPointCord = HelpPoint((new_point[0],new_point[1]),self.orangeBall)
+                       
+                        
+                       
+                        self.helpPoints.append(helpPointCord)
+                        
+                else:      
+                    max_x = max([p[0] for p in area.points])
+                    min_x = min([p[0] for p in area.points])
+                    max_y = max([p[1] for p in area.points])
+                    min_y = min([p[1] for p in area.points])
+                
+                    if center_x > min_x and center_x < max_x and center_y > min_y and center_y < max_y:
+                        in_outer_area = True
+                        x_addision = 0
+                        y_addision = 0
+                        
+                        
+                        if area.type == "BL_corner":
+                            x_addision =  factor
+                            y_addision = -factor
+                        elif area.type == "BR_corner":
+                            x_addision = - factor
+                            y_addision = - factor
+                        elif area.type == "TR_corner":
+                            x_addision = - factor
+                            y_addision =  factor
+                        elif area.type == "TL_corner":
+                            x_addision =  factor
+                            y_addision =  factor
+                        elif area.type == "left_side":
+                            x_addision =  factor
+                        elif area.type == "right_side":
+                            x_addision = - factor
+                        elif area.type == "top_side":
+                            y_addision =  factor
+                        elif area.type == "bottom_side":
+                            y_addision = - factor
+                    
+                    
+                        orangeball_center = np.array([center_x, center_y])
+                        helpPointCord = HelpPoint((orangeball_center[0] + x_addision, orangeball_center[1] + y_addision),self.orangeBall)
+                        self.helpPoints.append(helpPointCord)
+                    
+                        
+                        break
+            if in_outer_area == False:
+                whiteball_center = np.array([center_x, center_y])
+                helpPointCord = HelpPoint((whiteball_center[0], whiteball_center[1]),self.orangeBall)
+                self.helpPoints.append(helpPointCord)
+
     def find_HP(self):
         self.outerArea = OuterArea()
         print("dbug1")

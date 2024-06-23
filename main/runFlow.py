@@ -94,7 +94,7 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                 data.egg.con = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg, 2000, 8000)
 
             if orange:
-                data.orangeBall.con = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
+                data.orangeBall.con = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 50, 800)
 
             if balls:
                 ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
@@ -122,6 +122,7 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                         
                       #  data.robot.midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1], data)
                         data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data)
+                        #data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot_peter(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data, data.arenaCorners)
                         data.robot.add_detection(data.robot.midpoint, data.robot.angle)
                     
                         data.robot.detected = True
@@ -143,6 +144,7 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                         #data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(
                            # data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1],data)
                         data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data)
+                        #data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot_peter(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data, data.arenaCorners)
                         data.robot.add_detection(data.robot.midpoint, data.robot.angle)
 
                     else:

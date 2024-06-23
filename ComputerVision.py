@@ -159,9 +159,9 @@ class ImageProcessor:
         return ImageProcessor.filter_circles(contours, min_size, max_size,min_curvature, max_curvature)
 
     @staticmethod
-    def find_orangeball_hsv(image, min_size=100, max_size=400):
+    def find_orangeball_hsv(image, min_size=50, max_size=600):
         orange_lower = np.array([15, 100, 20], dtype="uint8")
-        orange_upper = np.array([30, 255, 255], dtype="uint8")
+        orange_upper = np.array([41, 255, 255], dtype="uint8")
         return ImageProcessor.detect_and_filter_objects(image, orange_lower, orange_upper, min_size, max_size)
 
     @staticmethod
@@ -177,7 +177,7 @@ class ImageProcessor:
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size, min_curvature, max_curvature)
 
     @staticmethod
-    def find_balls_hsv1(image, min_size=200, white_area_size=1000, padding=15, min_size2=400, max_size=10000):
+    def find_balls_hsv1(image, min_size=200, white_area_size=500, padding=15, min_size2=400, max_size=500):
         def detect_balls_original_mask(hsv_image, white_lower, white_upper):
             # Threshhold the HSV image to get only white colors
             white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
@@ -839,6 +839,61 @@ class ImageProcessor:
         new_cY = cY + adjustment_y
         
         return new_cX, new_cY
+    @staticmethod
+    def convert_distance_to_cm(pixel_distance):
+        bottom_left, bottom_right, top_left, top_right = ImageProcessor.corners.values()
+        x_scale = 166.7 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
+        return pixel_distance * x_scale
+    @staticmethod
+    # Peters version
+    def get_corrected_coordinates_robot_peter(x, y, data, corners):
+        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = corners
+     
+        if None in corners:
+            print("Some corners are missing.")
+            return None
+
+        mid_x = (bottom_left_corner[0] + bottom_right_corner[0] + top_left_corner[0] + top_right_corner[0]) // 4
+        mid_y = (bottom_left_corner[1] + bottom_right_corner[1] + top_left_corner[1] + top_right_corner[1]) // 4
+
+        # Calculate the Euclidean distance (B) between the midpoint and the robot's location
+       
+        B = math.sqrt((x - mid_x) ** 2 + (y - mid_y) ** 2)
+        
+        cm_B = ImageProcessor.convert_distance_to_cm(B)
+       
+        # Given heights
+        H = 168
+        h = 31
+
+        
+        # Calculate the true horizontal distance (x)
+        cm_x_offset = cm_B * (h / H)
+        
+        # convert x_offset to pixel
+        pixel_offset_x, _ = ImageProcessor.convert_to_pixel((cm_x_offset, 0))
+        ## Det skal kigges på
+        pixel_offset_x -= ImageProcessor.convert_to_pixel((0, 0))[0]  # Subtract base offset
+
+        # find angle from robot to midpoint
+        dx = mid_x - x
+        dy = mid_y - y
+        angle = math.degrees(math.atan2(dy, dx))
+        radian_angle = np.deg2rad(angle)
+        
+        # Calculate the true location of the robot using trigonometry
+        true_x = x + pixel_offset_x * math.cos(radian_angle)
+        true_y = y + pixel_offset_x * math.sin(radian_angle)
+        #print(f"Robot location in pixel:({x},{y})")
+        #print(f"Distance between robot and midpoint: {B}")
+        #print(f"Pixel offset x: {pixel_offset_x}")
+        #print(f"True location of the robot: ({true_x}, {true_y})")
+        #print(f"Angle from robot to midpoint: {angle} degrees")
+
+        return true_x, true_y
+
+    #print(f"Robot location in pixel:({x},{y})")
+
     '''
     @staticmethod
     def get_corrected_coordinates_robot(x,y):
