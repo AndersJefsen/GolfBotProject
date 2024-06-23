@@ -159,9 +159,9 @@ class ImageProcessor:
         return ImageProcessor.filter_circles(contours, min_size, max_size,min_curvature, max_curvature)
 
     @staticmethod
-    def find_orangeball_hsv(image, min_size=100, max_size=400):
+    def find_orangeball_hsv(image, min_size=50, max_size=600):
         orange_lower = np.array([15, 100, 20], dtype="uint8")
-        orange_upper = np.array([30, 255, 255], dtype="uint8")
+        orange_upper = np.array([41, 255, 255], dtype="uint8")
         return ImageProcessor.detect_and_filter_objects(image, orange_lower, orange_upper, min_size, max_size)
 
     @staticmethod
@@ -177,7 +177,7 @@ class ImageProcessor:
         return ImageProcessor.detect_and_filter_objects(image, white_lower, white_upper, min_size, max_size, min_curvature, max_curvature)
 
     @staticmethod
-    def find_balls_hsv1(image, min_size=300, white_area_size=1000, padding=15, min_size2=400, max_size=10000):
+    def find_balls_hsv1(image, min_size=200, white_area_size=500, padding=15, min_size2=400, max_size=500):
         def detect_balls_original_mask(hsv_image, white_lower, white_upper):
             # Threshhold the HSV image to get only white colors
             white_mask = cv2.inRange(hsv_image, white_lower, white_upper)
@@ -314,7 +314,7 @@ class ImageProcessor:
 
         return ball_contours
     @staticmethod
-    def find_robot(indput_Image, min_size=100, max_size=400):
+    def find_robot(indput_Image, min_size=100, max_size=2000):
        
 
         # blue_lower = np.array([80, 66, 100], dtype="uint8")
@@ -322,13 +322,11 @@ class ImageProcessor:
         #blue_upper = np.array([131, 255, 255], dtype="uint8")
         #blue_mask=ImageProcessor.apply_hsv_filter(indput_Image, blue_lower,blue_upper)
         # Når robotten har grønne cirkler
-        green_lower = np.array([36, 25, 25], dtype="uint8")
-        green_upper = np.array([86, 255, 255], dtype="uint8")
 
-
+        green_lower = np.array([20, 25, 25], dtype="uint8")
+        green_upper = np.array([90, 255, 255], dtype="uint8")
 
         green_mask = ImageProcessor.apply_hsv_filter(indput_Image, green_lower, green_upper)
-
 
         green_mask = ImageProcessor.clean_mask(green_mask)
 
@@ -608,11 +606,12 @@ class ImageProcessor:
         return None  # Return None if no contour with exactly 12 corners is found
 
     @staticmethod
-    def draw_cross_corners(image,corners):
-    # Draw circles at each corner with the specified color
-        for point in corners:
+    def draw_cross_corners(image, corners):
+        # Draw circles and indices at each corner with the specified color
+        for i, point in enumerate(corners):
             x, y = point.ravel()
             cv2.circle(image, (x, y), 5, (128, 0, 128), -1)  # Purple color circles
+            cv2.putText(image, str(i), (x + 10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)  # Green color indices
         return image
 
 
@@ -806,30 +805,50 @@ class ImageProcessor:
         if diff > 180:
             diff = 360 - diff
         return diff
-    """
+    
+    
+    
+
     @staticmethod
-    def find_map_midpoint():
-        bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = corners
-        if None in corners:
-            print("Some corners are missing.")
-            return None
-
-        mid_x = (bottom_left_corner[0] + bottom_right_corner[0] + top_left_corner[0] + top_right_corner[0]) // 4
-        mid_y = (bottom_left_corner[1] + bottom_right_corner[1] + top_left_corner[1] + top_right_corner[1]) // 4
-
-        return mid_x, mid_y
-        """
-
+     #johan
+    def get_corrected_coordinates_robot(cX, cY,data: Data, adjustment_factor=0.2):
+        # Calculate the center of the area
+        height, width, _ = data.screenshot.shape
+        centerX = width / 2
+        centerY = height / 2
+        
+        # Calculate vector from the point to the center
+        vector_to_center_x = centerX - cX
+        vector_to_center_y = centerY - cY
+        
+        # Calculate the distance from the point to the center
+        distance_to_center = math.sqrt(vector_to_center_x**2 + vector_to_center_y**2)
+        
+        # Normalize the vector to the center
+        if distance_to_center != 0:  # Prevent division by zero
+            normalized_vector = (vector_to_center_x / distance_to_center, vector_to_center_y / distance_to_center)
+        else:
+            normalized_vector = (0, 0)
+        
+        # Scale the normalized vector by the adjustment factor
+        adjustment_x = normalized_vector[0] * adjustment_factor * distance_to_center
+        adjustment_y = normalized_vector[1] * adjustment_factor * distance_to_center
+        
+        # Adjust coordinates
+        new_cX = cX + adjustment_x
+        new_cY = cY + adjustment_y
+        
+        return new_cX, new_cY
     @staticmethod
     def convert_distance_to_cm(pixel_distance):
         bottom_left, bottom_right, top_left, top_right = ImageProcessor.corners.values()
         x_scale = 166.7 / max(bottom_right[0] - bottom_left[0], top_right[0] - top_left[0])
         return pixel_distance * x_scale
-
     @staticmethod
     # Peters version
-    def get_corrected_coordinates_robot(x, y, data, corners):
+    def get_corrected_coordinates_robot_peter(x, y, data, corners):
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = corners
+
         if None in corners:
             print("Some corners are missing.")
             return None
@@ -838,14 +857,19 @@ class ImageProcessor:
         mid_y = (bottom_left_corner[1] + bottom_right_corner[1] + top_left_corner[1] + top_right_corner[1]) // 4
 
         # Calculate the Euclidean distance (B) between the midpoint and the robot's location
+
         B = math.sqrt((x - mid_x) ** 2 + (y - mid_y) ** 2)
+
         cm_B = ImageProcessor.convert_distance_to_cm(B)
+
         # Given heights
-        H = 171
+        H = 168
         h = 31
+
 
         # Calculate the true horizontal distance (x)
         cm_x_offset = cm_B * (h / H)
+
         # convert x_offset to pixel
         pixel_offset_x, _ = ImageProcessor.convert_to_pixel((cm_x_offset, 0))
         ## Det skal kigges på
@@ -870,41 +894,7 @@ class ImageProcessor:
 
     #print(f"Robot location in pixel:({x},{y})")
 
-    """
-    @staticmethod
-     #johan
-    def get_corrected_coordinates_robot(cX, cY,data: Data, adjustment_factor=0.2):
-        # Calculate the center of the area
-        height, width, _ = data.screenshot.shape
-        centerX = width / 2
-        centerY = height / 2
-
-        # Calculate vector from the point to the center
-        vector_to_center_x = centerX - cX
-        vector_to_center_y = centerY - cY
-
-        # Calculate the distance from the point to the center
-        distance_to_center = math.sqrt(vector_to_center_x**2 + vector_to_center_y**2)
-
-        # Normalize the vector to the center
-        if distance_to_center != 0:  # Prevent division by zero
-            normalized_vector = (vector_to_center_x / distance_to_center, vector_to_center_y / distance_to_center)
-        else:
-            normalized_vector = (0, 0)
-
-        # Scale the normalized vector by the adjustment factor
-        adjustment_x = normalized_vector[0] * adjustment_factor * distance_to_center
-        adjustment_y = normalized_vector[1] * adjustment_factor * distance_to_center
-
-        # Adjust coordinates
-        new_cX = cX + adjustment_x
-        new_cY = cY + adjustment_y
-
-        print(f"{new_cX},{new_cY}")
-
-        return new_cX, new_cY
-    """
-    """
+    '''
     @staticmethod
     def get_corrected_coordinates_robot(x,y):
         
@@ -943,9 +933,7 @@ class ImageProcessor:
         corrected_coordinates=[corrected_x,corrected_y]
 
         return corrected_coordinates
-        """
    
-    """
     @staticmethod
     def get_corrected_coordinates_robot(x,y,roboth=31,camerah=170):
         
@@ -960,8 +948,7 @@ class ImageProcessor:
 
         return (x_2d, y_2d)
     
-    """
-    """
+
     @staticmethod
     #anders
     def get_corrected_coordinates_robot(x, y, data: Data, robot_height=31, camera_height=165):
@@ -982,12 +969,10 @@ class ImageProcessor:
         # Beregn interpolationen for x og y koordinater
         R_x = x + (x_robot / B) * (cam_x - x)
         R_y = y + (x_robot / B) * (cam_y - y)
-
-        print(f"Victors pixel{ImageProcessor.convert_to_pixel((R_x,R_y))}")
         return ImageProcessor.convert_to_pixel((R_x, R_y))
-    """
+    
 
-    """
+    
     @staticmethod
     #victor
     def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=165 ):
@@ -1003,14 +988,13 @@ class ImageProcessor:
         scale_factor = robot_z / cam_z
         x_2d = cam_x + vector_x * (1 - scale_factor)
         y_2d = cam_y + vector_y * (1 - scale_factor)
-        print(f"x_2d = {x_2d}, y_2d ={y_2d}")
-        return (x_2d, y_2d)
-        """
 
+        return (x_2d, y_2d)
         
    
     
-    """
+    
+    
     @staticmethod
     def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=165 ):
         height, width, _ = data.screenshot.shape
@@ -1026,7 +1010,7 @@ class ImageProcessor:
 
         return (x_2d, y_2d)
     
-    """
+    '''
 
 
 if __name__ == "__main__":

@@ -94,7 +94,7 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                 data.egg.con = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg, 2000, 8000)
 
             if orange:
-                data.orangeBall.con = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 300, 1000)
+                data.orangeBall.con = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 50, 800)
 
             if balls:
                 ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
@@ -103,13 +103,15 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                     data.addBalls(ballcontours, ballcordinats)
 
             if cross:
-                data.cross.con = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
+                crosscon = ComputerVision.ImageProcessor.find_cross_contours(inputimg)
+                if crosscon is not None:
+                    data.cross.con = crosscon
                 if  data.cross.con is not None:
                     data.cross.corner_con = ComputerVision.ImageProcessor.find_cross_corners(data.cross.con)
 
 
             if robot:
-                data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=10, max_size=100000)
+                data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=100, max_size=100000)
             
                 angle = None
                 img = data.screenshot
@@ -119,7 +121,8 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                         data.robot.originalMidtpoint, data.robot.angle, data.output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,data.output_image)
                         
                       #  data.robot.midpoint=ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0],data.robot.originalMidtpoint[1], data)
-                        data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data, data.arenaCorners)
+                        data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data)
+                        #data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot_peter(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data, data.arenaCorners)
                         data.robot.add_detection(data.robot.midpoint, data.robot.angle)
                     
                         data.robot.detected = True
@@ -128,7 +131,7 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
 
                     print("Robot not detected in masked image, trying full image.")
 
-                    data.robot.con = ComputerVision.ImageProcessor.find_robot(data.screenshot, min_size=10,
+                    data.robot.con = ComputerVision.ImageProcessor.find_robot(data.screenshot, min_size=100,
                                                                             max_size=100000)
       
                     if data.robot.con is not None and len(data.robot.con) == 3:
@@ -140,7 +143,8 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
 
                         #data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(
                            # data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1],data)
-                        data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data.arenaCorners)
+                        data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data)
+                        #data.robot.midpoint = ComputerVision.ImageProcessor.get_corrected_coordinates_robot_peter(data.robot.originalMidtpoint[0], data.robot.originalMidtpoint[1], data, data.arenaCorners)
                         data.robot.add_detection(data.robot.midpoint, data.robot.angle)
 
                     else:
@@ -164,8 +168,24 @@ def paint_output(data: Data, output_image):
       imageManipulationTools.drawHelpPoints(output_image, data.drivepoints,color=(0, 255, 0))
       #print("done painting")
       for area in data.outerArea.areas:
+          index = 0
           if area.type == "BL_corner" or area.type == "BR_corner" or area.type == "TR_corner" or area.type == "TL_corner":
               color = (0, 255, 0)
+
+          elif area.type == "cross_corner":
+            if index == 0:
+                color = (179, 0, 255)
+            elif index == 1:
+                color = (0, 255, 255)
+            elif index == 2:
+                color = (255, 0, 255)
+            elif index == 3:
+                color = (255, 255, 0)
+            elif index == 4:
+                color = (255, 0, 0)
+            else:
+                color = (0, 0, 0)
+            index = index + 1
           else:
               color = (0, 0, 255)
 
