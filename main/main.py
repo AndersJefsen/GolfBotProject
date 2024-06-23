@@ -1,3 +1,4 @@
+import threading
 from time import time
 import cv2 as cv
 from vision import Vision
@@ -140,9 +141,18 @@ def høvl(data: Data,robot=True, image=None ):
                         angleCorrectionAndDrive(data,closest_help_point,isBall=False,isMiddleBall=False)
 
 
+operation_messi_commenced = False  # Flag to indicate if 6 minutes have passed
 
-
+def timer():
+    global operation_messi_commenced
+    print("Timer started")
+    time.sleep(60)  # Sleep for 6 minutes
+    operation_messi_commenced = True
+    print("Timer ended")
 def main(mode):
+        # Start the timer thread
+    timer_thread = threading.Thread(target=timer)
+    timer_thread.start()
     global last_ball_detection_time
     data = Data()
     data.mode = mode
@@ -253,13 +263,13 @@ def main(mode):
                 høvl(data,True, data.output_image)
                 print("after høvl")
                 
-            while len(data.whiteballs) == 0:
+            while len(data.whiteballs) == 0 or operation_messi_commenced:
+
                 print("Operation Messi Commenced - wait ")
                         # Load the small goal'
                 if(data.orangeBall.con is not None):
                     data.find_orange_HP()
                     høvl(data,True, data.output_image)
-
                 target_point = (130, 61)
                 goal_point = (160,61)
                 angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(target_point),isBall=False,isMiddleBall=False)
