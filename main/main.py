@@ -20,16 +20,22 @@ import ComputerVision
 
 def getRobotAngle(data:Data, selected_point):
     newpos = None
+    data.resetRobot()
     while newpos is None:
-        data.resetRobot()
+        
         rf.update_positions(data,True,False,False,False,False,10)
         newpos =  data.robot.get_best_robot_position()
         if(newpos is not None):
+            data.timesNotDetected =0
             currMidpoint,currAngle = newpos
             correctmid = ComputerVision.ImageProcessor.convert_to_cartesian(currMidpoint)
             angle_to_turn = path.calculate_angle(correctmid,ComputerVision.ImageProcessor.convert_to_cartesian(selected_point),currAngle)
             distance_to_drive = path.calculate_distance(correctmid,ComputerVision.ImageProcessor.convert_to_cartesian(selected_point))
-                   
+        else:
+            data.timesNotDetected += 1
+            if data.timesNotDetected >=10:
+                com.turn_Robot(50,data.socket)       
+                data.timesNotDetected = 0
                             
     return angle_to_turn,distance_to_drive, correctmid
      
@@ -82,32 +88,98 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
             print("arrived at point with distance: ",distance_to_drive)
       
 
-    
+def add_all_obstacles(data:Data, withOrange = True):
+    contours = []
+    egg_contour = data.egg.con
+    if egg_contour is not None:
+        contours.extend(egg_contour)
+        crosscon= data.cross.con
+    if crosscon is not None:
 
-def høvl(data: Data,robot=True, image=None ):
+    
+        contours.extend(crosscon)
+    if withOrange:
+        orange_ball_contour = data.orangeBall.con
+        if orange_ball_contour is not None:
+            contours.extend(orange_ball_contour)    
+    return contours
+
+def høvlOrange(data:Data):
+    print("HØVL ORANGE")
+   
+
+    points = []
+    isDrivePoint = False
+    if(data.orangeHelpPoint is not None and data.robot.midpoint is not None):
+        robotPos = data.robot.midpoint
+        hp_x = data.orangeHelpPoint.con[0]
+        hp_y = data.orangeHelpPoint.con[1]
+       
+        
+
+        ispath = path.is_path_clear(robotPos,(hp_x,hp_y),add_all_obstacles(data,withOrange=False))
+        if(ispath): 
+            print("PATH CLEAR")
+          
+            
+            for i, contour in enumerate(data.orangeBall.con, 1):
+                x, y, w, h = cv.boundingRect(contour)
+                center_x = x + w // 2
+                center_y = y + h // 2
+            if center_x == hp_y and center_y == hp_y:
+                print("orange ball is at help point")
+                points.append((center_x,center_y))
+            else:
+                print("orange ball is not at help point")
+                points.append((center_x,center_y))
+                points.append((center_x,center_y))
+                
+            
+        else:
+            drivepoint, drive_point_distance, drive_angle_to_turn = path.find_close_ball(robotPos, data.drivepoints, data.robot.angle)
+            distance = path.calculate_distance_correct(robotPos, drivepoint)
+
+            if distance < 50:
+                index= data.drivepoints.index(drivepoint)
+                newindex = (index+1)%4
+                print("closest drivepoint: ", drivepoint)
+                drivepoint = data.drivepoints[newindex]
+            points.append(drivepoint)
+            isDrivePoint = True
+        
+        if len(points) == 1:
+            if isDrivePoint:
+                angleCorrectionAndDrive(data,points[0],isBall=False,isMiddleBall=False)
+            else:
+                 angleCorrectionAndDrive(data,points[0],isBall=True,isMiddleBall=True,iteration=0)
+        else:
+            angleCorrectionAndDrive(data,points[0],isBall=False,isMiddleBall=False)
+            angleCorrectionAndDrive(data,points[1],isBall=True,isMiddleBall=False)
+           
+
+    
+    
+    
+def høvl(data: Data,robot=True, image=None):
         if(data.robot.detected and data.getAllBallCordinates() is not None):
                     
                     currMidpoint,currAngle = data.robot.get_best_robot_position()
+                    contours = []
+                    helpPoints = []
                     
-
-                    contours=[]
-                    egg_contour = data.egg.con
-                    if egg_contour is not None:
-                        contours.extend(egg_contour)
-                        crosscon= data.cross.con
-                    if crosscon is not None:
-
-                   
-                        contours.extend(crosscon)
-                    orange_ball_contour = data.orangeBall.con
-                    if orange_ball_contour is not None:
-                        contours.extend(orange_ball_contour)
-                    
+                    contours= add_all_obstacles(data,withOrange=True)
                     helpPoints=data.helpPoints
+                   
+                    
+                    
+                    
                     
                     drivepoints=data.drivepoints
                     print("drivepoints: ",drivepoints)
+                   
                     closest_help_point, selected_ball,best_angle_to_turn, min_distance = path.find_shortest_path(data.robot.midpoint,data.robot.angle, helpPoints, contours,drivepoints) #data.helppoints.coords"""
+                  
+
                     print("here")
                     if selected_ball is not None:
                         #for point in helppoints:
@@ -167,27 +239,13 @@ def main(mode):
     else:
         print("Invalid mode")
         return
-
-  
     if mode == "robot":
         data.socket = com.connect_to_robot()
 
     if mode == "Goal":
         data.socket = com.connect_to_robot()
-    
-    gui = False
-
-    vision_image = Vision('ball.png')
-
-    vision_image.init_control_gui()
-
     data.testpicturename = 'master.jpg'
-
-    
-
-
     findArena = False
-
     while not findArena:
         try:
             data.screenshot = None
@@ -202,11 +260,7 @@ def main(mode):
                 print(f"An error occurred while trying to detect arena: {e}")
                 break
         if(data.output_image is not None):
-                # Resize the image
-                        desired_size = (1200, 800)
-                        resized_image = cv.resize(data.output_image, desired_size, interpolation=cv.INTER_LINEAR)
-                        cv.imshow("Resized Image", resized_image)
-                        cv.waitKey(1)
+               rf.drawAndShow(data,"Resized Image")
 
         print("finding arena")
         try:
@@ -215,12 +269,6 @@ def main(mode):
             print(f"An error occurredin rf.findArena_flow: {e}")
             break
 
-
-  
-
-
-
-    
     
     while(True):
     
@@ -248,32 +296,26 @@ def main(mode):
 
         if(mode == "robot" ):
             if(data.robot.detected and data.getAllBallCordinates()):
-                data.robot.set_min_detections(15)
+                data.timesNotDetected = 0
+                data.robot.set_min_detections(5)
                 print("before høvl")
                 høvl(data,True, data.output_image)
                 print("after høvl")
-                
-            while len(data.whiteballs) == 0:
-                print("Operation Messi Commenced - wait ")
+            
+
+            if len(data.whiteballs) == 0:
+                print("No white balls detected trying to get orangeball")
                         # Load the small goal'
-                if(data.orangeBall.con is not None):
-                    data.find_orange_HP()
-                    høvl(data,True, data.output_image)
-
-                target_point = (130, 61)
-                goal_point = (160,61)
-                angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(target_point),isBall=False,isMiddleBall=False)
-                angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(goal_point),isBall=False,isMiddleBall=False,isGoal=True)
-                '''
-                while(True):
-                    angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,ComputerVision.ImageProcessor.convert_to_pixel(goal_point)) 
-                    if angle_to_turn < 2 and angle_to_turn > -2:
-                        print("correct angle achived: ",angle_to_turn)
-                        break
-                    com.turn_Robot( angle_to_turn,data.socket)'''
-                com.release(data.socket)
-
-                #result = com.move_to_position_and_release(target_point, correctmidCorrect, currAngle, data.socket)
+                if(data.orangeHelpPoint is not None):
+                    print("getting orangeBall")
+                    høvlOrange(data)
+                else:
+                    print("Operation Messi Commenced - wait ")
+                    target_point = (130, 55)
+                    goal_point = (160,55)
+                    angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(target_point),isBall=False,isMiddleBall=False)
+                    angleCorrectionAndDrive(data,ComputerVision.ImageProcessor.convert_to_pixel(goal_point),isBall=False,isMiddleBall=False,isGoal=True)
+               
                 
         
         if(mode == "test"):

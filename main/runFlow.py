@@ -1,6 +1,7 @@
 from data import Data as Data
 import imageManipulationTools
 import cv2 as cv
+import numpy as np
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -94,7 +95,12 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                 data.egg.con = ComputerVision.ImageProcessor.find_bigball_hsv(inputimg, 2000, 8000)
 
             if orange:
-                data.orangeBall.con = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg, 50, 800)
+                #data.orangeBall.con = None
+                orangecon = ComputerVision.ImageProcessor.find_orangeball_hsv(inputimg)
+                if orangecon is not None:
+                    data.orangeBall.con = orangecon
+              
+
 
             if balls:
                 ballcontours = ComputerVision.ImageProcessor.find_balls_hsv1(inputimg)
@@ -111,7 +117,8 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
 
 
             if robot:
-                data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=100, max_size=100000)
+                
+                data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=200, max_size=1000)
             
                 angle = None
                 img = data.screenshot
@@ -129,10 +136,10 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
 
                 else:
 
-                    print("Robot not detected in masked image, trying full image.")
+                  
 
-                    data.robot.con = ComputerVision.ImageProcessor.find_robot(data.screenshot, min_size=100,
-                                                                            max_size=100000)
+                    data.robot.con = ComputerVision.ImageProcessor.find_robot(data.screenshot, min_size=200,
+                                                                            max_size=1000)
       
                     if data.robot.con is not None and len(data.robot.con) == 3:
                               
@@ -150,6 +157,7 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                     else:
 
                         data.robot.detected = False
+            print("done with iterations in update position robot detected = ",data.robot.detected )
 def paint_output(data: Data, output_image):
       #print("painting")
       #paint white balls
@@ -162,7 +170,14 @@ def paint_output(data: Data, output_image):
                     #ComputerVision.ImageProcessor.showimage("final", outputimage)
       if data.cross.corner_con is not None:
             output_image = ComputerVision.ImageProcessor.draw_cross_corners(output_image, data.cross.corner_con)
+      if data.orangeHelpPoint is not None:
       
+        cords =  [np.array(contour, dtype=np.int32) for contour in data.orangeHelpPoint.con]
+        pa = []
+        
+        pa.append(cords)
+     
+        imageManipulationTools.drawHelpPoints(output_image, pa)
       imageManipulationTools.drawHelpPoints(output_image, data.getAllHelpPointsCon())
      
       imageManipulationTools.drawHelpPoints(output_image, data.drivepoints,color=(0, 255, 0))

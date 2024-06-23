@@ -159,9 +159,9 @@ class ImageProcessor:
         return ImageProcessor.filter_circles(contours, min_size, max_size,min_curvature, max_curvature)
 
     @staticmethod
-    def find_orangeball_hsv(image, min_size=50, max_size=600):
-        orange_lower = np.array([15, 100, 20], dtype="uint8")
-        orange_upper = np.array([41, 255, 255], dtype="uint8")
+    def find_orangeball_hsv(image, min_size=50, max_size=10000):
+        orange_lower = np.array([5, 50, 50], dtype="uint8")
+        orange_upper = np.array([30, 255, 255], dtype="uint8")
         return ImageProcessor.detect_and_filter_objects(image, orange_lower, orange_upper, min_size, max_size)
 
     @staticmethod
@@ -314,7 +314,7 @@ class ImageProcessor:
 
         return ball_contours
     @staticmethod
-    def find_robot(indput_Image, min_size=100, max_size=2000):
+    def find_robot(indput_Image, min_size=200, max_size=1000):
        
 
         # blue_lower = np.array([80, 66, 100], dtype="uint8")
@@ -323,8 +323,8 @@ class ImageProcessor:
         #blue_mask=ImageProcessor.apply_hsv_filter(indput_Image, blue_lower,blue_upper)
         # Når robotten har grønne cirkler
 
-        green_lower = np.array([20, 25, 25], dtype="uint8")
-        green_upper = np.array([90, 255, 255], dtype="uint8")
+        green_lower = np.array([40, 40, 40], dtype="uint8")
+        green_upper = np.array([80, 255, 255], dtype="uint8")
 
         green_mask = ImageProcessor.apply_hsv_filter(indput_Image, green_lower, green_upper)
 
