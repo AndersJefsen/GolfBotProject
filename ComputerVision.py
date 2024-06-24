@@ -266,7 +266,7 @@ class ImageProcessor:
         mask_ranges = [
             (np.array([0, 0, 245], dtype="uint8"), np.array([180, 60, 255], dtype="uint8")),  # bright lighting
             #(np.array([0, 0, 200], dtype="uint8"), np.array([180, 60, 255], dtype="uint8")),  # Normal lighting
-            (np.array([0, 0, 150], dtype="uint8"), np.array([180, 90, 255], dtype="uint8")),  # Darker conditions
+            (np.array([0, 0, 210], dtype="uint8"), np.array([180, 90, 255], dtype="uint8")),  # Darker conditions
             #(np.array([0, 0, 100], dtype="uint8"), np.array([180, 100, 255], dtype="uint8"))  # Even more lenient
         ]
 
@@ -277,9 +277,9 @@ class ImageProcessor:
             ball_contours.extend(additional_ball_contours)
 
             # Display the processed image for debugging
-            # cv2.imshow(f'Processed Image Balls - Range {white_lower[2]}-{white_upper[2]}', white_mask)
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows()
+            cv2.imshow(f'Processed Image Balls - Range {white_lower[2]}-{white_upper[2]}', white_mask)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
             if len(ball_contours) >= 12:
                 break
