@@ -378,8 +378,8 @@ def høvlOrange(data:Data):
 
 def messi(data:Data):
     if(data.robot.midpoint is not None):
-        target_point = (130, 60)
-        goal_point = (160,60)
+        target_point = (130, 62)
+        goal_point = (160,62)
         robotPos = data.robot.midpoint
 
         ispath = path.is_path_clear(robotPos,(target_point),add_all_obstacles(data,withOrange=False))  
