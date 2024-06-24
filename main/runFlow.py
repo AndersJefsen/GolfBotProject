@@ -1,3 +1,5 @@
+import time
+
 from data import Data as Data
 import imageManipulationTools
 import cv2 as cv
@@ -275,16 +277,20 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
         print("isball: ",isBall)
         print("ismiddleball: ",isMiddleBall)
         '''
-        damping_factor = 1 / (iterations + 1)
-        angle_to_turn = angle_to_turn*damping_factor
+
         print("angle to turn to ball: ", angle_to_turn)
+        print("CURR MIDPOINT: ", corrmid)
         drawAndShow(data,"Resized Image")
-        if abs(angle_to_turn)<2: 
+        if abs(angle_to_turn) <2:
             print("correct angle achived: ",angle_to_turn)
             break
+        damping_factor = 1 / (iterations + 1)
+        angle_to_turn = angle_to_turn*damping_factor
         com.turn_Robot( angle_to_turn,data.socket)
         print("done turning")
-        iterations += 1
+        if iterations< 1:
+            iterations += 1
+
     
     if isMiddleBall is True and iteration == 0:
         distance_to_drive = distance_to_drive/2
@@ -387,8 +393,8 @@ def høvlOrange(data:Data):
 
 def messi(data:Data):
     if(data.robot.midpoint is not None):
-        target_point = (130, 62)
-        goal_point = (160,62)
+        target_point = (140, 61)
+        goal_point = (160,61)
         robotPos = data.robot.midpoint
 
         ispath = path.is_path_clear(robotPos,ComputerVision.ImageProcessor.convert_to_pixel((target_point)),add_all_obstacles(data,withOrange=False))

@@ -1012,7 +1012,7 @@ class ImageProcessor:
     '''
     @staticmethod
     #victor
-    def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=165 ):
+    def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=170 ):
         height, width, _ = data.screenshot.shape
 
         cam_x, cam_y = width // 2, height // 2
