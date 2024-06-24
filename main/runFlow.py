@@ -429,8 +429,10 @@ def høvl(data: Data,robot=True, image=None):
                     helpPoints = []
                     
                     contours= add_all_obstacles(data,withOrange=True)
-                    helpPoints=data.helpPoints
-                   
+                    if(len(data.helpPoints)>0):
+                        helpPoints=data.helpPoints
+                    else:
+                        helpPoints = data.cornerHelpPoints
                     
                     
                     
