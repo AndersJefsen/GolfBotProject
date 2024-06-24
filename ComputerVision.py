@@ -160,10 +160,28 @@ class ImageProcessor:
         return ImageProcessor.filter_circles(contours, min_size, max_size,min_curvature, max_curvature)
 
     @staticmethod
-    def find_orangeball_hsv(image, min_size=400, max_size=10000):
-        orange_lower = np.array([5, 50, 50], dtype="uint8")
-        orange_upper = np.array([30, 255, 255], dtype="uint8")
-        return ImageProcessor.detect_and_filter_objects(image, orange_lower, orange_upper, min_size, max_size)
+    def find_orangeball_hsv(image, min_size=300, max_size=10000):
+        def detect_with_mask(image, lower_color, upper_color, min_size, max_size):
+            return ImageProcessor.detect_and_filter_objects(image, lower_color, upper_color, min_size, max_size)
+
+        # First threshold range for the orange ball
+        orange_lower1 = np.array([5, 50, 50], dtype="uint8")
+        orange_upper1 = np.array([30, 255, 255], dtype="uint8")
+        contours1 = detect_with_mask(image, orange_lower1, orange_upper1, min_size, max_size)
+        # cv2.imshow('Processed Image Balls', contours1)
+
+
+        if len(contours1) == 1:
+            return contours1
+
+        # If the first mask didn't find exactly one ball, use a second threshold range
+        orange_lower2 = np.array([20, 100, 100], dtype="uint8")
+        orange_upper2 = np.array([25, 255, 255], dtype="uint8")
+        contours2 = detect_with_mask(image, orange_lower2, orange_upper2, min_size, max_size)
+        # cv2.imshow('Processed Image Balls', contours2)
+
+
+        return contours2
 
     @staticmethod
     def find_balls_hsv(image, min_size=100, max_size=400):
