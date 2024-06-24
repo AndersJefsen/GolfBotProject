@@ -22,7 +22,7 @@ def main(mode):
     data = Data()
     data.mode = mode
     start_time = time.time()
-    timer_duration = 390 #this is seconds so 6.5 minutes
+    timer_duration = 420 #this is seconds so 6.5 minutes
     if mode == "camera" or mode == "robot" or mode == "Goal":
         data.wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
         print("camera mode")
@@ -104,7 +104,13 @@ def main(mode):
             if(remaining_time < 0):
                 print("Time is up")
                 rf.messi(data)
-            if(data.robot.detected and data.getAllBallCordinates()):
+            elif(remaining_time < 40):
+                if(data.orangeHelpPoint is not None):
+                    print("getting orangeBall")
+                    rf.høvlOrange(data)
+                    rf.messi(data)
+                 
+            elif(data.robot.detected and data.getAllBallCordinates()):
                 data.timesNotDetected = 0
                 data.robot.set_min_detections(5)
                 print("HØVL MODE")
@@ -112,7 +118,7 @@ def main(mode):
                 print("HØVL DONE")
             
 
-            if len(data.whiteballs) == 0:
+            elif len(data.whiteballs) == 0:
                 print("No white balls detected trying to get orangeball")
                         # Load the small goal'
                 if(data.orangeHelpPoint is not None):

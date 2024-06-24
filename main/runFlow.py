@@ -194,8 +194,8 @@ def paint_output(data: Data, output_image):
      
         imageManipulationTools.drawHelpPoints(output_image, pa)
       imageManipulationTools.drawHelpPoints(output_image, data.getAllHelpPointsCon())
-      target_point = (130, 66)
-      goal_point = (162,66)
+      target_point = (130, 64)
+      goal_point = (162,64)
       
       if data.arenaCorners:
         output_image = cv.circle(output_image, ComputerVision.ImageProcessor.convert_to_pixel(target_point), 5, (0, 0, 0), -1)
@@ -272,6 +272,7 @@ def getRobotAngle(data:Data, selected_point):
 def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBall = False,iteration = 1,isGoal = False):
     iterations = 0
     stuck = 0
+    forget = 1
     while True:
         
         angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
@@ -286,20 +287,25 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
 
         print("angle to turn to ball: ", angle_to_turn)
         print("Distance to pint ", distance_to_drive)
-        drawAndShow(data,"Resized Image")
-        if abs(angle_to_turn) <2:
-            print("correct angle achived: ",angle_to_turn)
-            break
-        if stuck > 15:
-            com.drive_Back_Robot(-5,data.socket)
-            stuck = 0
-        damping_factor = 1 / (iterations + 1)
-        angle_to_turn = angle_to_turn*damping_factor
-        com.turn_Robot( angle_to_turn,data.socket)
-        print("done turning")
-        if iterations< 1:
-            iterations += 1
-        stuck += 1
+        if (forget %2) == 0:
+            print("forgetting")
+            forget +=1
+        else:
+            drawAndShow(data,"Resized Image")
+            if abs(angle_to_turn) <3:
+                print("correct angle achived: ",angle_to_turn)
+                break
+            if stuck > 15:
+                com.drive_Back_Robot(-5,data.socket)
+                stuck = 0
+            damping_factor = 1 / (iterations + 1)
+            angle_to_turn = angle_to_turn*damping_factor
+            com.turn_Robot( angle_to_turn,data.socket)
+            print("done turning")
+            if iterations< 1:
+                iterations += 1
+            stuck += 1
+            forget += 1
 
     
     if isMiddleBall is True and iteration == 0:
@@ -403,9 +409,9 @@ def høvlOrange(data:Data):
 
 def messi(data:Data):
     if(data.robot.midpoint is not None):
-        target_point = (130, 66)
-        goal_point = (162,66)
-        
+        target_point = (130, 64)
+        goal_point = (162,64)
+    
         robotPos = data.robot.midpoint
 
         ispath = path.is_path_clear(robotPos,ComputerVision.ImageProcessor.convert_to_pixel((target_point)),add_all_obstacles(data,withOrange=False))
