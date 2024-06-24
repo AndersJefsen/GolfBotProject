@@ -127,8 +127,12 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                 
                 data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=200, max_size=1000)
             
-                if data.robot.con is not None:
-                    ComputerVision.ImageProcessor.show_contours_with_areas(inputimg, data.robot.con)
+                
+                mask=ComputerVision.ImageProcessor.find_robot_mask(inputimg, min_size=200, max_size=1000)
+
+                cv.imshow("windowName", mask)
+                cv.waitKey(1)
+
                 #angle = None
                 #img = data.screenshot
                 if data.robot.con is not None:
