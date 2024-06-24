@@ -168,12 +168,6 @@ class ImageProcessor:
         orange_lower1 = np.array([15, 100, 20], dtype="uint8")
         orange_upper1 = np.array([25, 255, 255], dtype="uint8")
         contours1 = detect_with_mask(image, orange_lower1, orange_upper1, min_size, max_size)
-        # orange = cv2.inRange(image, orange_lower1, orange_upper1)
-        # contours, _ = cv2.findContours(orange, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        # cv2.imshow('Orange balls 1', orange)
-        # print("orange contour size =", cv2.contourArea(contours1))
-
 
 
         if len(contours1) == 1:
@@ -183,13 +177,6 @@ class ImageProcessor:
         orange_lower2 = np.array([20, 100, 100], dtype="uint8")
         orange_upper2 = np.array([30, 255, 255], dtype="uint8")
         contours2 = detect_with_mask(image, orange_lower2, orange_upper2, min_size, max_size)
-        # orange1 = cv2.inRange(image, orange_lower1, orange_upper1)
-        # contours, _ = cv2.findContours(orange, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        # cv2.imshow('Orange balls 2', orange1)
-
-        # print("orange contour size =", cv2.contourArea(contours2))
-        # cv2.imshow('Processed Image Balls', contours2)
 
 
         return contours2
