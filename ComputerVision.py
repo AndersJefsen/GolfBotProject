@@ -822,7 +822,7 @@ class ImageProcessor:
     
     
     
-
+    '''
     @staticmethod
      #johan
     def get_corrected_coordinates_robot(cX, cY,data: Data, adjustment_factor=0.2):
@@ -853,6 +853,7 @@ class ImageProcessor:
         new_cY = cY + adjustment_y
         
         return new_cX, new_cY
+    '''
     @staticmethod
     def convert_distance_to_cm(pixel_distance):
         bottom_left, bottom_right, top_left, top_right = ImageProcessor.corners.values()
@@ -987,23 +988,7 @@ class ImageProcessor:
     
 
     
-    @staticmethod
-    #victor
-    def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=165 ):
-        height, width, _ = data.screenshot.shape
-
-        cam_x, cam_y = width // 2, height // 2
-
-    # Calculate the vector from the camera to the robot on the plane
-        vector_x = robot_x - cam_x
-        vector_y = robot_y - cam_y
-        #print(vector_x)
-        # Apply the scale factor for perspective based on height
-        scale_factor = robot_z / cam_z
-        x_2d = cam_x + vector_x * (1 - scale_factor)
-        y_2d = cam_y + vector_y * (1 - scale_factor)
-
-        return (x_2d, y_2d)
+    
         
    
     
@@ -1025,7 +1010,23 @@ class ImageProcessor:
         return (x_2d, y_2d)
     
     '''
+    @staticmethod
+    #victor
+    def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=165 ):
+        height, width, _ = data.screenshot.shape
 
+        cam_x, cam_y = width // 2, height // 2
+
+    # Calculate the vector from the camera to the robot on the plane
+        vector_x = robot_x - cam_x
+        vector_y = robot_y - cam_y
+        #print(vector_x)
+        # Apply the scale factor for perspective based on height
+        scale_factor = robot_z / cam_z
+        x_2d = cam_x + vector_x * (1 - scale_factor)
+        y_2d = cam_y + vector_y * (1 - scale_factor)
+
+        return (x_2d, y_2d)
 
 if __name__ == "__main__":
     image_path = "main/peter.png"  # Path to your image
