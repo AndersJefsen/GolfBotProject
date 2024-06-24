@@ -284,6 +284,7 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
             break
         com.turn_Robot( angle_to_turn,data.socket)
         print("done turning")
+        iterations += 1
     
     if isMiddleBall is True and iteration == 0:
         distance_to_drive = distance_to_drive/2
