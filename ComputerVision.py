@@ -356,16 +356,16 @@ class ImageProcessor:
 
         #contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        robot_counters=ImageProcessor.filter_circles(contours, min_size,max_size)
-        if robot_counters is None:
+        #robot_counters=ImageProcessor.filter_circles(contours, min_size,max_size)
+        if contours is None:
             print("robot not found")
             return None
-        if len(robot_counters) <3:
+        if len(contours) <3:
             print("Robot not found, Not enough contours found.")
             return None
 
         # Sort the round contours by area and select the three largest
-        robot_counters = sorted(robot_counters, key=cv2.contourArea, reverse=True)[:3]
+        robot_counters = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
 
         return robot_counters
 
