@@ -160,7 +160,7 @@ class ImageProcessor:
         return ImageProcessor.filter_circles(contours, min_size, max_size,min_curvature, max_curvature)
 
     @staticmethod
-    def find_orangeball_hsv(image, min_size=150, max_size=10000):
+    def find_orangeball_hsv(image, min_size=175, max_size=10000):
         orange_lower = np.array([20, 50, 50], dtype="uint8")
         orange_upper = np.array([30, 255, 255], dtype="uint8")
         return ImageProcessor.detect_and_filter_objects(image, orange_lower, orange_upper, min_size, max_size)
