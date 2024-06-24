@@ -104,7 +104,9 @@ def turn_Robot(angle_to_turn,sock ):
     res = send_command(command, sock)
     return res
 
-    
+def drive_Back_Robot(distance_to_drive,sock):
+    command = f"MOVE {distance_to_drive}"
+    res = send_command(command,sock)
 def drive_Robot(distance_to_drive,sock):
     command = f"MOVE_COLLECT {distance_to_drive}"
     res = send_command(command, sock)
