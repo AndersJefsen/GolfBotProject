@@ -127,9 +127,10 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                 
                 data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=200, max_size=1000)
             
-                angle = None
-                img = data.screenshot
-
+                if data.robot.con is not None:
+                    ComputerVision.ImageProcessor.show_contours_with_areas(inputimg, data.robot.con)
+                #angle = None
+                #img = data.screenshot
                 if data.robot.con is not None:
                     if (len(data.robot.con)==3):
                         data.robot.originalMidtpoint, data.robot.angle, data.output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,data.output_image)
@@ -216,8 +217,7 @@ def paint_output(data: Data, output_image):
       
         #Skal laves om
       #output_image = ComputerVision.ImageProcessor.draw_cross_corners(data.cross.con, output_image)
-     
-
+      
       if data.robot.detected:
         
         output_image=ComputerVision.ImageProcessor.paintballs(data.robot.con, "robo ball", output_image)
@@ -240,7 +240,7 @@ def getRobotAngle(data:Data, selected_point):
     data.resetRobot()
     while newpos is None:
         
-        rf.update_positions(data,True,False,False,False,False,10)
+        update_positions(data,True,False,False,False,False,10)
         newpos =  data.robot.get_best_robot_position()
         if(newpos is not None):
             data.timesNotDetected =0

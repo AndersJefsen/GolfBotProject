@@ -65,7 +65,8 @@ def find_shortest_path(robot_position, robot_orientation, paired_help_points_and
     # If no help points are available, use drive points as a fallback
     if not paired_help_points_and_balls:
         print("No help point and ball pairs available.")
-        return find_close_ball(robot_position, drive_points, robot_orientation)
+        closest_ball, min_distance, angle_to_turn=find_close_ball(robot_position, drive_points, robot_orientation)
+        return closest_ball, None, min_distance, angle_to_turn
     
 
     closest_help_point = None

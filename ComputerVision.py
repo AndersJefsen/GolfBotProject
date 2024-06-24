@@ -90,8 +90,9 @@ class ImageProcessor:
     def showimage(name="pic", image=None):
         try:
             cv2.imshow(name, image)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            cv2.waitKey(1)
+            #cv2.waitKey(0)
+            #cv2.destroyAllWindows()
 
         except Exception as e:
             print(f"error {e} with pic {name}")   
