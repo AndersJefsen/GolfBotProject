@@ -127,10 +127,9 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                 
                 data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=200, max_size=1000)
             
-                if data.robot.con is not None:
-                    ComputerVision.ImageProcessor.show_contours_with_areas(inputimg, data.robot.con)
-                #angle = None
-                #img = data.screenshot
+                angle = None
+                img = data.screenshot
+
                 if data.robot.con is not None:
                     if (len(data.robot.con)==3):
                         data.robot.originalMidtpoint, data.robot.angle, data.output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,data.output_image)
@@ -217,7 +216,8 @@ def paint_output(data: Data, output_image):
       
         #Skal laves om
       #output_image = ComputerVision.ImageProcessor.draw_cross_corners(data.cross.con, output_image)
-      
+     
+
       if data.robot.detected:
         
         output_image=ComputerVision.ImageProcessor.paintballs(data.robot.con, "robo ball", output_image)
@@ -258,8 +258,9 @@ def getRobotAngle(data:Data, selected_point):
      
 
 def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBall = False,iteration = 1,isGoal = False):
-  
+    iterations = 0
     while True:
+        
         angle_to_turn, distance_to_drive, corrmid =  getRobotAngle(data,selected_point)
         '''
         print("selected point: ", ComputerVision.ImageProcessor.convert_to_cartesian(selected_point))  
@@ -269,9 +270,11 @@ def angleCorrectionAndDrive(data:Data, selected_point, isBall = False,isMiddleBa
         print("isball: ",isBall)
         print("ismiddleball: ",isMiddleBall)
         '''
+        damping_factor = 1 / (iterations + 1)
+        angle_to_turn = angle_to_turn*damping_factor
         print("angle to turn to ball: ", angle_to_turn)
         drawAndShow(data,"Resized Image")
-        if angle_to_turn < 2 and angle_to_turn > -2: 
+        if abs(angle_to_turn)<2: 
             print("correct angle achived: ",angle_to_turn)
             break
         com.turn_Robot( angle_to_turn,data.socket)
@@ -378,8 +381,8 @@ def høvlOrange(data:Data):
 
 def messi(data:Data):
     if(data.robot.midpoint is not None):
-        target_point = (130, 62)
-        goal_point = (160,62)
+        target_point = (130, 55)
+        goal_point = (160,55)
         robotPos = data.robot.midpoint
 
         ispath = path.is_path_clear(robotPos,(target_point),add_all_obstacles(data,withOrange=False))  
