@@ -139,6 +139,7 @@ def create_parallel_lines(p1, p2, n, spacing):
     return lines
 
 def is_path_clear(p1, p2, contours):
+    print(p1,p2,contours)
     p1 = (int(round(p1[0])), int(round(p1[1])))
     p2 = (int(round(p2[0])), int(round(p2[1])))
     # Generate parallel lines as polygons
