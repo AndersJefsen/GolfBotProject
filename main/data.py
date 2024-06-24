@@ -25,6 +25,7 @@ class Data:
         self.screenshot = None
         self.output_image = None
         self.timesNotDetected = 0
+        self.cornerHelpPoints = []
 
 
 
@@ -263,19 +264,23 @@ class Data:
                         in_outer_area = True
                         x_addision = 0
                         y_addision = 0
-                        
+                        corner = False
                         if area.type == "BL_corner":
                             x_addision =  factor
                             y_addision = -factor
+                            corner = True
                         elif area.type == "BR_corner":
                             x_addision = - factor
                             y_addision = - factor
+                            corner = True
                         elif area.type == "TR_corner":
                             x_addision = - factor
                             y_addision =  factor
+                            corner  = True
                         elif area.type == "TL_corner":
                             x_addision =  factor
                             y_addision =  factor
+                            corner = True
                         elif area.type == "left_side":
                             x_addision =  factor
                         elif area.type == "right_side":
@@ -288,7 +293,10 @@ class Data:
                     
                         whiteball_center = np.array([center_x, center_y])
                         helpPointCord = HelpPoint((whiteball_center[0] + x_addision, whiteball_center[1] + y_addision),whiteball)
-                        self.helpPoints.append(helpPointCord)
+                        if corner:
+                            self.cornerHelpPoints.append(helpPointCord)
+                        else:    
+                            self.helpPoints.append(helpPointCord)
                     
                         
                         break
