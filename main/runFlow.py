@@ -194,7 +194,12 @@ def paint_output(data: Data, output_image):
      
         imageManipulationTools.drawHelpPoints(output_image, pa)
       imageManipulationTools.drawHelpPoints(output_image, data.getAllHelpPointsCon())
-     
+      target_point = (130, 66)
+      goal_point = (162,66)
+      
+      if data.arenaCorners:
+        output_image = cv.circle(output_image, ComputerVision.ImageProcessor.convert_to_pixel(target_point), 5, (0, 0, 0), -1)
+        output_image = cv.circle(output_image, ComputerVision.ImageProcessor.convert_to_pixel(goal_point), 5, (0, 0, 0), -1)
       imageManipulationTools.drawHelpPoints(output_image, data.drivepoints,color=(0, 255, 0))
       #print("done painting")
       for area in data.outerArea.areas:
@@ -398,8 +403,9 @@ def høvlOrange(data:Data):
 
 def messi(data:Data):
     if(data.robot.midpoint is not None):
-        target_point = (130, 61)
-        goal_point = (162,61)
+        target_point = (130, 66)
+        goal_point = (162,66)
+        
         robotPos = data.robot.midpoint
 
         ispath = path.is_path_clear(robotPos,ComputerVision.ImageProcessor.convert_to_pixel((target_point)),add_all_obstacles(data,withOrange=False))
