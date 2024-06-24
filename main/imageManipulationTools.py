@@ -27,8 +27,10 @@ def drawHelpPoints(output_Image, points, color=(0, 0, 255)):
     return output_Image
 
 def drawLine(output_image, point1, point2, color=(0, 255, 0)):
-    if isinstance(point1, (list, tuple)) and isinstance(point2, (list, tuple)):
-        cv.line(output_image, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), color, 2)
+    if isinstance(point1, (list, tuple, np.ndarray)) and isinstance(point2, (list, tuple, np.ndarray)):
+        point1 = [int(point1[0]), int(point1[1])]
+        point2 = [int(point2[0]), int(point2[1])]
+        cv.line(output_image, (point1[0], point1[1]), (point2[0], point2[1]), color, 2)
     else:
         print(f"Unexpected point format: {point1} or {point2}")
     return output_image

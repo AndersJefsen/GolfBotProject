@@ -1,4 +1,5 @@
 import numpy as np
+import time
 import cv2 as cv
 class Data:
    
@@ -8,6 +9,7 @@ class Data:
         self.arenaCorners = []
         self.whiteballs = []
         self.orangeBall = ArenaObject()
+        self.orangeHelpPoint = None
         self.robotPositions = []
         self.egg = ArenaObject()
         self.arenaMask = None
@@ -22,6 +24,7 @@ class Data:
         self.testpicturename = None
         self.screenshot = None
         self.output_image = None
+        self.timesNotDetected = 0
 
 
 
@@ -80,60 +83,221 @@ class Data:
         self.robot = Robot()
     def getAllHelpPointsCon(self):
         return [hp.con for hp in self.helpPoints]
-    #NEEEDS FIXING TOMORROW 18/06 2024 only length-1 arrays can be converted to Python scalars
-    def find_outer_ball_HP(self):
+    def getAllOrangeHPCon(self):
+        return [ohp.con for ohp in self.orangeHelpPoint]
+    def add_cross_factor(self,factor,corner,center,ballcenter):
+        direction_vector = np.array(corner) - np.array(center)
+        norm = np.linalg.norm(direction_vector)
+        if norm == 0:
+            raise ValueError("Center and corner cannot be the same point")
+        normalized_vector = direction_vector / norm
+        addition = factor * normalized_vector
+        new_point = np.array(ballcenter) + addition
+    
+    # Extract the x and y additions for output if needed
+        
+    
+        return new_point
+        
+    def areal(self,x1, y1, x2, y2, x3, y3):
+ 
+        return abs((x1 * (y2 - y3) + x2 * (y3 - y1) 
+                    + x3 * (y1 - y2)) / 2.0)
+    
+    def is_point_in_triangle_cross_product(self,p, a, b, c):
+        p = np.array(p)
+        a = np.array(a)
+        b = np.array(b)
+        c = np.array(c)
+        x, y = p
+        x1, y1 = a
+        x2, y2 = b
+        x3, y3 = c
+        A = self.areal (x1, y1, x2, y2, x3, y3)
+
+        # Calculate area of triangle PBC 
+        A1 = self.areal (x, y, x2, y2, x3, y3)
+        
+        # Calculate area of triangle PAC 
+        A2 = self.areal (x1, y1, x, y, x3, y3)
+        
+        # Calculate area of triangle PAB 
+        A3 = self.areal (x1, y1, x2, y2, x, y)
+        
+        # Check if sum of A1, A2 and A3 
+        # is same as A
+        if(A == A1 + A2 + A3):
+            return True
+        else:
+            return False
+    def is_pos_in_corner(self,pos):
+        for area in self.outerArea.areas:
+            if area.type == "BR_corner" or area.type == "BL_corner" or area.type == "TR_corner" or area.type == "TL_corner":
+                max_x = max([p[0] for p in area.points])
+                min_x = min([p[0] for p in area.points])
+                max_y = max([p[1] for p in area.points])
+                min_y = min([p[1] for p in area.points])
+            
+                if pos[0] > min_x and pos[0] < max_x and pos[1] > min_y and pos[1] < max_y:
+                    return True
+        return False
+    def find_orange_HP(self):
+        self.orangeHelpPoint = None
+        if self.orangeBall.con:
+            
+            for i, contour in enumerate(self.orangeBall.con, 1):
+                    x, y, w, h = cv.boundingRect(contour)
+                    center_x = x + w // 2
+                    center_y = y + h // 2
+            factor = 150
+            in_outer_area = False
+           
+            
+            for area in self.outerArea.areas:
+              
+                if area.type == "cross_corner":
+                    if(self.is_point_in_triangle_cross_product((center_x,center_y),area.points[0],area.points[1],area.points[2])):
+                        in_outer_area = True
+
+                        new_point = self.add_cross_factor(factor,area.points[1],self.cross.center,(center_x,center_y))
+                        
+                        cord =(new_point[0],new_point[1])
+                        helpPointCord = HelpPoint((new_point[0],new_point[1]),self.orangeBall)
+                       
+                        
+                       
+                        self.orangeHelpPoint = helpPointCord
+                        return
+                          
+                else:      
+                    max_x = max([p[0] for p in area.points])
+                    min_x = min([p[0] for p in area.points])
+                    max_y = max([p[1] for p in area.points])
+                    min_y = min([p[1] for p in area.points])
+                  
+                    if center_x > min_x and center_x < max_x and center_y > min_y and center_y < max_y:
+                        in_outer_area = True
+                        x_addision = 0
+                        y_addision = 0
+                        
+                        
+                        if area.type == "BL_corner":
+                            x_addision =  factor
+                            y_addision = -factor
+                        elif area.type == "BR_corner":
+                            x_addision = - factor
+                            y_addision = - factor
+                        elif area.type == "TR_corner":
+                            x_addision = - factor
+                            y_addision =  factor
+                        elif area.type == "TL_corner":
+                            x_addision =  factor
+                            y_addision =  factor
+                        elif area.type == "left_side":
+                            x_addision =  factor
+                        elif area.type == "right_side":
+                            x_addision = - factor
+                        elif area.type == "top_side":
+                            y_addision =  factor
+                        elif area.type == "bottom_side":
+                            y_addision = - factor
+                    
+                    
+                        orangeball_center = np.array([center_x, center_y])
+                        helpPointCord = HelpPoint((orangeball_center[0] + x_addision, orangeball_center[1] + y_addision),self.orangeBall)
+                        self.orangeHelpPoint = helpPointCord
+                        return
+                       
+                        
+                        
+                    
+                        
+            if in_outer_area == False:
+            
+                orangeball_center = np.array([center_x, center_y])
+                helpPointCord = HelpPoint(( orangeball_center[0],  orangeball_center[1]),self.orangeBall)
+                self.orangeHelpPoint = helpPointCord
+                return
+               
+               
+
+    def find_HP(self):
+        self.outerArea = OuterArea()
+    
+        if self.cross.corner_con is not None:
+           
+            self.find_Cross_HP()
+       
+    
+        self.find_Corner_HP()
+      
         self.outerArea.create_areas(self.arenaCorners[0],self.arenaCorners[1],self.arenaCorners[2],self.arenaCorners[3])
+        if self.orangeBall.con is not None:
+            self.find_orange_HP()
         for whiteball in self.whiteballs:
             x, y, w, h = cv.boundingRect(whiteball.con)
             center_x = x + w // 2
             center_y = y + h // 2
             in_outer_area = False
+            factor = 150
             for area in self.outerArea.areas:
-               
-                max_x = max([p[0] for p in area.points])
-                min_x = min([p[0] for p in area.points])
-                max_y = max([p[1] for p in area.points])
-                min_y = min([p[1] for p in area.points])
-              
-                if center_x > min_x and center_x < max_x and center_y > min_y and center_y < max_y:
-                    in_outer_area = True
-                    x_addision = 0
-                    y_addision = 0
-                    factor = 150
-                    if area.type == "BL_corner":
-                        x_addision =  factor
-                        y_addision = -factor
-                    elif area.type == "BR_corner":
-                        x_addision = - factor
-                        y_addision = - factor
-                    elif area.type == "TR_corner":
-                        x_addision = - factor
-                        y_addision =  factor
-                    elif area.type == "TL_corner":
-                        x_addision =  factor
-                        y_addision =  factor
-                    elif area.type == "left_side":
-                        x_addision =  factor
-                    elif area.type == "right_side":
-                        x_addision = - factor
-                    elif area.type == "top_side":
-                        y_addision =  factor
-                    elif area.type == "bottom_side":
-                        y_addision = - factor
-                    
+                if area.type == "cross_corner":
+                    if(self.is_point_in_triangle_cross_product((center_x,center_y),area.points[0],area.points[1],area.points[2])):
+                        in_outer_area = True
+
+                        new_point = self.add_cross_factor(factor,area.points[1],self.cross.center,(center_x,center_y))
                    
-                    whiteball_center = np.array([center_x, center_y])
-                    helpPointCord = HelpPoint((whiteball_center[0] + x_addision, whiteball_center[1] + y_addision),whiteball)
-                    self.helpPoints.append(helpPointCord)
-                   
+                        helpPointCord = HelpPoint((new_point[0],new_point[1]),whiteball)
+                       
+                        
+                       
+                        self.helpPoints.append(helpPointCord)
+                        
+                else:      
+                    max_x = max([p[0] for p in area.points])
+                    min_x = min([p[0] for p in area.points])
+                    max_y = max([p[1] for p in area.points])
+                    min_y = min([p[1] for p in area.points])
+                
+                    if center_x > min_x and center_x < max_x and center_y > min_y and center_y < max_y:
+                        in_outer_area = True
+                        x_addision = 0
+                        y_addision = 0
+                        
+                        if area.type == "BL_corner":
+                            x_addision =  factor
+                            y_addision = -factor
+                        elif area.type == "BR_corner":
+                            x_addision = - factor
+                            y_addision = - factor
+                        elif area.type == "TR_corner":
+                            x_addision = - factor
+                            y_addision =  factor
+                        elif area.type == "TL_corner":
+                            x_addision =  factor
+                            y_addision =  factor
+                        elif area.type == "left_side":
+                            x_addision =  factor
+                        elif area.type == "right_side":
+                            x_addision = - factor
+                        elif area.type == "top_side":
+                            y_addision =  factor
+                        elif area.type == "bottom_side":
+                            y_addision = - factor
                     
-                    break
+                    
+                        whiteball_center = np.array([center_x, center_y])
+                        helpPointCord = HelpPoint((whiteball_center[0] + x_addision, whiteball_center[1] + y_addision),whiteball)
+                        self.helpPoints.append(helpPointCord)
+                    
+                        
+                        break
             if in_outer_area == False:
                 whiteball_center = np.array([center_x, center_y])
                 helpPointCord = HelpPoint((whiteball_center[0], whiteball_center[1]),whiteball)
                 self.helpPoints.append(helpPointCord)
 
-        
+    
     def find_Corner_HP(self):
         if not self.arenaCorners:
             return False
@@ -174,7 +338,7 @@ class Data:
 
        
         
-        if  self.cross.corner_con is None:
+        if  self.cross.corner_con is None or len(self.cross.corner_con) == 0:
             print("Error: contour_points is empty.")
             return False
 
@@ -184,55 +348,29 @@ class Data:
 
         # Calculate distances from the center to all points
         distances = []
-        for point in self.cross.corner_con:
+        for i, point in enumerate(self.cross.corner_con):
             distance = np.linalg.norm(center - np.array(point[0]))
-            distances.append((distance, point[0]))
-
-        # Sort points by distance and select the four closest
-        distances.sort()
-        closest_points = [point for _, point in distances[:4]]
-
-        # Find vectors between opposite points and calculate help point
-        for point in closest_points:
-            current_point = np.array(point)
-
-            # Calculate the direction vector from the center to the point
-            direction_vector = current_point - center
-
-            # Normalize the direction vector
-            direction_norm = direction_vector / np.linalg.norm(direction_vector)
-
-            # Define the length of the help point line (extend outwards)
-         # Adjust this length as needed
-
-            # Calculate the help point position
-            con = center + direction_norm*225
-            print("con: ", con)
-            help_point = HelpPoint(tuple(con))
-            #print("help_point: ", help_point)
+            distances.append((distance, point[0], i))
             
-            self.helpPoints.append(help_point)
-            '''
-            for i in range(4):
-                for j in range(i+1, 4):
-                    if (i + j) % 2 != 0:  # Ensuring they are not opposite pairs
-                        point1 = np.array(closest_points[i])
-                        point2 = np.array(closest_points[j])
+        # Sort points by distance and select the four closest
+ 
+        distances.sort(key=lambda x: x[0])
+       
 
-                        # Calculate the mid-direction vector from the center to the average of the points
-                        mid_direction_vector = ((point1 + point2) / 2) - center
+       
+        for _, corner, idx in distances[:4]:
+            prev_idx = (idx - 1) % len(self.cross.corner_con)
+            next_idx = (idx + 1) % len(self.cross.corner_con)
+            
+            area_points = [
+                self.cross.corner_con[prev_idx][0],
+                corner,
+                self.cross.corner_con[next_idx][0]
+            ]
 
-                        # Normalize the mid-direction vector
-                        mid_direction_norm = mid_direction_vector / np.linalg.norm(mid_direction_vector)
+            self.outerArea.areas.append(Area(area_points, "cross_corner"))
 
-                        # Calculate the help point position
-                      
-                        mid_help_point = HelpPoint(tuple(center + mid_direction_norm * 300))
-                        
-                        #print("mid_help_point: ", mid_help_point)
-                        self.helpPoints.append(mid_help_point)
-            '''
-        #print("done with cross hp")
+    
       
       
 
@@ -350,7 +488,7 @@ class OuterArea:
         self.areas.append(Area(top_side, "top_side"))
         bottom_side = self.create_sides(bottomleft, bottomright, "bottom", cornerLength)
         self.areas.append(Area(bottom_side, "bottom_side"))
-
+    
     def create_sides(self,cornerPointOne,cornerPointTwo,side,conerLength):
         if side == "left":
             # Calculate the correct points based on bottomleft and cornerLength
@@ -413,7 +551,7 @@ class OuterArea:
                 
 class Area:
     def __init__(self, points, type="area"):
-        if len(points) == 4:
+        if len(points) == 4 or len(points) == 3:
            self.points = points
            self.type = type 
         else:

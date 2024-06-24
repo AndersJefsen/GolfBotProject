@@ -16,6 +16,11 @@ from time import time, strftime, gmtime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import ComputerVision 
 
+
+
+
+
+
 def detect_objects(imageToDetectOn, imageToDrawOn,vision_image, hsv_filter, maxThreshold,minThreshold,minArea,maxArea,name,rgb_Color,threshold,minPoints,maxPoints,arenaCorners):
        #this hsv filter is used to find the edges of the obstacle
     img = vision_image.apply_hsv_filter(imageToDetectOn, hsv_filter)
@@ -135,3 +140,19 @@ def custom_object_detection(imageToDetectOn, imageToDrawOn):
     
     
     return edged,imageToDrawOn
+'''
+wincap = cv.VideoCapture(0,cv.CAP_DSHOW)
+
+vision_image = Vision('ball.png')
+
+vision_image.init_control_gui()
+while(True):
+    ret, screenshot = wincap.read()
+    output_image = screenshot.copy()
+    screenshot = Vision.apply_hsv_filter(vision_image,screenshot)
+    edged,output_image = custom_object_detection(screenshot,output_image)
+    cv.imshow('input', screenshot)
+    cv.imshow('output', output_image)
+    cv.waitKey(1)
+
+'''    
