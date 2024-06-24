@@ -49,7 +49,7 @@ def main(mode):
 
     if mode == "Goal":
         data.socket = com.connect_to_robot()
-    data.testpicturename = 'v.jpg'
+    data.testpicturename = 'billede6(bold i hjørnet).png'
     findArena = False
     while not findArena:
         try:

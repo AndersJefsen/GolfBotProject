@@ -160,15 +160,20 @@ class ImageProcessor:
         return ImageProcessor.filter_circles(contours, min_size, max_size,min_curvature, max_curvature)
 
     @staticmethod
-    def find_orangeball_hsv(image, min_size=300, max_size=10000):
+    def find_orangeball_hsv(image, min_size=150, max_size=10000):
         def detect_with_mask(image, lower_color, upper_color, min_size, max_size):
             return ImageProcessor.detect_and_filter_objects(image, lower_color, upper_color, min_size, max_size)
 
         # First threshold range for the orange ball
-        orange_lower1 = np.array([5, 50, 50], dtype="uint8")
-        orange_upper1 = np.array([30, 255, 255], dtype="uint8")
+        orange_lower1 = np.array([15, 100, 20], dtype="uint8")
+        orange_upper1 = np.array([25, 255, 255], dtype="uint8")
         contours1 = detect_with_mask(image, orange_lower1, orange_upper1, min_size, max_size)
-        # cv2.imshow('Processed Image Balls', contours1)
+        # orange = cv2.inRange(image, orange_lower1, orange_upper1)
+        # contours, _ = cv2.findContours(orange, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # cv2.imshow('Orange balls 1', orange)
+        # print("orange contour size =", cv2.contourArea(contours1))
+
 
 
         if len(contours1) == 1:
@@ -176,8 +181,14 @@ class ImageProcessor:
 
         # If the first mask didn't find exactly one ball, use a second threshold range
         orange_lower2 = np.array([20, 100, 100], dtype="uint8")
-        orange_upper2 = np.array([25, 255, 255], dtype="uint8")
+        orange_upper2 = np.array([30, 255, 255], dtype="uint8")
         contours2 = detect_with_mask(image, orange_lower2, orange_upper2, min_size, max_size)
+        # orange1 = cv2.inRange(image, orange_lower1, orange_upper1)
+        # contours, _ = cv2.findContours(orange, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # cv2.imshow('Orange balls 2', orange1)
+
+        # print("orange contour size =", cv2.contourArea(contours2))
         # cv2.imshow('Processed Image Balls', contours2)
 
 
