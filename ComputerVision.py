@@ -314,6 +314,19 @@ class ImageProcessor:
         cv2.drawContours(output_image, ball_contours, -1, (0, 255, 0), 2)
 
         return ball_contours
+    
+    @staticmethod
+    def find_robot_mask(indput_Image, min_size=200, max_size=1000):
+
+        green_lower = np.array([40, 40, 40], dtype="uint8")
+        green_upper = np.array([80, 255, 255], dtype="uint8")
+
+        green_mask = ImageProcessor.apply_hsv_filter(indput_Image, green_lower, green_upper)
+
+        green_mask = ImageProcessor.clean_mask(green_mask)
+
+        return green_mask
+
     @staticmethod
     def find_robot(indput_Image, min_size=200, max_size=1000):
        

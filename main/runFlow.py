@@ -127,9 +127,14 @@ def update_positions(data :Data,robot:bool,balls:bool,egg:bool,orange:bool, cros
                 
                 data.robot.con =ComputerVision.ImageProcessor.find_robot(inputimg, min_size=200, max_size=1000)
             
-                angle = None
-                img = data.screenshot
+                
+                mask=ComputerVision.ImageProcessor.find_robot_mask(inputimg, min_size=200, max_size=1000)
 
+                cv.imshow("windowName", mask)
+                cv.waitKey(1)
+
+                #angle = None
+                #img = data.screenshot
                 if data.robot.con is not None:
                     if (len(data.robot.con)==3):
                         data.robot.originalMidtpoint, data.robot.angle, data.output_image, data.robot.direction=ComputerVision.ImageProcessor.getrobot(data.robot.con,data.output_image)
