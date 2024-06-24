@@ -169,9 +169,9 @@ class ImageProcessor:
         orange_upper1 = np.array([25, 255, 255], dtype="uint8")
         contours1 = detect_with_mask(image, orange_lower1, orange_upper1, min_size, max_size)
 
-
-        if len(contours1) == 1:
-            return contours1
+        if contours1 is not None:
+            if len(contours1) == 1:
+                return contours1
 
         # If the first mask didn't find exactly one ball, use a second threshold range
         orange_lower2 = np.array([20, 100, 100], dtype="uint8")
