@@ -364,7 +364,7 @@ def høvlOrange(data:Data):
                 points.append((center_x,center_y))
             else:
                 print("orange ball is not at help point")
-                points.append((center_x,center_y))
+                points.append((hp_x,hp_y))
                 points.append((center_x,center_y))
                 
             
@@ -393,7 +393,7 @@ def høvlOrange(data:Data):
 
 def messi(data:Data):
     if(data.robot.midpoint is not None):
-        target_point = (140, 61)
+        target_point = (130, 61)
         goal_point = (160,61)
         robotPos = data.robot.midpoint
 
