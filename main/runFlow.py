@@ -378,8 +378,8 @@ def høvlOrange(data:Data):
 
 def messi(data:Data):
     if(data.robot.midpoint is not None):
-        target_point = (130, 55)
-        goal_point = (160,55)
+        target_point = (130, 60)
+        goal_point = (160,60)
         robotPos = data.robot.midpoint
 
         ispath = path.is_path_clear(robotPos,(target_point),add_all_obstacles(data,withOrange=False))  
@@ -404,7 +404,7 @@ def messi(data:Data):
 def høvl(data: Data,robot=True, image=None):
         if(data.robot.detected and data.getAllBallCordinates() is not None):
                     
-                    currMidpoint,currAngle = data.robot.get_best_robot_position()
+                    #currMidpoint,currAngle = data.robot.get_best_robot_position()
                     contours = []
                     helpPoints = []
                     

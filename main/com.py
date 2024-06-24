@@ -7,7 +7,7 @@ from path import calculate_distance, calculate_angle, find_close_ball
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SERVER_ADDRESS = '192.168.11.243'  # IP address of EV3
+SERVER_ADDRESS = '192.168.209.243'  # IP address of EV3
 SERVER_PORT = 1024  # Port server script
 
 
