@@ -90,8 +90,9 @@ class ImageProcessor:
     def showimage(name="pic", image=None):
         try:
             cv2.imshow(name, image)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            cv2.waitKey(1)
+            #cv2.waitKey(0)
+            #cv2.destroyAllWindows()
 
         except Exception as e:
             print(f"error {e} with pic {name}")   
@@ -159,10 +160,26 @@ class ImageProcessor:
         return ImageProcessor.filter_circles(contours, min_size, max_size,min_curvature, max_curvature)
 
     @staticmethod
-    def find_orangeball_hsv(image, min_size=50, max_size=600):
-        orange_lower = np.array([10, 100, 20], dtype="uint8")
-        orange_upper = np.array([45, 255, 255], dtype="uint8")
-        return ImageProcessor.detect_and_filter_objects(image, orange_lower, orange_upper, min_size, max_size)
+    def find_orangeball_hsv(image, min_size=150, max_size=10000):
+        def detect_with_mask(image, lower_color, upper_color, min_size, max_size):
+            return ImageProcessor.detect_and_filter_objects(image, lower_color, upper_color, min_size, max_size)
+
+        # First threshold range for the orange ball
+        orange_lower1 = np.array([15, 100, 20], dtype="uint8")
+        orange_upper1 = np.array([25, 255, 255], dtype="uint8")
+        contours1 = detect_with_mask(image, orange_lower1, orange_upper1, min_size, max_size)
+
+        if contours1 is not None:
+            if len(contours1) == 1:
+                return contours1
+
+        # If the first mask didn't find exactly one ball, use a second threshold range
+        orange_lower2 = np.array([20, 100, 100], dtype="uint8")
+        orange_upper2 = np.array([30, 255, 255], dtype="uint8")
+        contours2 = detect_with_mask(image, orange_lower2, orange_upper2, min_size, max_size)
+
+
+        return contours2
 
     @staticmethod
     def find_balls_hsv(image, min_size=100, max_size=400):
@@ -313,8 +330,21 @@ class ImageProcessor:
         cv2.drawContours(output_image, ball_contours, -1, (0, 255, 0), 2)
 
         return ball_contours
+    
     @staticmethod
-    def find_robot(indput_Image, min_size=100, max_size=400):
+    def find_robot_mask(indput_Image, min_size=200, max_size=1000):
+
+        green_lower = np.array([40, 40, 40], dtype="uint8")
+        green_upper = np.array([80, 255, 255], dtype="uint8")
+
+        green_mask = ImageProcessor.apply_hsv_filter(indput_Image, green_lower, green_upper)
+
+        green_mask = ImageProcessor.clean_mask(green_mask)
+
+        return green_mask
+
+    @staticmethod
+    def find_robot(indput_Image, min_size=200, max_size=1000):
        
 
         # blue_lower = np.array([80, 66, 100], dtype="uint8")
@@ -324,7 +354,7 @@ class ImageProcessor:
         # Når robotten har grønne cirkler
 
         green_lower = np.array([40, 40, 40], dtype="uint8")
-        green_upper = np.array([90, 255, 255], dtype="uint8")
+        green_upper = np.array([80, 255, 255], dtype="uint8")
 
         green_mask = ImageProcessor.apply_hsv_filter(indput_Image, green_lower, green_upper)
 
@@ -342,16 +372,16 @@ class ImageProcessor:
 
         #contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        robot_counters=ImageProcessor.filter_circles(contours, min_size,max_size)
-        if robot_counters is None:
+        #robot_counters=ImageProcessor.filter_circles(contours, min_size,max_size)
+        if contours is None:
             print("robot not found")
             return None
-        if len(robot_counters) <3:
+        if len(contours) <3:
             print("Robot not found, Not enough contours found.")
             return None
 
         # Sort the round contours by area and select the three largest
-        robot_counters = sorted(robot_counters, key=cv2.contourArea, reverse=True)[:3]
+        robot_counters = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
 
         return robot_counters
 
@@ -424,7 +454,7 @@ class ImageProcessor:
 
         return result_image
 
-
+   
 
     @staticmethod
     def find_direction(contours):
@@ -808,7 +838,7 @@ class ImageProcessor:
     
     
     
-
+    '''
     @staticmethod
      #johan
     def get_corrected_coordinates_robot(cX, cY,data: Data, adjustment_factor=0.2):
@@ -839,6 +869,7 @@ class ImageProcessor:
         new_cY = cY + adjustment_y
         
         return new_cX, new_cY
+    '''
     @staticmethod
     def convert_distance_to_cm(pixel_distance):
         bottom_left, bottom_right, top_left, top_right = ImageProcessor.corners.values()
@@ -848,7 +879,7 @@ class ImageProcessor:
     # Peters version
     def get_corrected_coordinates_robot_peter(x, y, data, corners):
         bottom_left_corner, bottom_right_corner, top_left_corner, top_right_corner = corners
-
+     
         if None in corners:
             print("Some corners are missing.")
             return None
@@ -857,19 +888,19 @@ class ImageProcessor:
         mid_y = (bottom_left_corner[1] + bottom_right_corner[1] + top_left_corner[1] + top_right_corner[1]) // 4
 
         # Calculate the Euclidean distance (B) between the midpoint and the robot's location
-
+       
         B = math.sqrt((x - mid_x) ** 2 + (y - mid_y) ** 2)
-
+        
         cm_B = ImageProcessor.convert_distance_to_cm(B)
-
+       
         # Given heights
         H = 168
         h = 31
 
-
+        
         # Calculate the true horizontal distance (x)
         cm_x_offset = cm_B * (h / H)
-
+        
         # convert x_offset to pixel
         pixel_offset_x, _ = ImageProcessor.convert_to_pixel((cm_x_offset, 0))
         ## Det skal kigges på
@@ -880,7 +911,7 @@ class ImageProcessor:
         dy = mid_y - y
         angle = math.degrees(math.atan2(dy, dx))
         radian_angle = np.deg2rad(angle)
-
+        
         # Calculate the true location of the robot using trigonometry
         true_x = x + pixel_offset_x * math.cos(radian_angle)
         true_y = y + pixel_offset_x * math.sin(radian_angle)
@@ -973,23 +1004,7 @@ class ImageProcessor:
     
 
     
-    @staticmethod
-    #victor
-    def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=165 ):
-        height, width, _ = data.screenshot.shape
-
-        cam_x, cam_y = width // 2, height // 2
-
-    # Calculate the vector from the camera to the robot on the plane
-        vector_x = robot_x - cam_x
-        vector_y = robot_y - cam_y
-        #print(vector_x)
-        # Apply the scale factor for perspective based on height
-        scale_factor = robot_z / cam_z
-        x_2d = cam_x + vector_x * (1 - scale_factor)
-        y_2d = cam_y + vector_y * (1 - scale_factor)
-
-        return (x_2d, y_2d)
+    
         
    
     
@@ -1011,7 +1026,23 @@ class ImageProcessor:
         return (x_2d, y_2d)
     
     '''
+    @staticmethod
+    #victor
+    def get_corrected_coordinates_robot(robot_x, robot_y, data: Data, robot_z=31, cam_z=170 ):
+        height, width, _ = data.screenshot.shape
 
+        cam_x, cam_y = width // 2, height // 2
+
+    # Calculate the vector from the camera to the robot on the plane
+        vector_x = robot_x - cam_x
+        vector_y = robot_y - cam_y
+        #print(vector_x)
+        # Apply the scale factor for perspective based on height
+        scale_factor = robot_z / cam_z
+        x_2d = cam_x + vector_x * (1 - scale_factor)
+        y_2d = cam_y + vector_y * (1 - scale_factor)
+
+        return (x_2d, y_2d)
 
 if __name__ == "__main__":
     image_path = "main/peter.png"  # Path to your image

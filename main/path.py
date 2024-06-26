@@ -36,6 +36,7 @@ def calculate_angle(robot_position, ball_position, robot_orientation):
     
     if abs(angle) > 180:
         angle = abs(angle) - 360
+ 
     return -angle
 
 def find_close_ball(robot_position, balls, robot_orientation):
@@ -53,14 +54,19 @@ def find_close_ball(robot_position, balls, robot_orientation):
             closest_ball = ball
             
             angle_to_turn = calculate_angle(robot_position, ball, robot_orientation)
+    print("closest ball: ", closest_ball)
+    print("min_distance: ", min_distance)
+    print("angle_to_turn: ", angle_to_turn)
             
-    return closest_ball,None, min_distance, angle_to_turn
+    return closest_ball, min_distance, angle_to_turn
+
 
 def find_shortest_path(robot_position, robot_orientation, paired_help_points_and_balls, contours, drive_points):
     # If no help points are available, use drive points as a fallback
     if not paired_help_points_and_balls:
         print("No help point and ball pairs available.")
-        return find_close_ball(robot_position, drive_points, robot_orientation)
+        closest_ball, min_distance, angle_to_turn=find_close_ball(robot_position, drive_points, robot_orientation)
+        return closest_ball, None, min_distance, angle_to_turn
     
 
     closest_help_point = None
@@ -108,7 +114,7 @@ def find_shortest_path(robot_position, robot_orientation, paired_help_points_and
 
     return None
 
-
+# Function to create n parallel lines to a given line
 def create_parallel_lines(p1, p2, n, spacing):
     # Calculate the direction vector from p1 to p2
     dx, dy = p2[0] - p1[0], p2[1] - p1[1]
@@ -133,6 +139,7 @@ def create_parallel_lines(p1, p2, n, spacing):
     return lines
 
 def is_path_clear(p1, p2, contours):
+    print(p1,p2,contours)
     p1 = (int(round(p1[0])), int(round(p1[1])))
     p2 = (int(round(p2[0])), int(round(p2[1])))
     # Generate parallel lines as polygons
