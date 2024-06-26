@@ -11,12 +11,12 @@ class TestImageProcessor(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Load sample images for testing
-        cls.orange_ball_image = cv2.imread('outerball.jpg')
-        cls.white_ball_image = cv2.imread('outerball.jpg')
-        cls.egg_image = cv2.imread('outerball.jpg')
-        cls.arena_image = cv2.imread('outerball.jpg')
-        cls.cross_image = cv2.imread('outerball.jpg')
-        cls.robot_image = cv2.imread('outerball.jpg')
+        cls.orange_ball_image = cv2.imread('images/Blandet/outerball.jpg')
+        cls.white_ball_image = cv2.imread('images/Blandet/outerball.jpg')
+        cls.egg_image = cv2.imread('images/Blandet/outerball.jpg')
+        cls.arena_image = cv2.imread('images/Blandet/outerball.jpg')
+        cls.cross_image = cv2.imread('images/Blandet/outerball.jpg')
+        cls.robot_image = cv2.imread('images/Blandet/outerball.jpg')
 
 
     def test_find_balls_hsv(self):

@@ -8,7 +8,6 @@ import numpy as np
 import sys
 import os
 import detectionTools
-import visualisation
 from data import Data as Data
 import imageManipulationTools
 import time
